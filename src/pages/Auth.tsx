@@ -15,7 +15,8 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user, notifications } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const { signIn, signUp, signInWithGoogle, user, notifications } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,6 +46,16 @@ const Auth = () => {
     setLoading(true);
     const { error } = await signUp(email, password);
     setLoading(false);
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    const { error } = await signInWithGoogle();
+    setGoogleLoading(false);
+    
+    if (!error) {
+      navigate('/dashboard');
+    }
   };
 
   return (

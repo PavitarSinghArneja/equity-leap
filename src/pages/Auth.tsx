@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Eye, EyeOff } from 'lucide-react';
+import { BarChart3, Eye, EyeOff, Chrome } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { AnimatedNotifications } from '@/components/ui/notification';
 
@@ -15,7 +15,8 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user, notifications } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const { signIn, signUp, signInWithGoogle, user, notifications } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,6 +46,16 @@ const Auth = () => {
     setLoading(true);
     const { error } = await signUp(email, password);
     setLoading(false);
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    const { error } = await signInWithGoogle();
+    setGoogleLoading(false);
+    
+    if (!error) {
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -127,10 +138,30 @@ const Auth = () => {
                   <Button 
                     type="submit" 
                     className="w-full" 
-                    variant="hero"
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                     disabled={loading}
                   >
                     {loading ? "Signing In..." : "Sign In"}
+                  </Button>
+                  
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    className="w-full"
+                    onClick={handleGoogleSignIn}
+                    disabled={googleLoading}
+                  >
+                    <Chrome className="w-4 h-4 mr-2" />
+                    {googleLoading ? "Signing in..." : "Sign in with Google"}
                   </Button>
                 </form>
               </TabsContent>
@@ -180,10 +211,30 @@ const Auth = () => {
                   <Button 
                     type="submit" 
                     className="w-full" 
-                    variant="hero"
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                     disabled={loading}
                   >
                     {loading ? "Creating Account..." : "Create Account"}
+                  </Button>
+                  
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    className="w-full"
+                    onClick={handleGoogleSignIn}
+                    disabled={googleLoading}
+                  >
+                    <Chrome className="w-4 h-4 mr-2" />
+                    {googleLoading ? "Creating account..." : "Sign up with Google"}
                   </Button>
                 </form>
                 <p className="text-sm text-muted-foreground text-center">

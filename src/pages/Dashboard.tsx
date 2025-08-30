@@ -44,13 +44,15 @@ const Dashboard = () => {
       if (now > trialExpires && !profile.subscription_active) {
         setTrialExpired(true);
       }
-
-      // Redirect to KYC if not approved
-      if (profile.kyc_status === 'pending' && !window.location.pathname.includes('/kyc')) {
-        navigate('/kyc');
-      }
     }
   }, [user, profile, loading, navigate]);
+
+  // Separate effect for KYC redirection to avoid conflicts
+  useEffect(() => {
+    if (profile && profile.kyc_status !== 'approved') {
+      navigate('/kyc');
+    }
+  }, [profile, navigate]);
 
   useEffect(() => {
     if (user) {

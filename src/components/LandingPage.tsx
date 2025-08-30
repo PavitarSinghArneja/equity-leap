@@ -18,10 +18,10 @@ const LandingPage = () => {
           </div>
           <div className="flex items-center space-x-4">
             <Link to="/auth">
-              <Button variant="ghost">Sign In</Button>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Sign In</Button>
             </Link>
             <Link to="/auth">
-              <Button variant="hero">Get Started</Button>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Get Started</Button>
             </Link>
           </div>
         </div>

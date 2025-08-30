@@ -23,6 +23,7 @@ interface AuthContextType {
   addNotification: (notification: any) => void;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -149,6 +150,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return { error };
   };
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`
+      }
+    });
+
+    if (error) {
+      addNotification({
+        name: "Google Sign In Failed",
+        description: error.message,
+        icon: "❌",
+        color: "#FF3D71"
+      });
+    }
+
+    return { error };
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -179,6 +200,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       addNotification,
       signUp,
       signIn,
+      signInWithGoogle,
       signOut,
       refreshProfile
     }}>

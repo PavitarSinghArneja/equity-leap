@@ -17,19 +17,19 @@
     --popover-foreground: 0 0% 95%;
 
     /* Primary: Bright Green */
-    --primary: 120 100% 50%;
+    --primary: 120 60% 45%;
     --primary-foreground: 0 0% 98%;
-    --primary-light: 120 100% 60%;
-    --primary-dark: 120 100% 40%;
+    --primary-light: 120 60% 55%;
+    --primary-dark: 120 60% 35%;
 
     /* Secondary: Darker Green */
-    --secondary: 120 80% 35%;
+    --secondary: 120 50% 30%;
     --secondary-foreground: 0 0% 98%;
-    --secondary-light: 120 80% 45%;
-    --secondary-dark: 120 80% 25%;
+    --secondary-light: 120 50% 40%;
+    --secondary-dark: 120 50% 20%;
 
     /* Accent: Bright Green variant */
-    --accent: 120 100% 45%;
+    --accent: 120 50% 40%;
     --accent-foreground: 0 0% 98%;
 
     /* Muted: Dark blue-grays */
@@ -37,7 +37,7 @@
     --muted-foreground: 210 10% 65%;
 
     /* Success/Profit Green - Bright green */
-    --success: 120 100% 50%;
+    --success: 120 60% 45%;
     --success-foreground: 0 0% 98%;
 
     /* Warning/Risk Orange */
@@ -49,24 +49,24 @@
 
     --border: 210 15% 20%;
     --input: 210 15% 10%;
-    --ring: 120 100% 50%;
+    --ring: 120 60% 45%;
 
     --radius: 0.75rem;
 
     /* Investment Platform Specific Colors */
-    --portfolio-up: 120 100% 50%;
+    --portfolio-up: 120 60% 45%;
     --portfolio-down: 0 84% 60%;
-    --escrow-balance: 120 100% 50%;
+    --escrow-balance: 120 60% 45%;
 
     /* Sidebar */
     --sidebar-background: 210 15% 10%;
     --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 120 100% 50%;
+    --sidebar-primary: 120 60% 45%;
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 210 15% 15%;
     --sidebar-accent-foreground: 0 0% 90%;
     --sidebar-border: 210 15% 20%;
-    --sidebar-ring: 120 100% 50%;
+    --sidebar-ring: 120 60% 45%;
   }
 
   .dark {
@@ -77,19 +77,19 @@
     --card-foreground: 0 0% 95%;
     --popover: 210 15% 12%;
     --popover-foreground: 0 0% 95%;
-    --primary: 120 100% 50%;
+    --primary: 120 60% 45%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 120 80% 35%;
+    --secondary: 120 50% 30%;
     --secondary-foreground: 0 0% 98%;
     --muted: 210 15% 15%;
     --muted-foreground: 210 10% 65%;
-    --accent: 120 100% 45%;
+    --accent: 120 50% 40%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     --border: 210 15% 20%;
     --input: 210 15% 10%;
-    --ring: 120 100% 50%;
+    --ring: 120 60% 45%;
   }
 }
 

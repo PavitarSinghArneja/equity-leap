@@ -58,20 +58,6 @@
     --portfolio-down: 0 84% 60%;
     --escrow-balance: 120 100% 50%;
 
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(210 15% 8%), hsl(120 100% 50%));
-    --gradient-card: linear-gradient(145deg, hsl(210 15% 12%), hsl(210 15% 15%));
-    --gradient-investment: linear-gradient(90deg, hsl(120 100% 50%), hsl(120 80% 35%));
-    
-    /* Shadows */
-    --shadow-card: 0 4px 20px -4px hsl(210 15% 5% / 0.6);
-    --shadow-investment: 0 8px 30px -8px hsl(120 100% 50% / 0.3);
-    --shadow-glow: 0 0 40px hsl(120 100% 50% / 0.2);
-    
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
     /* Sidebar */
     --sidebar-background: 210 15% 10%;
     --sidebar-foreground: 0 0% 90%;

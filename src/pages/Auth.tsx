@@ -8,13 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart3, Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { AnimatedNotifications } from '@/components/ui/notification';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, notifications } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,11 +48,11 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
       {/* Background Pattern */}
       <div className="absolute inset-0 hero-gradient opacity-5" />
       
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-md z-10">
         {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-3 mb-6">
@@ -199,6 +200,13 @@ const Auth = () => {
           </Link>
         </div>
       </div>
+      
+      {/* Animated Notifications */}
+      {notifications.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 w-96">
+          <AnimatedNotifications notifications={notifications} />
+        </div>
+      )}
     </div>
   );
 };

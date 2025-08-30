@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useNotifications } from '@/hooks/use-notifications';
 
 interface UserProfile {
   id: string;
@@ -19,6 +19,8 @@ interface AuthContextType {
   session: Session | null;
   profile: UserProfile | null;
   loading: boolean;
+  notifications: any[];
+  addNotification: (notification: any) => void;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -36,6 +38,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const { notifications, addNotification } = useNotifications();
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -103,9 +106,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
 
     if (error) {
-      toast.error(error.message);
+      addNotification({
+        name: "Registration Failed",
+        description: error.message,
+        icon: "❌",
+        color: "#FF3D71"
+      });
     } else {
-      toast.success('Sign up successful! Please check your email to verify your account.');
+      addNotification({
+        name: "Registration Successful",
+        description: "Please check your email to verify your account",
+        icon: "✅",
+        color: "#00C9A7"
+      });
     }
 
     return { error };
@@ -118,9 +131,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
 
     if (error) {
-      toast.error(error.message);
+      addNotification({
+        name: "Login Failed",
+        description: error.message,
+        icon: "🔒",
+        color: "#FF3D71"
+      });
     } else {
-      toast.success('Welcome back!');
+      addNotification({
+        name: "Welcome Back!",
+        description: "Successfully signed in",
+        icon: "🎉",
+        color: "#00C9A7"
+      });
     }
 
     return { error };
@@ -129,9 +152,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      toast.error(error.message);
+      addNotification({
+        name: "Sign Out Failed",
+        description: error.message,
+        icon: "❌",
+        color: "#FF3D71"
+      });
     } else {
-      toast.success('Signed out successfully');
+      addNotification({
+        name: "Signed Out",
+        description: "Successfully signed out",
+        icon: "👋",
+        color: "#FFB800"
+      });
       setProfile(null);
     }
   };
@@ -142,6 +175,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       session,
       profile,
       loading,
+      notifications,
+      addNotification,
       signUp,
       signIn,
       signOut,

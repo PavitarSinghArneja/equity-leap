@@ -52,7 +52,7 @@ const LandingPage = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link to="/auth">
-              <Button size="lg" className="bg-primary text-white hover:bg-primary/90 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 px-8 py-3">
+              <Button size="lg" className="bg-primary text-white hover:bg-primary/80 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 px-8 py-3">
                 Start Investing <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
@@ -76,9 +76,7 @@ const LandingPage = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="investment-card border-border/50">
               <CardHeader className="text-center">
-                <div className="w-16 h-16 investment-gradient rounded-full flex items-center justify-center mx-auto mb-4">
-                  <TrendingUp className="w-8 h-8 text-white" />
-                </div>
+                <TrendingUp className="w-16 h-16 text-primary mx-auto mb-4" />
                 <CardTitle>High Returns</CardTitle>
               </CardHeader>
               <CardContent>
@@ -90,9 +88,7 @@ const LandingPage = () => {
 
             <Card className="investment-card border-border/50">
               <CardHeader className="text-center">
-                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Shield className="w-8 h-8 text-primary-foreground" />
-                </div>
+                <Shield className="w-16 h-16 text-primary mx-auto mb-4" />
                 <CardTitle>Secure Platform</CardTitle>
               </CardHeader>
               <CardContent>
@@ -104,9 +100,7 @@ const LandingPage = () => {
 
             <Card className="investment-card border-border/50">
               <CardHeader className="text-center">
-                <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-secondary-foreground" />
-                </div>
+                <Users className="w-16 h-16 text-primary mx-auto mb-4" />
                 <CardTitle>Low Minimums</CardTitle>
               </CardHeader>
               <CardContent>
@@ -118,9 +112,7 @@ const LandingPage = () => {
 
             <Card className="investment-card border-border/50">
               <CardHeader className="text-center">
-                <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
-                  <BarChart3 className="w-8 h-8 text-accent-foreground" />
-                </div>
+                <BarChart3 className="w-16 h-16 text-primary mx-auto mb-4" />
                 <CardTitle>Easy Trading</CardTitle>
               </CardHeader>
               <CardContent>
@@ -145,7 +137,7 @@ const LandingPage = () => {
           
           <div className="grid md:grid-cols-3 gap-12 max-w-5xl mx-auto">
             <div className="text-center">
-              <div className="w-20 h-20 hero-gradient rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6">
+              <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6">
                 1
               </div>
               <h3 className="text-2xl font-semibold mb-4">Sign Up & Verify</h3>
@@ -155,7 +147,7 @@ const LandingPage = () => {
             </div>
             
             <div className="text-center">
-              <div className="w-20 h-20 hero-gradient rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6">
+              <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6">
                 2
               </div>
               <h3 className="text-2xl font-semibold mb-4">Browse Properties</h3>
@@ -165,7 +157,7 @@ const LandingPage = () => {
             </div>
             
             <div className="text-center">
-              <div className="w-20 h-20 hero-gradient rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6">
+              <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6">
                 3
               </div>
               <h3 className="text-2xl font-semibold mb-4">Invest & Earn</h3>
@@ -185,7 +177,7 @@ const LandingPage = () => {
             Join thousands of investors building wealth through fractional real estate
           </p>
           <Link to="/auth">
-            <Button size="lg" variant="hero">
+            <Button size="lg" className="bg-primary text-white hover:bg-primary/80">
               Get Started Today <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
@@ -197,7 +189,7 @@ const LandingPage = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <BarChart3 className="w-5 h-5 text-white" />
               </div>
               <span className="text-2xl font-bold">EquityLeap</span>

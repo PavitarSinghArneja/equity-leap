@@ -105,22 +105,12 @@
 
   /* Investment Platform Specific Styles */
   .investment-card {
-    background: var(--gradient-card);
-    box-shadow: var(--shadow-card);
-    transition: var(--transition-smooth);
+    transition: all 0.2s ease-in-out;
   }
 
   .investment-card:hover {
-    box-shadow: var(--shadow-investment);
     transform: translateY(-2px);
-  }
-
-  .hero-gradient {
-    background: var(--gradient-hero);
-  }
-
-  .investment-gradient {
-    background: var(--gradient-investment);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 
   /* Custom scrollbar */

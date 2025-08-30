@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import LandingPage from "@/components/LandingPage";
 import Auth from "@/pages/Auth";
+import Welcome from "@/pages/Welcome";
 import Dashboard from "@/pages/Dashboard";
 import KYC from "@/pages/KYC";
 import Properties from "@/pages/Properties";
@@ -23,6 +24,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/welcome" element={<Welcome />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/kyc" element={<KYC />} />
             <Route path="/properties" element={<Properties />} />

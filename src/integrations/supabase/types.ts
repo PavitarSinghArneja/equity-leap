@@ -14,7 +14,326 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      escrow_balances: {
+        Row: {
+          available_balance: number | null
+          created_at: string | null
+          id: string
+          pending_balance: number | null
+          total_invested: number | null
+          total_returns: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          available_balance?: number | null
+          created_at?: string | null
+          id?: string
+          pending_balance?: number | null
+          total_invested?: number | null
+          total_returns?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          available_balance?: number | null
+          created_at?: string | null
+          id?: string
+          pending_balance?: number | null
+          total_invested?: number | null
+          total_returns?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      investments: {
+        Row: {
+          created_at: string | null
+          id: string
+          investment_date: string | null
+          investment_status:
+            | Database["public"]["Enums"]["investment_status"]
+            | null
+          price_per_share: number
+          property_id: string | null
+          shares_owned: number
+          total_investment: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          investment_date?: string | null
+          investment_status?:
+            | Database["public"]["Enums"]["investment_status"]
+            | null
+          price_per_share: number
+          property_id?: string | null
+          shares_owned: number
+          total_investment: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          investment_date?: string | null
+          investment_status?:
+            | Database["public"]["Enums"]["investment_status"]
+            | null
+          price_per_share?: number
+          property_id?: string | null
+          shares_owned?: number
+          total_investment?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investments_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kyc_documents: {
+        Row: {
+          admin_notes: string | null
+          created_at: string | null
+          document_type: Database["public"]["Enums"]["document_type"]
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          mime_type: string | null
+          updated_at: string | null
+          user_id: string | null
+          verification_status: Database["public"]["Enums"]["kyc_status"] | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string | null
+          document_type: Database["public"]["Enums"]["document_type"]
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          mime_type?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verification_status?: Database["public"]["Enums"]["kyc_status"] | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string | null
+          document_type?: Database["public"]["Enums"]["document_type"]
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          mime_type?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verification_status?: Database["public"]["Enums"]["kyc_status"] | null
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          address: string
+          available_shares: number
+          city: string
+          country: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          documents: string[] | null
+          expected_annual_return: number | null
+          featured: boolean | null
+          funded_amount: number | null
+          funding_goal: number
+          id: string
+          images: string[] | null
+          investment_end_date: string | null
+          investment_start_date: string | null
+          maximum_investment: number | null
+          minimum_investment: number | null
+          property_status: Database["public"]["Enums"]["property_status"] | null
+          property_type: string | null
+          share_price: number
+          title: string
+          total_value: number
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          available_shares: number
+          city: string
+          country: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          documents?: string[] | null
+          expected_annual_return?: number | null
+          featured?: boolean | null
+          funded_amount?: number | null
+          funding_goal: number
+          id?: string
+          images?: string[] | null
+          investment_end_date?: string | null
+          investment_start_date?: string | null
+          maximum_investment?: number | null
+          minimum_investment?: number | null
+          property_status?:
+            | Database["public"]["Enums"]["property_status"]
+            | null
+          property_type?: string | null
+          share_price: number
+          title: string
+          total_value: number
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          available_shares?: number
+          city?: string
+          country?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          documents?: string[] | null
+          expected_annual_return?: number | null
+          featured?: boolean | null
+          funded_amount?: number | null
+          funding_goal?: number
+          id?: string
+          images?: string[] | null
+          investment_end_date?: string | null
+          investment_start_date?: string | null
+          maximum_investment?: number | null
+          minimum_investment?: number | null
+          property_status?:
+            | Database["public"]["Enums"]["property_status"]
+            | null
+          property_type?: string | null
+          share_price?: number
+          title?: string
+          total_value?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          property_id: string | null
+          reference_id: string | null
+          status: string | null
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          property_id?: string | null
+          reference_id?: string | null
+          status?: string | null
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          property_id?: string | null
+          reference_id?: string | null
+          status?: string | null
+          transaction_type?: Database["public"]["Enums"]["transaction_type"]
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          address: string | null
+          country: string | null
+          created_at: string | null
+          date_of_birth: string | null
+          email: string
+          full_name: string | null
+          id: string
+          kyc_approved_at: string | null
+          kyc_status: Database["public"]["Enums"]["kyc_status"] | null
+          kyc_submitted_at: string | null
+          phone: string | null
+          subscription_active: boolean | null
+          subscription_ends_at: string | null
+          tier: Database["public"]["Enums"]["user_tier"] | null
+          trial_expires_at: string | null
+          trial_started_at: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          country?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          email: string
+          full_name?: string | null
+          id?: string
+          kyc_approved_at?: string | null
+          kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
+          kyc_submitted_at?: string | null
+          phone?: string | null
+          subscription_active?: boolean | null
+          subscription_ends_at?: string | null
+          tier?: Database["public"]["Enums"]["user_tier"] | null
+          trial_expires_at?: string | null
+          trial_started_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          country?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          kyc_approved_at?: string | null
+          kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
+          kyc_submitted_at?: string | null
+          phone?: string | null
+          subscription_active?: boolean | null
+          subscription_ends_at?: string | null
+          tier?: Database["public"]["Enums"]["user_tier"] | null
+          trial_expires_at?: string | null
+          trial_started_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +342,27 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      document_type:
+        | "passport"
+        | "drivers_license"
+        | "id_card"
+        | "proof_of_address"
+        | "bank_statement"
+        | "other"
+      investment_status: "pending" | "confirmed" | "cancelled"
+      kyc_status: "pending" | "under_review" | "approved" | "rejected"
+      property_status: "upcoming" | "open" | "funded" | "closed"
+      transaction_type:
+        | "deposit"
+        | "withdrawal"
+        | "investment"
+        | "dividend"
+        | "fee"
+      user_tier:
+        | "explorer"
+        | "waitlist_player"
+        | "small_investor"
+        | "large_investor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +489,31 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      document_type: [
+        "passport",
+        "drivers_license",
+        "id_card",
+        "proof_of_address",
+        "bank_statement",
+        "other",
+      ],
+      investment_status: ["pending", "confirmed", "cancelled"],
+      kyc_status: ["pending", "under_review", "approved", "rejected"],
+      property_status: ["upcoming", "open", "funded", "closed"],
+      transaction_type: [
+        "deposit",
+        "withdrawal",
+        "investment",
+        "dividend",
+        "fee",
+      ],
+      user_tier: [
+        "explorer",
+        "waitlist_player",
+        "small_investor",
+        "large_investor",
+      ],
+    },
   },
 } as const

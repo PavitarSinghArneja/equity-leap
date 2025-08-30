@@ -38,7 +38,7 @@ const Auth = () => {
     setLoading(false);
     
     if (!error) {
-      navigate('/dashboard');
+      navigate('/welcome');
     }
   };
 
@@ -57,7 +57,7 @@ const Auth = () => {
     setGoogleLoading(false);
     
     if (!error) {
-      navigate('/dashboard');
+      navigate('/welcome');
     }
   };
 

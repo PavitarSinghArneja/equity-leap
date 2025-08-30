@@ -58,7 +58,7 @@ const Auth = () => {
             <div className="w-12 h-12 hero-gradient rounded-xl flex items-center justify-center">
               <BarChart3 className="w-7 h-7 text-white" />
             </div>
-            <span className="text-3xl font-bold hero-gradient bg-clip-text text-transparent">
+            <span className="text-3xl font-bold text-foreground">
               EquityLeap
             </span>
           </Link>

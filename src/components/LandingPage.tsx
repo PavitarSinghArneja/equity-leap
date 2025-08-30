@@ -31,27 +31,32 @@ const LandingPage = () => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
+        {/* Background Image */}
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: `url(${heroImage})` }}
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ 
+            backgroundImage: `url('https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop')` 
+          }}
         />
-        <div className="absolute inset-0 hero-gradient opacity-90" />
-        <div className="relative container mx-auto px-4 py-32 text-center">
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
+        {/* Dark overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-slate-800/90 to-slate-900/95" />
+        
+        <div className="relative container mx-auto px-4 py-24 md:py-32 text-center">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
             Fractional Property
-            <span className="block text-secondary-light">Investment</span>
+            <span className="block text-primary">Investment</span>
           </h1>
-          <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-slate-200 mb-8 max-w-3xl mx-auto leading-relaxed">
             Invest in premium real estate with as little as $100. 
             Professional management, transparent returns, and seamless trading.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link to="/auth">
-              <Button size="lg" className="bg-white text-primary hover:bg-transparent hover:border-white hover:text-white border border-white">
+              <Button size="lg" className="bg-primary text-white hover:bg-primary/90 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 px-8 py-3">
                 Start Investing <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="bg-white text-primary border-white hover:bg-transparent hover:text-white">
+            <Button size="lg" variant="outline" className="bg-transparent text-white border-white hover:bg-white hover:text-slate-900 px-8 py-3">
               View Properties
             </Button>
           </div>

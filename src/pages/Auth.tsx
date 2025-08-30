@@ -126,13 +126,12 @@ const Auth = () => {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full" 
                     className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                     disabled={loading}
                   >
                     {loading ? "Signing In..." : "Sign In"}
                   </Button>
-                  
+                </form>
               </TabsContent>
               
               <TabsContent value="signup" className="space-y-4 mt-6">
@@ -179,7 +178,6 @@ const Auth = () => {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full" 
                     className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                     disabled={loading}
                   >

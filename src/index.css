@@ -57,16 +57,6 @@
     --portfolio-up: 120 60% 45%;
     --portfolio-down: 0 84% 60%;
     --escrow-balance: 120 60% 45%;
-
-    /* Sidebar */
-    --sidebar-background: 210 15% 10%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 120 60% 45%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 210 15% 15%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 210 15% 20%;
-    --sidebar-ring: 120 60% 45%;
   }
 
   .dark {

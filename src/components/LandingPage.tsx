@@ -1,10 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, TrendingUp, Shield, Users, BarChart3 } from "lucide-react";
+import { ArrowRight, TrendingUp, Shield, Users, BarChart3, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import heroImage from "@/assets/hero-image.jpg";
 
 const LandingPage = () => {
+  const { user, profile, signOut } = useAuth();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -17,12 +20,33 @@ const LandingPage = () => {
             <span className="text-2xl font-bold text-foreground">EquityLeap</span>
           </div>
           <div className="flex items-center space-x-4">
-            <Link to="/auth">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Sign In</Button>
-            </Link>
-            <Link to="/auth">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Get Started</Button>
-            </Link>
+            {user && profile ? (
+              <>
+                <span className="text-foreground font-medium">
+                  Welcome, {profile.full_name || user.email?.split('@')[0] || 'User'}
+                </span>
+                <Link to="/dashboard">
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Dashboard</Button>
+                </Link>
+                <Button 
+                  variant="outline" 
+                  onClick={signOut}
+                  className="flex items-center space-x-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/auth">
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Sign In</Button>
+                </Link>
+                <Link to="/auth">
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Get Started</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>

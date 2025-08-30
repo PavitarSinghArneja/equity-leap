@@ -13,7 +13,9 @@ import {
   AlertCircle,
   LogOut,
   FileCheck,
-  CreditCard 
+  CreditCard,
+  Phone,
+  Calendar 
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -47,12 +49,7 @@ const Dashboard = () => {
     }
   }, [user, profile, loading, navigate]);
 
-  // Separate effect for KYC redirection to avoid conflicts
-  useEffect(() => {
-    if (profile && profile.kyc_status !== 'approved') {
-      navigate('/kyc');
-    }
-  }, [profile, navigate]);
+  // Note: KYC is no longer mandatory - users can access dashboard but will need KYC for investments
 
   useEffect(() => {
     if (user) {
@@ -179,22 +176,22 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* KYC Status Alert */}
-        {profile?.kyc_status !== 'approved' && (
-          <Card className="mb-6 border-warning/20 bg-warning/5">
+        {/* KYC Status Alert - Only show for non-explorer users */}
+        {profile?.kyc_status !== 'approved' && profile?.tier !== 'explorer' && (
+          <Card className="mb-6 border-blue-200 bg-blue-50">
             <CardContent className="pt-6">
               <div className="flex items-center space-x-3">
-                <AlertCircle className="w-5 h-5 text-warning" />
+                <AlertCircle className="w-5 h-5 text-blue-600" />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-warning">KYC Verification Required</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Complete your KYC verification to unlock all platform features.
+                  <h3 className="font-semibold text-blue-800">Complete KYC for Direct Investments</h3>
+                  <p className="text-sm text-blue-600">
+                    KYC verification is required for direct platform investments. You can browse properties and contact our team anytime.
                   </p>
                 </div>
                 <Button 
                   variant="outline" 
                   onClick={() => navigate('/kyc')}
-                  className="border-warning text-warning hover:bg-warning/10"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
                 >
                   <FileCheck className="w-4 h-4 mr-2" />
                   Complete KYC
@@ -285,10 +282,24 @@ const Dashboard = () => {
               </Button>
               
               {profile?.tier === 'explorer' ? (
-                <Button className="w-full justify-start" variant="outline" disabled>
-                  <AlertCircle className="w-4 h-4 mr-2" />
-                  Contact Team to Invest
-                </Button>
+                <>
+                  <Button 
+                    className="w-full justify-start" 
+                    variant="outline"
+                    onClick={() => toast.info('Contact our team to start investing')}
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Set Up a Meeting
+                  </Button>
+                  <Button 
+                    className="w-full justify-start" 
+                    variant="outline"
+                    onClick={() => toast.info('Our agent will call you soon')}
+                  >
+                    <Phone className="w-4 h-4 mr-2" />
+                    Get a Call from Our Agent
+                  </Button>
+                </>
               ) : (
                 <Button className="w-full justify-start" variant="hero">
                   <Wallet className="w-4 h-4 mr-2" />

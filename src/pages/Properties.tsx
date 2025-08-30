@@ -96,9 +96,15 @@ const Properties = () => {
 
   const canInvest = (property: Property) => {
     if (!profile) return false;
+    if (profile.tier === 'explorer') return property.property_status === 'open'; // Explorers can contact team without KYC
     if (profile.kyc_status !== 'approved') return false;
-    if (profile.tier === 'explorer') return false;
     return property.property_status === 'open';
+  };
+
+  const shouldShowHeroButton = (property: Property) => {
+    if (!profile) return false;
+    if (profile.tier === 'explorer') return property.property_status === 'open'; // Explorers get hero button to contact team
+    return canInvest(property); // Other users need full investment capability
   };
 
   const handleInvestClick = (property: Property) => {
@@ -293,7 +299,7 @@ const Properties = () => {
                   {/* Action Button */}
                   <Button 
                     className="w-full" 
-                    variant={canInvest(property) ? "hero" : "outline"}
+                    variant={shouldShowHeroButton(property) ? "hero" : "outline"}
                     onClick={() => handleInvestClick(property)}
                     disabled={property.property_status !== 'open'}
                   >

@@ -15,8 +15,6 @@ const LandingPage = () => {
               <BarChart3 className="w-5 h-5 text-white" />
             </div>
             <span className="text-2xl font-bold text-foreground">EquityLeap</span>
-              EquityLeap
-            </span>
           </div>
           <div className="flex items-center space-x-4">
             <Link to="/auth">

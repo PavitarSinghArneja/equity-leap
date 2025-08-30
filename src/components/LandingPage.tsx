@@ -47,11 +47,11 @@ const LandingPage = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link to="/auth">
-              <Button size="lg" variant="hero" className="bg-white text-primary hover:bg-white/90">
+              <Button size="lg" variant="hero" className="bg-white text-primary hover:bg-transparent hover:border-white hover:text-white border border-transparent">
                 Start Investing <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+            <Button size="lg" variant="outline" className="bg-white text-primary border-white hover:bg-transparent hover:text-white">
               View Properties
             </Button>
           </div>

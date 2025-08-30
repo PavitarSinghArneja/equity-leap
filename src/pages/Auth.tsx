@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart3, Eye, EyeOff, Chrome } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { AnimatedNotifications } from '@/components/ui/notification';
+import { MagicCard } from '@/components/magicui/magic-card';
+import { useTheme } from 'next-themes';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -17,6 +19,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const { signIn, signUp, signInWithGoogle, user, notifications } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -80,14 +83,18 @@ const Auth = () => {
           </p>
         </div>
 
-        <Card className="investment-card border-border/50">
-          <CardHeader className="text-center">
-            <CardTitle>Access Your Account</CardTitle>
-            <CardDescription>
-              Start your investment journey with EquityLeap
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <Card className="p-0 max-w-md w-full shadow-none border-none">
+          <MagicCard
+            gradientColor={theme === "dark" ? "#262626" : "#D9D9D955"}
+            className="p-0"
+          >
+            <CardHeader className="border-b border-border p-6 text-center">
+              <CardTitle>Access Your Account</CardTitle>
+              <CardDescription>
+                Start your investment journey with EquityLeap
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -248,7 +255,8 @@ const Auth = () => {
                 </p>
               </TabsContent>
             </Tabs>
-          </CardContent>
+            </CardContent>
+          </MagicCard>
         </Card>
 
         <div className="text-center mt-6">

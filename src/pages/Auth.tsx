@@ -155,17 +155,6 @@ const Auth = () => {
                   
                   <Button 
                     type="button"
-                    variant="outline" 
-                    className="w-full"
-                    onClick={handleGoogleSignIn}
-                    disabled={googleLoading}
-                  >
-                    <Chrome className="w-4 h-4 mr-2" />
-                    {googleLoading ? "Signing in..." : "Sign in with Google"}
-                  </Button>
-                  
-                  <Button 
-                    type="button"
                     className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:text-gray-900 shadow-sm"
                     onClick={handleGoogleSignIn}
                     disabled={googleLoading}
@@ -240,17 +229,6 @@ const Auth = () => {
                       <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                     </div>
                   </div>
-                  
-                  <Button 
-                    type="button"
-                    variant="outline" 
-                    className="w-full"
-                    onClick={handleGoogleSignIn}
-                    disabled={googleLoading}
-                  >
-                    <Chrome className="w-4 h-4 mr-2" />
-                    {googleLoading ? "Creating account..." : "Sign up with Google"}
-                  </Button>
                   
                   <Button 
                     type="button"

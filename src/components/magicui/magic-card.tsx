@@ -34,6 +34,8 @@ export const MagicCard = ({ children, className, gradientColor }: MagicCardProps
       ref={cardRef}
       className={cn(
         "relative overflow-hidden rounded-lg bg-card text-card-foreground shadow-sm",
+        // Glow effect on hover
+        "transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20",
         // Shining border effect
         "before:absolute before:inset-0 before:rounded-lg before:p-[1px] before:opacity-0 before:transition-opacity before:duration-500",
         "before:bg-[conic-gradient(from_0deg_at_var(--mouse-x,50%)_var(--mouse-y,50%),hsl(var(--primary))_0deg,transparent_60deg,transparent_300deg,hsl(var(--primary))_360deg)]",

@@ -114,7 +114,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    font-family: "Poppins", system-ui, -apple-system, sans-serif;
   }
 
   /* Investment Platform Specific Styles */

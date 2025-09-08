@@ -353,6 +353,16 @@ const Auth = () => {
                     {googleLoading ? "Creating account..." : "Sign up with Google"}
                   </Button>
                 </form>
+                <div className="text-xs text-muted-foreground mt-2">
+                  <p className="font-medium mb-1">Password requirements:</p>
+                  <ul className="space-y-1 text-xs">
+                    <li>• At least 8 characters long</li>
+                    <li>• One uppercase letter (A-Z)</li>
+                    <li>• One lowercase letter (a-z)</li>
+                    <li>• One number (0-9)</li>
+                    <li>• One special character (@$!%*?&)</li>
+                  </ul>
+                </div>
                 <p className="text-sm text-muted-foreground text-center">
                   By creating an account, you agree to our Terms of Service and Privacy Policy
                 </p>

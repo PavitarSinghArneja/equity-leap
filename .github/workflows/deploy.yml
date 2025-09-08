@@ -37,10 +37,25 @@ jobs:
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_KEY }}
         script: |
-          cd /root/equity-leap
+          # Find the equity-leap directory
+          if [ -d "/root/equity-leap" ]; then
+            cd /root/equity-leap
+          elif [ -d "/home/$USER/equity-leap" ]; then
+            cd /home/$USER/equity-leap
+          elif [ -d "equity-leap" ]; then
+            cd equity-leap
+          else
+            echo "equity-leap directory not found"
+            exit 1
+          fi
+          
+          # Pull latest changes
           git pull origin main
-          npm run build
-          docker build -t equityleap-app .
-          docker stop equityleap-container || true
-          docker rm equityleap-container || true
-          docker run -d --name equityleap-container -p 80:80 equityleap-app
+          
+          # Stop and remove existing container
+          sudo docker stop equityleap-container || true
+          sudo docker rm equityleap-container || true
+          
+          # Build and run new container
+          sudo docker build -t equityleap-app .
+          sudo docker run -d --name equityleap-container -p 80:80 equityleap-app

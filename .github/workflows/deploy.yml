@@ -37,25 +37,68 @@ jobs:
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_KEY }}
         script: |
+          set -e  # Exit on any error
+          
+          echo "Starting deployment..."
+          echo "Current directory: $(pwd)"
+          echo "User: $(whoami)"
+          echo "Available directories:"
+          ls -la /
+          
           # Find the equity-leap directory
+          PROJECT_DIR=""
           if [ -d "/root/equity-leap" ]; then
-            cd /root/equity-leap
+            PROJECT_DIR="/root/equity-leap"
           elif [ -d "/home/$USER/equity-leap" ]; then
-            cd /home/$USER/equity-leap
+            PROJECT_DIR="/home/$USER/equity-leap"
+          elif [ -d "/home/ubuntu/equity-leap" ]; then
+            PROJECT_DIR="/home/ubuntu/equity-leap"
           elif [ -d "equity-leap" ]; then
-            cd equity-leap
+            PROJECT_DIR="equity-leap"
           else
-            echo "equity-leap directory not found"
+            echo "ERROR: equity-leap directory not found"
+            echo "Checked locations:"
+            echo "- /root/equity-leap"
+            echo "- /home/$USER/equity-leap"
+            echo "- /home/ubuntu/equity-leap"
+            echo "- equity-leap"
+            exit 1
+          fi
+          
+          echo "Found project directory: $PROJECT_DIR"
+          cd "$PROJECT_DIR"
+          
+          # Check if git repository
+          if [ ! -d ".git" ]; then
+            echo "ERROR: Not a git repository"
             exit 1
           fi
           
           # Pull latest changes
+          echo "Pulling latest changes..."
           git pull origin main
           
-          # Stop and remove existing container
-          sudo docker stop equityleap-container || true
-          sudo docker rm equityleap-container || true
+          # Check if Docker is available
+          if ! command -v docker &> /dev/null; then
+            echo "ERROR: Docker is not installed"
+            exit 1
+          fi
           
-          # Build and run new container
-          sudo docker build -t equityleap-app .
-          sudo docker run -d --name equityleap-container -p 80:80 equityleap-app
+          # Stop and remove existing container
+          echo "Stopping existing container..."
+          docker stop equityleap-container || true
+          docker rm equityleap-container || true
+          
+          # Build new container
+          echo "Building Docker image..."
+          docker build -t equityleap-app .
+          
+          # Run new container
+          echo "Starting new container..."
+          docker run -d --name equityleap-container -p 80:80 equityleap-app
+          
+          # Verify container is running
+          echo "Container status:"
+          docker ps | grep equityleap-container || echo "Container not found in running processes"
+          
+          echo "Deployment completed successfully!"

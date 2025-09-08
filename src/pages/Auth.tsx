@@ -18,33 +18,116 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const { signIn, signUp, signInWithGoogle, user, notifications } = useAuth();
+  const { signIn, signUp, signInWithGoogle, user, profile, notifications, addNotification, loading: authLoading } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect authenticated users to dashboard
-    if (user) {
-      navigate('/dashboard');
+    // Redirect authenticated users to appropriate page, but only after auth loading is complete
+    if (!authLoading && user && profile) {
+      // Check if trial has expired
+      if (!profile.subscription_active) {
+        const trialExpires = new Date(profile.trial_expires_at);
+        const now = new Date();
+        
+        if (now > trialExpires) {
+          navigate('/trial-expired');
+          return;
+        }
+      }
+      
+      navigate('/welcome');
     }
-  }, [user, navigate]);
+  }, [user, profile, authLoading, navigate]);
+
+  const validateForm = (isSignUp = false) => {
+    // Check for empty fields
+    if (!email.trim()) {
+      addNotification({
+        name: "Email Required",
+        description: "Please enter your email address",
+        icon: "ALERT_TRIANGLE",
+        color: "#DC2626",
+        isLogo: true
+      });
+      return false;
+    }
+
+    if (!password) {
+      addNotification({
+        name: "Password Required", 
+        description: "Please enter your password",
+        icon: "ALERT_TRIANGLE",
+        color: "#DC2626",
+        isLogo: true
+      });
+      return false;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      addNotification({
+        name: "Invalid Email",
+        description: "Please enter a valid email address",
+        icon: "ALERT_TRIANGLE",
+        color: "#DC2626",
+        isLogo: true
+      });
+      return false;
+    }
+
+    // Validate password length (especially important for sign up)
+    if (password.length < 6) {
+      addNotification({
+        name: "Password Too Short",
+        description: "Password must be at least 6 characters long",
+        icon: "ALERT_TRIANGLE",
+        color: "#DC2626",
+        isLogo: true
+      });
+      return false;
+    }
+
+    // Additional validation for sign up
+    if (isSignUp && password.length < 8) {
+      addNotification({
+        name: "Weak Password",
+        description: "For better security, use at least 8 characters",
+        icon: "ALERT_TRIANGLE",
+        color: "#F59E0B",
+        isLogo: true
+      });
+      // Don't return false - this is just a warning
+    }
+
+    return true;
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    
+    // Validate form before submitting
+    if (!validateForm(false)) {
+      return;
+    }
     
     setLoading(true);
     const { error } = await signIn(email, password);
     setLoading(false);
     
     if (!error) {
-      navigate('/dashboard');
+      navigate('/welcome');
     }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    
+    // Validate form before submitting (with sign-up specific checks)
+    if (!validateForm(true)) {
+      return;
+    }
     
     setLoading(true);
     const { error } = await signUp(email, password);
@@ -54,12 +137,28 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     const { error } = await signInWithGoogle();
-    setGoogleLoading(false);
     
-    if (!error) {
-      navigate('/dashboard');
+    // Don't navigate here - OAuth will handle the redirect
+    // Only stop loading if there's an error (user will stay on this page)
+    if (error) {
+      setGoogleLoading(false);
     }
+    // If no error, user will be redirected to Google and then back to /welcome
   };
+
+  // Show loading spinner while auth context is initializing
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 hero-gradient rounded-xl flex items-center justify-center mx-auto mb-4">
+            <BarChart3 className="w-7 h-7 text-white animate-pulse" />
+          </div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
@@ -69,7 +168,7 @@ const Auth = () => {
       <div className="relative w-full max-w-md z-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center space-x-3 mb-6">
+          <Link to="/" className="inline-flex items-center space-x-3 mb-12">
             <div className="w-12 h-12 hero-gradient rounded-xl flex items-center justify-center">
               <BarChart3 className="w-7 h-7 text-white" />
             </div>
@@ -112,7 +211,8 @@ const Auth = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email"
                       required
-                      className="bg-input"
+                      className="bg-input text-base"
+                      autoComplete="email"
                     />
                   </div>
                   <div className="space-y-2">
@@ -125,7 +225,8 @@ const Auth = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Enter your password"
                         required
-                        className="bg-input pr-10"
+                        className="bg-input pr-10 text-base"
+                        autoComplete="current-password"
                       />
                       <Button
                         type="button"
@@ -144,7 +245,7 @@ const Auth = () => {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-11 text-base"
                     disabled={loading}
                   >
                     {loading ? "Signing In..." : "Sign In"}
@@ -161,7 +262,7 @@ const Auth = () => {
                   
                   <Button 
                     type="button"
-                    className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:text-gray-900 shadow-sm"
+                    className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:text-gray-900 shadow-sm h-11 text-base"
                     onClick={handleGoogleSignIn}
                     disabled={googleLoading}
                   >
@@ -187,7 +288,8 @@ const Auth = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email"
                       required
-                      className="bg-input"
+                      className="bg-input text-base"
+                      autoComplete="email"
                     />
                   </div>
                   <div className="space-y-2">
@@ -201,7 +303,8 @@ const Auth = () => {
                         placeholder="Create a strong password"
                         required
                         minLength={6}
-                        className="bg-input pr-10"
+                        className="bg-input pr-10 text-base"
+                        autoComplete="new-password"
                       />
                       <Button
                         type="button"
@@ -220,7 +323,7 @@ const Auth = () => {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-11 text-base"
                     disabled={loading}
                   >
                     {loading ? "Creating Account..." : "Create Account"}
@@ -237,7 +340,7 @@ const Auth = () => {
                   
                   <Button 
                     type="button"
-                    className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:text-gray-900 shadow-sm"
+                    className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:text-gray-900 shadow-sm h-11 text-base"
                     onClick={handleGoogleSignIn}
                     disabled={googleLoading}
                   >
@@ -268,7 +371,7 @@ const Auth = () => {
       
       {/* Animated Notifications */}
       {notifications.length > 0 && (
-        <div className="fixed top-4 right-4 z-50 w-96">
+        <div className="fixed top-4 right-4 left-4 sm:left-auto sm:w-96 z-50">
           <AnimatedNotifications notifications={notifications} />
         </div>
       )}

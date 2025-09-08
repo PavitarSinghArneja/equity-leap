@@ -165,6 +165,8 @@ export type Database = {
           property_status: Database["public"]["Enums"]["property_status"] | null
           property_type: string | null
           share_price: number
+          shares_sellable: boolean | null
+          actual_roi_percentage: number | null
           title: string
           total_value: number
           updated_at: string | null
@@ -193,6 +195,8 @@ export type Database = {
             | null
           property_type?: string | null
           share_price: number
+          shares_sellable?: boolean | null
+          actual_roi_percentage?: number | null
           title: string
           total_value: number
           updated_at?: string | null
@@ -221,6 +225,8 @@ export type Database = {
             | null
           property_type?: string | null
           share_price?: number
+          shares_sellable?: boolean | null
+          actual_roi_percentage?: number | null
           title?: string
           total_value?: number
           updated_at?: string | null
@@ -280,6 +286,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          is_admin: boolean | null
           kyc_approved_at: string | null
           kyc_status: Database["public"]["Enums"]["kyc_status"] | null
           kyc_submitted_at: string | null
@@ -287,6 +294,9 @@ export type Database = {
           subscription_active: boolean | null
           subscription_ends_at: string | null
           tier: Database["public"]["Enums"]["user_tier"] | null
+          tier_override_by_admin: boolean | null
+          tier_override_at: string | null
+          tier_override_by: string | null
           trial_expires_at: string | null
           trial_started_at: string | null
           updated_at: string | null
@@ -300,6 +310,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id?: string
+          is_admin?: boolean | null
           kyc_approved_at?: string | null
           kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
           kyc_submitted_at?: string | null
@@ -307,6 +318,9 @@ export type Database = {
           subscription_active?: boolean | null
           subscription_ends_at?: string | null
           tier?: Database["public"]["Enums"]["user_tier"] | null
+          tier_override_by_admin?: boolean | null
+          tier_override_at?: string | null
+          tier_override_by?: string | null
           trial_expires_at?: string | null
           trial_started_at?: string | null
           updated_at?: string | null
@@ -320,6 +334,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          is_admin?: boolean | null
           kyc_approved_at?: string | null
           kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
           kyc_submitted_at?: string | null
@@ -327,6 +342,9 @@ export type Database = {
           subscription_active?: boolean | null
           subscription_ends_at?: string | null
           tier?: Database["public"]["Enums"]["user_tier"] | null
+          tier_override_by_admin?: boolean | null
+          tier_override_at?: string | null
+          tier_override_by?: string | null
           trial_expires_at?: string | null
           trial_started_at?: string | null
           updated_at?: string | null
@@ -356,7 +374,8 @@ export type Database = {
         | "deposit"
         | "withdrawal"
         | "investment"
-        | "dividend"
+        | "share_sale"
+        | "share_purchase"
         | "fee"
       user_tier:
         | "explorer"
@@ -505,7 +524,8 @@ export const Constants = {
         "deposit",
         "withdrawal",
         "investment",
-        "dividend",
+        "share_sale",
+        "share_purchase",
         "fee",
       ],
       user_tier: [

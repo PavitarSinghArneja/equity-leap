@@ -133,4 +133,40 @@
   .text-escrow {
     color: hsl(var(--escrow-balance));
   }
+
+  /* Hero gradient - Brand primary gradient */
+  .hero-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 640px) {
+    /* Improve touch targets */
+    button {
+      min-height: 44px;
+    }
+    
+    /* Prevent zoom on input focus in iOS */
+    input[type="email"],
+    input[type="password"],
+    input[type="text"],
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+    
+    /* Improve tap target spacing */
+    .clickable {
+      padding: 12px;
+    }
+    
+    /* Ensure safe areas on devices with notches */
+    .safe-area-top {
+      padding-top: env(safe-area-inset-top);
+    }
+    
+    .safe-area-bottom {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+  }
 }

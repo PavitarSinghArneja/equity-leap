@@ -2,53 +2,93 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { useAdmin } from '@/hooks/useAdmin';
 import { supabase } from '@/integrations/supabase/client';
 import { 
-  FileText, 
-  Upload, 
-  CheckCircle, 
-  Clock, 
-  AlertCircle, 
-  ArrowLeft,
-  FileCheck
+  BarChart3, 
+  ChevronRight, 
+  ChevronLeft, 
+  Upload,
+  FileText,
+  User,
+  CreditCard,
+  Camera,
+  CheckCircle2,
+  AlertTriangle,
+  Home,
+  LogOut,
+  Crown
 } from 'lucide-react';
-import { toast } from 'sonner';
 
-interface KYCDocument {
-  id: string;
-  document_type: string;
-  file_name: string;
-  verification_status: string;
-  created_at: string;
+interface PersonalInfo {
+  fullName: string;
+  dateOfBirth: string;
+  address: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  phone: string;
 }
 
-const documentTypes = [
-  { value: 'passport', label: 'Passport' },
-  { value: 'drivers_license', label: "Driver's License" },
-  { value: 'id_card', label: 'National ID Card' },
-  { value: 'proof_of_address', label: 'Proof of Address' },
-  { value: 'bank_statement', label: 'Bank Statement' },
-  { value: 'other', label: 'Other' }
-];
+interface Documents {
+  panCard: File | null;
+  aadhaarFront: File | null;
+  aadhaarBack: File | null;
+  addressProof: File | null;
+}
+
+interface BankDetails {
+  accountNumber: string;
+  confirmAccountNumber: string;
+  ifscCode: string;
+  bankName: string;
+  accountType: 'savings' | 'current';
+}
 
 const KYC = () => {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, addNotification, refreshProfile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { isAdmin } = useAdmin();
+  
+  const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [documents, setDocuments] = useState<KYCDocument[]>([]);
-  const [selectedDocType, setSelectedDocType] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [profileData, setProfileData] = useState({
-    full_name: '',
-    phone: '',
-    date_of_birth: '',
-    address: '',
-    country: ''
+  
+  // Form data states
+  const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({
+    fullName: profile?.full_name || '',
+    dateOfBirth: profile?.date_of_birth || '',
+    address: profile?.address || '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: profile?.country || 'India',
+    phone: profile?.phone || ''
   });
+  
+  const [documents, setDocuments] = useState<Documents>({
+    panCard: null,
+    aadhaarFront: null,
+    aadhaarBack: null,
+    addressProof: null
+  });
+  
+  const [bankDetails, setBankDetails] = useState<BankDetails>({
+    accountNumber: '',
+    confirmAccountNumber: '',
+    ifscCode: '',
+    bankName: '',
+    accountType: 'savings'
+  });
+  
+  const [selfieFile, setSelfieFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -56,369 +96,653 @@ const KYC = () => {
       return;
     }
     
-    if (profile) {
-      setProfileData({
-        full_name: profile.full_name || '',
-        phone: '',
-        date_of_birth: '',
-        address: '',
-        country: ''
+    // If KYC is already approved, redirect to appropriate dashboard
+    if (profile?.kyc_status === 'approved') {
+      addNotification({
+        name: "KYC Already Completed",
+        description: "Your KYC verification is already approved",
+        icon: "CHECK_CIRCLE",
+        color: "#059669",
+        isLogo: true
       });
-    }
-
-    fetchDocuments();
-  }, [user, profile, navigate]);
-
-  const fetchDocuments = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('kyc_documents')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setDocuments(data || []);
-    } catch (error) {
-      console.error('Error fetching documents:', error);
-    }
-  };
-
-  const handleProfileUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update(profileData)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
       
-      toast.success('Profile updated successfully');
-      await refreshProfile();
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
+      if (profile.tier === 'waitlist_player') {
+        navigate('/waitlist-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     }
-    setLoading(false);
+  }, [user, profile, navigate, addNotification]);
+
+  const steps = [
+    { id: 1, title: 'Personal Information', icon: User, description: 'Basic personal details' },
+    { id: 2, title: 'Document Upload', icon: FileText, description: 'Identity documents' },
+    { id: 3, title: 'Bank Details', icon: CreditCard, description: 'Banking information' },
+    { id: 4, title: 'Photo Verification', icon: Camera, description: 'Selfie verification' },
+    { id: 5, title: 'Review & Submit', icon: CheckCircle2, description: 'Final review' }
+  ];
+
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 1:
+        const { fullName, dateOfBirth, address, city, state, postalCode, phone } = personalInfo;
+        if (!fullName || !dateOfBirth || !address || !city || !state || !postalCode || !phone) {
+          addNotification({
+            name: "Incomplete Information",
+            description: "Please fill all required personal information fields",
+            icon: "ALERT_TRIANGLE",
+            color: "#DC2626",
+            isLogo: true
+          });
+          return false;
+        }
+        return true;
+      
+      case 2:
+        if (!documents.panCard || !documents.aadhaarFront || !documents.aadhaarBack) {
+          addNotification({
+            name: "Documents Required",
+            description: "Please upload PAN card and both sides of Aadhaar card",
+            icon: "ALERT_TRIANGLE",
+            color: "#DC2626",
+            isLogo: true
+          });
+          return false;
+        }
+        return true;
+      
+      case 3:
+        const { accountNumber, confirmAccountNumber, ifscCode, bankName } = bankDetails;
+        if (!accountNumber || !confirmAccountNumber || !ifscCode || !bankName) {
+          addNotification({
+            name: "Bank Details Required",
+            description: "Please fill all bank details",
+            icon: "ALERT_TRIANGLE",
+            color: "#DC2626",
+            isLogo: true
+          });
+          return false;
+        }
+        if (accountNumber !== confirmAccountNumber) {
+          addNotification({
+            name: "Account Numbers Don't Match",
+            description: "Please ensure both account numbers are identical",
+            icon: "ALERT_TRIANGLE",
+            color: "#DC2626",
+            isLogo: true
+          });
+          return false;
+        }
+        return true;
+      
+      case 4:
+        if (!selfieFile) {
+          addNotification({
+            name: "Selfie Required",
+            description: "Please upload a clear selfie for verification",
+            icon: "ALERT_TRIANGLE",
+            color: "#DC2626",
+            isLogo: true
+          });
+          return false;
+        }
+        return true;
+      
+      default:
+        return true;
+    }
   };
 
-  const handleFileUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file || !selectedDocType || !user) return;
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => Math.min(prev + 1, 5));
+    }
+  };
 
-    setLoading(true);
+  const prevStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleFileUpload = async (file: File, documentType: keyof Documents | 'selfie') => {
     try {
-      // Upload file to Supabase Storage
-      const fileName = `${user.id}/${selectedDocType}_${Date.now()}_${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}/${documentType}_${Date.now()}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
         .from('kyc-documents')
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (error) throw error;
 
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('kyc-documents')
         .getPublicUrl(fileName);
 
-      // Save document record to database
-      const { error: dbError } = await supabase
-        .from('kyc_documents')
-        .insert({
-          user_id: user.id,
-          document_type: selectedDocType as any,
-          file_name: file.name,
-          file_url: urlData.publicUrl,
-          file_size: file.size,
-          mime_type: file.type
-        });
-
-      if (dbError) throw dbError;
-
-      toast.success('Document uploaded successfully');
-      setFile(null);
-      setSelectedDocType('');
-      fetchDocuments();
-      
-      // Update KYC submitted status if this is the first document
-      if (documents.length === 0) {
-        await supabase
-          .from('user_profiles')
-          .update({
-            kyc_status: 'under_review',
-            kyc_submitted_at: new Date().toISOString()
-          })
-          .eq('user_id', user.id);
-        
-        await refreshProfile();
-      }
+      return urlData.publicUrl;
     } catch (error) {
-      console.error('Error uploading document:', error);
-      toast.error('Failed to upload document');
-    }
-    setLoading(false);
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return <CheckCircle className="w-5 h-5 text-success" />;
-      case 'under_review':
-        return <Clock className="w-5 h-5 text-warning" />;
-      case 'rejected':
-        return <AlertCircle className="w-5 h-5 text-destructive" />;
-      default:
-        return <FileText className="w-5 h-5 text-muted-foreground" />;
+      console.error('File upload error:', error);
+      addNotification({
+        name: "Upload Failed",
+        description: "Failed to upload file. Please try again.",
+        icon: "ALERT_TRIANGLE",
+        color: "#DC2626",
+        isLogo: true
+      });
+      return null;
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return 'text-success';
-      case 'under_review':
-        return 'text-warning';
-      case 'rejected':
-        return 'text-destructive';
-      default:
-        return 'text-muted-foreground';
+  const submitKYC = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      // Upload all documents
+      const documentUrls: { [key: string]: string } = {};
+      
+      for (const [key, file] of Object.entries(documents)) {
+        if (file) {
+          const url = await handleFileUpload(file, key as keyof Documents);
+          if (url) documentUrls[key] = url;
+        }
+      }
+      
+      if (selfieFile) {
+        const selfieUrl = await handleFileUpload(selfieFile, 'selfie');
+        if (selfieUrl) documentUrls.selfie = selfieUrl;
+      }
+
+      // Update user profile
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .update({
+          full_name: personalInfo.fullName,
+          phone: personalInfo.phone,
+          date_of_birth: personalInfo.dateOfBirth,
+          address: `${personalInfo.address}, ${personalInfo.city}, ${personalInfo.state} ${personalInfo.postalCode}`,
+          country: personalInfo.country,
+          kyc_status: 'under_review',
+          kyc_submitted_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
+      if (profileError) throw profileError;
+
+      // Save KYC documents
+      const documentEntries = Object.entries(documentUrls).map(([type, url]) => ({
+        user_id: user.id,
+        document_type: type === 'panCard' ? 'passport' : 
+                     type === 'aadhaarFront' ? 'id_card' :
+                     type === 'aadhaarBack' ? 'id_card' :
+                     type === 'addressProof' ? 'proof_of_address' :
+                     type === 'selfie' ? 'other' : 'other',
+        file_url: url,
+        file_name: type,
+        verification_status: 'pending'
+      }));
+
+      const { error: docError } = await supabase
+        .from('kyc_documents')
+        .insert(documentEntries);
+
+      if (docError) throw docError;
+
+      // Create metadata document for bank details
+      const bankDetailsDoc = {
+        user_id: user.id,
+        document_type: 'bank_statement',
+        file_url: '', // No file, just metadata
+        file_name: 'bank_details',
+        verification_status: 'pending',
+        metadata: {
+          account_number: bankDetails.accountNumber,
+          ifsc_code: bankDetails.ifscCode,
+          bank_name: bankDetails.bankName,
+          account_type: bankDetails.accountType
+        }
+      };
+
+      const { error: bankError } = await supabase
+        .from('kyc_documents')
+        .insert([bankDetailsDoc]);
+
+      if (bankError) throw bankError;
+
+      await refreshProfile();
+
+      addNotification({
+        name: "KYC Submitted Successfully",
+        description: "Your documents are under review. We'll notify you once approved.",
+        icon: "CHECK_CIRCLE",
+        color: "#059669",
+        isLogo: true
+      });
+
+      // Redirect to appropriate dashboard
+      setTimeout(() => {
+        if (profile?.tier === 'waitlist_player') {
+          navigate('/waitlist-dashboard');
+        } else {
+          navigate('/dashboard');
+        }
+      }, 2000);
+
+    } catch (error) {
+      console.error('KYC submission error:', error);
+      addNotification({
+        name: "Submission Failed",
+        description: "Failed to submit KYC. Please try again.",
+        icon: "ALERT_TRIANGLE",
+        color: "#DC2626",
+        isLogo: true
+      });
+    } finally {
+      setLoading(false);
     }
   };
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name *</Label>
+                <Input
+                  id="fullName"
+                  value={personalInfo.fullName}
+                  onChange={(e) => setPersonalInfo(prev => ({ ...prev, fullName: e.target.value }))}
+                  placeholder="Enter your full name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                <Input
+                  id="dateOfBirth"
+                  type="date"
+                  value={personalInfo.dateOfBirth}
+                  onChange={(e) => setPersonalInfo(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="address">Address *</Label>
+              <Textarea
+                id="address"
+                value={personalInfo.address}
+                onChange={(e) => setPersonalInfo(prev => ({ ...prev, address: e.target.value }))}
+                placeholder="Enter your complete address"
+                rows={3}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="city">City *</Label>
+                <Input
+                  id="city"
+                  value={personalInfo.city}
+                  onChange={(e) => setPersonalInfo(prev => ({ ...prev, city: e.target.value }))}
+                  placeholder="City"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="state">State *</Label>
+                <Input
+                  id="state"
+                  value={personalInfo.state}
+                  onChange={(e) => setPersonalInfo(prev => ({ ...prev, state: e.target.value }))}
+                  placeholder="State"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="postalCode">Postal Code *</Label>
+                <Input
+                  id="postalCode"
+                  value={personalInfo.postalCode}
+                  onChange={(e) => setPersonalInfo(prev => ({ ...prev, postalCode: e.target.value }))}
+                  placeholder="Postal Code"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number *</Label>
+                <Input
+                  id="phone"
+                  value={personalInfo.phone}
+                  onChange={(e) => setPersonalInfo(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="Enter your phone number"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="country">Country *</Label>
+                <Select value={personalInfo.country} onValueChange={(value) => setPersonalInfo(prev => ({ ...prev, country: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="India">India</SelectItem>
+                    <SelectItem value="USA">USA</SelectItem>
+                    <SelectItem value="UK">UK</SelectItem>
+                    <SelectItem value="Canada">Canada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        );
+      
+      case 2:
+        return (
+          <div className="space-y-6">
+            {[
+              { key: 'panCard', label: 'PAN Card', required: true },
+              { key: 'aadhaarFront', label: 'Aadhaar Card (Front)', required: true },
+              { key: 'aadhaarBack', label: 'Aadhaar Card (Back)', required: true },
+              { key: 'addressProof', label: 'Address Proof (Optional)', required: false }
+            ].map(({ key, label, required }) => (
+              <div key={key} className="space-y-2">
+                <Label>{label} {required && '*'}</Label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setDocuments(prev => ({ ...prev, [key]: file }));
+                      }
+                    }}
+                    className="hidden"
+                    id={`file-${key}`}
+                  />
+                  <label htmlFor={`file-${key}`} className="cursor-pointer">
+                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">
+                      {documents[key as keyof Documents]?.name || 'Click to upload or drag and drop'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">PNG, JPG or PDF (max 5MB)</p>
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      
+      case 3:
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="bankName">Bank Name *</Label>
+              <Input
+                id="bankName"
+                value={bankDetails.bankName}
+                onChange={(e) => setBankDetails(prev => ({ ...prev, bankName: e.target.value }))}
+                placeholder="Enter your bank name"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="accountNumber">Account Number *</Label>
+              <Input
+                id="accountNumber"
+                value={bankDetails.accountNumber}
+                onChange={(e) => setBankDetails(prev => ({ ...prev, accountNumber: e.target.value }))}
+                placeholder="Enter your account number"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="confirmAccountNumber">Confirm Account Number *</Label>
+              <Input
+                id="confirmAccountNumber"
+                value={bankDetails.confirmAccountNumber}
+                onChange={(e) => setBankDetails(prev => ({ ...prev, confirmAccountNumber: e.target.value }))}
+                placeholder="Re-enter your account number"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="ifscCode">IFSC Code *</Label>
+                <Input
+                  id="ifscCode"
+                  value={bankDetails.ifscCode}
+                  onChange={(e) => setBankDetails(prev => ({ ...prev, ifscCode: e.target.value.toUpperCase() }))}
+                  placeholder="Enter IFSC code"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Account Type *</Label>
+                <Select value={bankDetails.accountType} onValueChange={(value) => setBankDetails(prev => ({ ...prev, accountType: value as 'savings' | 'current' }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="savings">Savings</SelectItem>
+                    <SelectItem value="current">Current</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        );
+      
+      case 4:
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <Camera className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Upload Your Selfie</h3>
+              <p className="text-gray-600 mb-6">Please upload a clear selfie for identity verification</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Selfie Photo *</Label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setSelfieFile(file);
+                  }}
+                  className="hidden"
+                  id="selfie-upload"
+                />
+                <label htmlFor="selfie-upload" className="cursor-pointer">
+                  <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-600">
+                    {selfieFile?.name || 'Click to upload your selfie'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">PNG or JPG (max 5MB)</p>
+                </label>
+              </div>
+            </div>
+          </div>
+        );
+      
+      case 5:
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Review Your Information</h3>
+              <p className="text-gray-600">Please review all information before submitting</p>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold mb-2">Personal Information</h4>
+                <p className="text-sm text-gray-600">Name: {personalInfo.fullName}</p>
+                <p className="text-sm text-gray-600">Phone: {personalInfo.phone}</p>
+                <p className="text-sm text-gray-600">Address: {personalInfo.address}, {personalInfo.city}</p>
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold mb-2">Documents</h4>
+                <p className="text-sm text-gray-600">PAN Card: {documents.panCard ? '✓ Uploaded' : '✗ Missing'}</p>
+                <p className="text-sm text-gray-600">Aadhaar Front: {documents.aadhaarFront ? '✓ Uploaded' : '✗ Missing'}</p>
+                <p className="text-sm text-gray-600">Aadhaar Back: {documents.aadhaarBack ? '✓ Uploaded' : '✗ Missing'}</p>
+                <p className="text-sm text-gray-600">Selfie: {selfieFile ? '✓ Uploaded' : '✗ Missing'}</p>
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold mb-2">Bank Details</h4>
+                <p className="text-sm text-gray-600">Bank: {bankDetails.bankName}</p>
+                <p className="text-sm text-gray-600">Account: ****{bankDetails.accountNumber.slice(-4)}</p>
+                <p className="text-sm text-gray-600">IFSC: {bankDetails.ifscCode}</p>
+              </div>
+            </div>
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-foreground">EquityLeap</span>
+          </div>
+          
           <div className="flex items-center space-x-4">
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/admin')}
+                className="border-orange-200 text-orange-700 hover:bg-orange-50"
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Admin Panel
+              </Button>
+            )}
             <Button 
               variant="ghost" 
-              onClick={() => navigate('/dashboard')}
+              size="sm"
+              onClick={() => navigate('/welcome')}
               className="text-muted-foreground hover:text-foreground"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
+              <Home className="w-4 h-4 mr-2" />
+              Home
             </Button>
-          </div>
-          <div className="flex items-center space-x-3">
-            <FileCheck className="w-6 h-6 text-primary" />
-            <span className="text-xl font-semibold">KYC Verification</span>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={signOut}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Progress Indicator */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-            <span>Profile Information</span>
-            <span>Document Upload</span>
-            <span>Verification</span>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold mb-2">KYC Verification</h1>
+            <p className="text-muted-foreground">Complete your Know Your Customer verification to start investing</p>
           </div>
-          <div className="flex items-center">
-            <div className="flex-1 h-2 bg-primary rounded-l-full" />
-            <div className={`flex-1 h-2 ${documents.length > 0 ? 'bg-primary' : 'bg-muted'}`} />
-            <div className={`flex-1 h-2 ${profile?.kyc_status === 'approved' ? 'bg-success' : 'bg-muted'} rounded-r-full`} />
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Profile Information */}
-          <Card className="investment-card">
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              {steps.map((step, index) => (
+                <div key={step.id} className="flex items-center">
+                  <div
+                    className={`
+                      flex items-center justify-center w-10 h-10 rounded-full border-2 
+                      ${currentStep >= step.id 
+                        ? 'bg-primary border-primary text-primary-foreground' 
+                        : 'border-gray-300 text-gray-500'
+                      }
+                    `}
+                  >
+                    {(() => {
+                      const IconComponent = step.icon;
+                      return <IconComponent className="w-5 h-5" />;
+                    })()}
+                  </div>
+                  {index < steps.length - 1 && (
+                    <div className={`flex-1 h-0.5 mx-4 ${currentStep > step.id ? 'bg-primary' : 'bg-gray-300'}`} />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-foreground">{steps[currentStep - 1].title}</p>
+              <p className="text-xs text-muted-foreground">{steps[currentStep - 1].description}</p>
+            </div>
+          </div>
+
+          {/* Main Card */}
+          <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
+              <CardTitle className="flex items-center">
+                {(() => {
+                  const IconComponent = steps[currentStep - 1].icon;
+                  return <IconComponent className="w-5 h-5 mr-2" />;
+                })()}
+                Step {currentStep} of 5: {steps[currentStep - 1].title}
+              </CardTitle>
               <CardDescription>
-                Please provide accurate information for verification
+                {steps[currentStep - 1].description}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleProfileUpdate} className="space-y-4">
-                <div>
-                  <Label htmlFor="full_name">Full Name</Label>
-                  <Input
-                    id="full_name"
-                    value={profileData.full_name}
-                    onChange={(e) => setProfileData({...profileData, full_name: e.target.value})}
-                    placeholder="Enter your full legal name"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={profileData.phone}
-                    onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                    placeholder="+1234567890"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="date_of_birth">Date of Birth</Label>
-                  <Input
-                    id="date_of_birth"
-                    type="date"
-                    value={profileData.date_of_birth}
-                    onChange={(e) => setProfileData({...profileData, date_of_birth: e.target.value})}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    value={profileData.address}
-                    onChange={(e) => setProfileData({...profileData, address: e.target.value})}
-                    placeholder="Enter your full address"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="country">Country</Label>
-                  <Input
-                    id="country"
-                    value={profileData.country}
-                    onChange={(e) => setProfileData({...profileData, country: e.target.value})}
-                    placeholder="Enter your country"
-                    required
-                  />
-                </div>
-                
-                <Button type="submit" disabled={loading} className="w-full">
-                  {loading ? 'Updating...' : 'Update Profile'}
-                </Button>
-              </form>
+              {renderStepContent()}
             </CardContent>
           </Card>
 
-          {/* Document Upload */}
-          <div className="space-y-6">
-            <Card className="investment-card">
-              <CardHeader>
-                <CardTitle>Upload Documents</CardTitle>
-                <CardDescription>
-                  Upload required identity and address verification documents
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleFileUpload} className="space-y-4">
-                  <div>
-                    <Label>Document Type</Label>
-                    <Select value={selectedDocType} onValueChange={setSelectedDocType}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select document type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {documentTypes.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="document">Select File</Label>
-                    <Input
-                      id="document"
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={(e) => setFile(e.target.files?.[0] || null)}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Accepted formats: PDF, JPG, PNG (Max 10MB)
-                    </p>
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    disabled={loading || !file || !selectedDocType}
-                    className="w-full"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    {loading ? 'Uploading...' : 'Upload Document'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+          {/* Navigation Buttons */}
+          <div className="flex justify-between">
+            <Button
+              variant="outline"
+              onClick={prevStep}
+              disabled={currentStep === 1}
+              className="flex items-center"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Previous
+            </Button>
 
-            {/* Uploaded Documents */}
-            <Card className="investment-card">
-              <CardHeader>
-                <CardTitle>Uploaded Documents</CardTitle>
-                <CardDescription>
-                  Track the status of your submitted documents
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {documents.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">
-                    No documents uploaded yet
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {documents.map((doc) => (
-                      <div key={doc.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          {getStatusIcon(doc.verification_status)}
-                          <div>
-                            <p className="font-medium text-sm">
-                              {documentTypes.find(t => t.value === doc.document_type)?.label}
-                            </p>
-                            <p className="text-xs text-muted-foreground">{doc.file_name}</p>
-                          </div>
-                        </div>
-                        <span className={`text-sm font-medium ${getStatusColor(doc.verification_status)}`}>
-                          {doc.verification_status.replace('_', ' ')}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {currentStep < 5 ? (
+              <Button
+                onClick={nextStep}
+                className="flex items-center"
+              >
+                Next
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
+            ) : (
+              <Button
+                onClick={submitKYC}
+                disabled={loading}
+                className="flex items-center bg-green-600 hover:bg-green-700"
+              >
+                {loading ? 'Submitting...' : 'Submit KYC'}
+                <CheckCircle2 className="w-4 h-4 ml-2" />
+              </Button>
+            )}
           </div>
         </div>
-
-        {/* Status Message */}
-        {profile?.kyc_status && (
-          <Card className={`mt-8 ${
-            profile.kyc_status === 'approved' ? 'border-success/20 bg-success/5' :
-            profile.kyc_status === 'under_review' ? 'border-warning/20 bg-warning/5' :
-            profile.kyc_status === 'rejected' ? 'border-destructive/20 bg-destructive/5' :
-            'border-border'
-          }`}>
-            <CardContent className="pt-6">
-              <div className="flex items-center space-x-3">
-                {getStatusIcon(profile.kyc_status)}
-                <div>
-                  <h3 className={`font-semibold ${getStatusColor(profile.kyc_status)}`}>
-                    KYC Status: {profile.kyc_status.replace('_', ' ').toUpperCase()}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {profile.kyc_status === 'approved' && 'Your account is fully verified. You can now access all platform features.'}
-                    {profile.kyc_status === 'under_review' && 'Your documents are being reviewed. This typically takes 1-3 business days.'}
-                    {profile.kyc_status === 'rejected' && 'Some documents were rejected. Please upload new documents or contact support.'}
-                    {profile.kyc_status === 'pending' && 'Please complete your profile and upload required documents to begin verification.'}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );

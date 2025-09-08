@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/hooks/use-notifications';
 
@@ -8,10 +8,19 @@ interface UserProfile {
   user_id: string;
   email: string;
   full_name?: string;
-  tier: 'explorer' | 'waitlist_player' | 'small_investor' | 'large_investor';
+  tier: 'explorer' | 'waitlist_player' | 'investor';
   kyc_status: 'pending' | 'under_review' | 'approved' | 'rejected';
   trial_expires_at: string;
   subscription_active: boolean;
+  is_admin?: boolean;
+}
+
+interface NotificationItem {
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  isLogo?: boolean;
 }
 
 interface AuthContextType {
@@ -19,11 +28,11 @@ interface AuthContextType {
   session: Session | null;
   profile: UserProfile | null;
   loading: boolean;
-  notifications: any[];
-  addNotification: (notification: any) => void;
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signInWithGoogle: () => Promise<{ error: any }>;
+  notifications: Array<NotificationItem & { id: string; time: string }>;
+  addNotification: (notification: NotificationItem) => void;
+  signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signInWithGoogle: () => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -39,9 +48,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastNotifiedUser, setLastNotifiedUser] = useState<string | null>(null);
+  const [hasShownWelcomeThisSession, setHasShownWelcomeThisSession] = useState<boolean>(false);
   const { notifications, addNotification } = useNotifications();
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
@@ -54,13 +65,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
-  };
+  }, []);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (user) {
       await fetchUserProfile(user.id);
     }
-  };
+  }, [user, fetchUserProfile]);
 
   useEffect(() => {
     // Get initial session
@@ -69,6 +80,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchUserProfile(session.user.id);
+        // Check if we've already shown welcome notification for this session
+        const sessionKey = `welcome_shown_${session.user.id}`;
+        const hasShownThisSession = sessionStorage.getItem(sessionKey);
+        if (hasShownThisSession) {
+          setHasShownWelcomeThisSession(true);
+        }
       }
       setLoading(false);
     });
@@ -79,13 +96,76 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
-          // Use setTimeout to prevent recursive issues
+        // Handle different auth events with notifications
+        if (event === 'SIGNED_IN' && session?.user) {
+          // User signed in successfully (including email verification and OAuth)
           setTimeout(() => {
             fetchUserProfile(session.user.id);
           }, 0);
-        } else {
+          
+          // Check if we've already shown welcome notification for this session
+          const sessionKey = `welcome_shown_${session.user.id}`;
+          const hasShownThisSession = sessionStorage.getItem(sessionKey);
+          
+          // Only show notification if we haven't shown it in this browser session
+          if (!hasShownThisSession && !hasShownWelcomeThisSession) {
+            setHasShownWelcomeThisSession(true);
+            sessionStorage.setItem(sessionKey, 'true');
+            
+            // Check if this is a new user (Google sign-up)
+            const isNewUser = session.user.created_at && 
+              new Date(session.user.created_at).getTime() > (Date.now() - 10000); // Within last 10 seconds
+            
+            // Check if this is Google OAuth (has provider metadata)
+            const isGoogleAuth = session.user.app_metadata?.provider === 'google';
+            
+            if (isGoogleAuth && isNewUser) {
+              // Google Sign-Up (new account)
+              addNotification({
+                name: "Welcome to EquityLeap! 🎉",
+                description: "Your Google account has been connected successfully",
+                icon: "GOOGLE",
+                color: "#4285F4",
+                isLogo: true
+              });
+            } else if (isGoogleAuth && !isNewUser) {
+              // Google Sign-In (existing account)
+              addNotification({
+                name: "Welcome Back! 👋",
+                description: "Successfully signed in with Google",
+                icon: "GOOGLE",
+                color: "#4285F4",
+                isLogo: true
+              });
+            } else if (session.user.email_confirmed_at && !user) {
+              // Email verification
+              addNotification({
+                name: "Email Verified! ✅",
+                description: "Your account is now verified and ready to use",
+                icon: "CHECK_CIRCLE",
+                color: "#059669",
+                isLogo: true
+              });
+            }
+          }
+        } else if (event === 'SIGNED_OUT') {
           setProfile(null);
+          setHasShownWelcomeThisSession(false);
+          // Clear welcome notification flags from sessionStorage
+          Object.keys(sessionStorage).forEach(key => {
+            if (key.startsWith('welcome_shown_')) {
+              sessionStorage.removeItem(key);
+            }
+          });
+        } else if (event === 'TOKEN_REFRESHED') {
+          // Token was refreshed successfully (silent)
+        } else if (event === 'USER_UPDATED') {
+          // User data was updated
+          if (session?.user) {
+            setTimeout(() => {
+              fetchUserProfile(session.user.id);
+            }, 0);
+          }
         }
         
         setLoading(false);
@@ -93,10 +173,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     );
 
     return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+
   const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${window.location.origin}/welcome`;
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -107,18 +189,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
 
     if (error) {
+      // Handle different signup error types with specific messages
+      let errorMessage = error.message;
+      let icon = "🚫";
+      
+      if (error.message.includes("already registered")) {
+        errorMessage = "This email is already registered. Try signing in instead.";
+        icon = "📧";
+      } else if (error.message.includes("invalid email")) {
+        errorMessage = "Please enter a valid email address";
+        icon = "📝";
+      } else if (error.message.includes("password")) {
+        errorMessage = "Password must be at least 6 characters long";
+        icon = "🔒";
+      }
+      
       addNotification({
         name: "Registration Failed",
-        description: error.message,
-        icon: "❌",
-        color: "#FF3D71"
+        description: errorMessage,
+        icon: "ALERT_TRIANGLE",
+        color: "#DC2626",
+        isLogo: true
       });
     } else {
       addNotification({
-        name: "Registration Successful",
-        description: "Please check your email to verify your account",
-        icon: "✅",
-        color: "#00C9A7"
+        name: "Welcome to EquityLeap! 🎉",
+        description: "Check your email to verify your account and get started",
+        icon: "CHECK_CIRCLE",
+        color: "#059669",
+        isLogo: true
       });
     }
 
@@ -132,42 +231,83 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
 
     if (error) {
+      // Handle different signin error types with specific messages
+      let errorMessage = error.message;
+      let icon = "🚫";
+      
+      if (error.message.includes("Invalid login credentials")) {
+        errorMessage = "Invalid email or password. Please check and try again.";
+        icon = "🔐";
+      } else if (error.message.includes("Email not confirmed")) {
+        errorMessage = "Please check your email and verify your account first";
+        icon = "📬";
+      } else if (error.message.includes("too many requests")) {
+        errorMessage = "Too many login attempts. Please wait a moment and try again.";
+        icon = "⏳";
+      } else if (error.message.includes("invalid email")) {
+        errorMessage = "Please enter a valid email address";
+        icon = "📝";
+      }
+      
       addNotification({
-        name: "Login Failed",
-        description: error.message,
-        icon: "🔒",
-        color: "#FF3D71"
+        name: "Sign In Failed",
+        description: errorMessage,
+        icon: "ALERT_TRIANGLE",
+        color: "#DC2626",
+        isLogo: true
       });
     } else {
-      addNotification({
-        name: "Welcome Back!",
-        description: "Successfully signed in",
-        icon: "🎉",
-        color: "#00C9A7"
-      });
+      // Don't show immediate notification - let onAuthStateChange handle it
+      // This prevents duplicate notifications
     }
 
     return { error };
   };
 
   const signInWithGoogle = async () => {
+    // Show loading notification for Google OAuth
+    addNotification({
+      name: "Connecting to Google...",
+      description: "Opening Google authentication window",
+      icon: "GOOGLE",
+      color: "#4285F4",
+      isLogo: true
+    });
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/`
+        redirectTo: `${window.location.origin}/welcome`
       }
     });
 
     if (error) {
+      let errorMessage = error.message;
+      let icon = "🚫";
+      
+      if (error.message.includes('provider is not enabled')) {
+        errorMessage = "Google sign-in is temporarily unavailable. Please use email/password.";
+        icon = "GOOGLE";
+      } else if (error.message.includes('popup')) {
+        errorMessage = "Google sign-in popup was blocked. Please allow popups and try again.";
+        icon = "GOOGLE";
+      } else if (error.message.includes('network')) {
+        errorMessage = "Network error. Please check your connection and try again.";
+        icon = "GOOGLE";
+      } else if (error.message.includes('cancelled')) {
+        errorMessage = "Google sign-in was cancelled. Please try again if you want to continue.";
+        icon = "GOOGLE";
+      }
+      
       addNotification({
-        name: "Google Sign-in Failed",
-        description: error.message.includes('provider is not enabled') 
-          ? "Google sign-in is not configured yet" 
-          : error.message,
-        icon: "❌",
-        color: "#FF3D71"
+        name: "Google Authentication Failed",
+        description: errorMessage,
+        icon: icon === "GOOGLE" ? "GOOGLE" : "ALERT_TRIANGLE",
+        color: "#DC2626",
+        isLogo: true
       });
     }
+    // Success case handled by onAuthStateChange listener
 
     return { error };
   };
@@ -177,18 +317,34 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (error) {
       addNotification({
         name: "Sign Out Failed",
-        description: error.message,
-        icon: "❌",
-        color: "#FF3D71"
+        description: "There was an issue signing you out. Please try again.",
+        icon: "ALERT_TRIANGLE",
+        color: "#DC2626",
+        isLogo: true
       });
     } else {
       addNotification({
-        name: "Signed Out",
-        description: "Successfully signed out",
-        icon: "👋",
-        color: "#FFB800"
+        name: "See You Soon! 👋",
+        description: "Successfully signed out. Thanks for using EquityLeap!",
+        icon: "CHECK_CIRCLE",
+        color: "#D97706",
+        isLogo: true
       });
       setProfile(null);
+      setHasShownWelcomeThisSession(false);
+      
+      // Clear welcome notification flags from sessionStorage
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('welcome_shown_')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+      
+      // Delay redirect to allow notification to show
+      setTimeout(() => {
+        // Use window.location for sign out to ensure a clean state
+        window.location.href = '/';
+      }, 2000);
     }
   };
 

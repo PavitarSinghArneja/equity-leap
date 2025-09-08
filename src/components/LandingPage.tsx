@@ -1,12 +1,32 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, TrendingUp, Shield, Users, BarChart3, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 import heroImage from "@/assets/hero-image.jpg";
 
 const LandingPage = () => {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect authenticated users to appropriate page
+    if (!loading && user && profile) {
+      // Check if trial has expired
+      if (!profile.subscription_active) {
+        const trialExpires = new Date(profile.trial_expires_at);
+        const now = new Date();
+        
+        if (now > trialExpires) {
+          navigate('/trial-expired');
+          return;
+        }
+      }
+      
+      navigate('/welcome');
+    }
+  }, [user, profile, loading, navigate]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -19,31 +39,38 @@ const LandingPage = () => {
             </div>
             <span className="text-2xl font-bold text-foreground">EquityLeap</span>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {user && profile ? (
               <>
-                <span className="text-foreground font-medium">
+                <span className="hidden sm:inline text-foreground font-medium">
                   Welcome, {profile.full_name || user.email?.split('@')[0] || 'User'}
                 </span>
-                <Link to="/dashboard">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Dashboard</Button>
+                <Link to="/welcome">
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm sm:text-base px-3 sm:px-4">
+                    Dashboard
+                  </Button>
                 </Link>
                 <Button 
                   variant="outline" 
                   onClick={signOut}
-                  className="flex items-center space-x-2"
+                  className="flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base px-3 sm:px-4"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
+                  <span className="hidden sm:inline">Sign Out</span>
                 </Button>
               </>
             ) : (
               <>
                 <Link to="/auth">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Sign In</Button>
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm sm:text-base px-3 sm:px-4">
+                    Sign In
+                  </Button>
                 </Link>
                 <Link to="/auth">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Get Started</Button>
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm sm:text-base px-3 sm:px-4">
+                    <span className="hidden sm:inline">Get Started</span>
+                    <span className="sm:hidden">Start</span>
+                  </Button>
                 </Link>
               </>
             )}
@@ -57,7 +84,7 @@ const LandingPage = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{ 
-            backgroundImage: `url('https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop')` 
+            backgroundImage: `url('/village-aerial.jpg')` 
           }}
         />
         {/* Dark overlay for better text readability */}
@@ -69,7 +96,7 @@ const LandingPage = () => {
             <span className="block text-primary">Investment</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-200 mb-8 max-w-3xl mx-auto leading-relaxed">
-            Invest in premium real estate with as little as $100. 
+            Invest in premium real estate with as little as ₹8,300. 
             Professional management, transparent returns, and seamless trading.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -127,7 +154,7 @@ const LandingPage = () => {
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-center">
-                  Start with just $100 and build your real estate portfolio gradually
+                  Start with just ₹8,300 and build your real estate portfolio gradually
                 </CardDescription>
               </CardContent>
             </Card>
@@ -159,7 +186,7 @@ const LandingPage = () => {
           
           <div className="grid md:grid-cols-3 gap-12 max-w-5xl mx-auto">
             <div className="text-center">
-              <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6">
+              <div className="w-20 h-20 bg-primary rounded-xl flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6">
                 1
               </div>
               <h3 className="text-2xl font-semibold mb-4">Sign Up & Verify</h3>
@@ -169,7 +196,7 @@ const LandingPage = () => {
             </div>
             
             <div className="text-center">
-              <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6">
+              <div className="w-20 h-20 bg-primary rounded-xl flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6">
                 2
               </div>
               <h3 className="text-2xl font-semibold mb-4">Browse Properties</h3>
@@ -179,7 +206,7 @@ const LandingPage = () => {
             </div>
             
             <div className="text-center">
-              <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6">
+              <div className="w-20 h-20 bg-primary rounded-xl flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6">
                 3
               </div>
               <h3 className="text-2xl font-semibold mb-4">Invest & Earn</h3>

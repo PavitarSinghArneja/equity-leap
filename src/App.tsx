@@ -3,34 +3,90 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { DevProvider } from "@/contexts/DevContext";
+import { AnimatedNotifications } from "@/components/ui/notification";
 import LandingPage from "@/components/LandingPage";
 import Auth from "@/pages/Auth";
+import Welcome from "@/pages/Welcome";
 import Dashboard from "@/pages/Dashboard";
+import WaitlistDashboard from "@/pages/WaitlistDashboard";
+import TrialExpired from "@/pages/TrialExpired";
 import KYC from "@/pages/KYC";
 import Properties from "@/pages/Properties";
+import Investment from "@/pages/Investment";
+import AdminRoute from "@/components/AdminRoute";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminKYC from "@/pages/admin/AdminKYC";
+import AdminProperties from "@/pages/admin/AdminProperties";
+import AdminSupport from "@/pages/admin/AdminSupport";
+import AdminInvestments from "@/pages/admin/AdminInvestments";
+import AdminAddProperty from "@/pages/admin/AdminAddProperty";
+import AdminShareTrading from "@/pages/admin/AdminShareTrading";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const AppContent = () => {
+  const { notifications } = useAuth();
+  
+  return (
+    <>
+      <Toaster />
+      <Sonner />
+      
+      {/* Global Notifications */}
+      <div className="fixed top-4 right-4 z-50 max-w-sm">
+        <AnimatedNotifications 
+          notifications={notifications} 
+          className="h-auto max-h-[80vh] overflow-hidden"
+        />
+      </div>
+      
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}
+      >
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/welcome" element={<Welcome />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/waitlist-dashboard" element={<WaitlistDashboard />} />
+          <Route path="/trial-expired" element={<TrialExpired />} />
+          <Route path="/kyc" element={<KYC />} />
+          <Route path="/properties" element={<Properties />} />
+          <Route path="/invest/:propertyId" element={<Investment />} />
+          
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+          <Route path="/admin/kyc" element={<AdminRoute><AdminKYC /></AdminRoute>} />
+          <Route path="/admin/properties" element={<AdminRoute><AdminProperties /></AdminRoute>} />
+          <Route path="/admin/properties/new" element={<AdminRoute><AdminAddProperty /></AdminRoute>} />
+          <Route path="/admin/share-trading" element={<AdminRoute><AdminShareTrading /></AdminRoute>} />
+          <Route path="/admin/support" element={<AdminRoute><AdminSupport /></AdminRoute>} />
+          <Route path="/admin/investments" element={<AdminRoute><AdminInvestments /></AdminRoute>} />
+          
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/kyc" element={<KYC />} />
-            <Route path="/properties" element={<Properties />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+      <DevProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </DevProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

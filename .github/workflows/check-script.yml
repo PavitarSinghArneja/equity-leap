@@ -1,0 +1,33 @@
+name: Check Deploy Script Exists
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check if deploy script exists
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          echo "=== CHECKING DEPLOY SCRIPT ==="
+          
+          # Check if script exists
+          if [ -f "/root/deploy-equity-leap.sh" ]; then
+            echo "✅ Script exists at /root/deploy-equity-leap.sh"
+            echo "File permissions:"
+            ls -la /root/deploy-equity-leap.sh
+            echo ""
+            echo "First 10 lines of script:"
+            head -10 /root/deploy-equity-leap.sh
+          else
+            echo "❌ Script does NOT exist at /root/deploy-equity-leap.sh"
+            echo "Contents of /root directory:"
+            ls -la /root/
+          fi
+          
+          echo "=== CHECK COMPLETED ==="

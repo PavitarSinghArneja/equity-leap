@@ -1,0 +1,52 @@
+name: Check Server Compose Setup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check Docker Compose Setup
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          echo "=== DOCKER COMPOSE CHECK ==="
+          
+          # Find docker-compose files
+          echo "1. Looking for docker-compose files:"
+          find ~ -name "docker-compose*.yml" -o -name "docker-compose*.yaml" 2>/dev/null | head -20
+          
+          # Check if there's a compose file in parent directory
+          echo ""
+          echo "2. Checking parent directory of equity-leap:"
+          cd ~/equity-leap/..
+          pwd
+          ls -la | grep -E "(docker-compose|compose|yml|yaml)"
+          
+          # Check docker-compose content if exists
+          if [ -f "docker-compose.yml" ]; then
+            echo ""
+            echo "3. Docker Compose file content:"
+            cat docker-compose.yml
+          fi
+          
+          # Check if using docker compose v2
+          echo ""
+          echo "4. Docker Compose version:"
+          docker compose version 2>/dev/null || docker-compose version 2>/dev/null
+          
+          # Check current running compose projects
+          echo ""
+          echo "5. Running compose projects:"
+          sudo docker compose ls 2>/dev/null || sudo docker-compose ps 2>/dev/null || echo "No compose command"
+          
+          # Check Traefik labels on equity-leap container
+          echo ""
+          echo "6. Equity-leap container details:"
+          sudo docker inspect root-equity-leap-1 2>/dev/null | grep -A 5 -B 5 "traefik" | head -30
+          
+          echo "=== END CHECK ==="

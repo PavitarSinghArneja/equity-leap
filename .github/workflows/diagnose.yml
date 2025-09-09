@@ -1,0 +1,81 @@
+name: Diagnose Deployment Issues
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Diagnose Server Environment
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          echo "=== DIAGNOSTIC REPORT ==="
+          echo ""
+          echo "1. USER & LOCATION:"
+          echo "User: $(whoami)"
+          echo "Home: $HOME"
+          echo "Current directory: $(pwd)"
+          echo ""
+          
+          echo "2. CHECK DOCKER:"
+          if command -v docker >/dev/null 2>&1; then
+            echo "Docker is installed"
+            docker --version
+            echo "Docker service status:"
+            sudo systemctl status docker | head -5 || echo "Cannot check service"
+            echo "Docker permissions:"
+            groups | grep docker || echo "User not in docker group"
+          else
+            echo "Docker is NOT installed"
+          fi
+          echo ""
+          
+          echo "3. CHECK GIT:"
+          if command -v git >/dev/null 2>&1; then
+            echo "Git is installed"
+            git --version
+          else
+            echo "Git is NOT installed"
+          fi
+          echo ""
+          
+          echo "4. CHECK PROJECT:"
+          if [ -d "equity-leap" ]; then
+            echo "Project directory exists at: $(pwd)/equity-leap"
+            cd equity-leap
+            echo "Git status:"
+            git status | head -3 || echo "Not a git repository"
+            echo "Files in project:"
+            ls -la | head -10
+            echo "Dockerfile exists: $([ -f Dockerfile ] && echo YES || echo NO)"
+            echo "DockerFile exists: $([ -f DockerFile ] && echo YES || echo NO)"
+          else
+            echo "Project directory does NOT exist"
+            echo "Contents of current directory:"
+            ls -la
+          fi
+          echo ""
+          
+          echo "5. CHECK RUNNING CONTAINERS:"
+          sudo docker ps -a 2>/dev/null || docker ps -a 2>/dev/null || echo "Cannot list containers"
+          echo ""
+          
+          echo "6. CHECK PORTS:"
+          echo "Port 80 usage:"
+          sudo netstat -tlnp | grep :80 || sudo lsof -i :80 || echo "Port 80 appears free"
+          echo ""
+          
+          echo "7. TEST DOCKER BUILD:"
+          if [ -d "equity-leap" ]; then
+            cd equity-leap
+            echo "Attempting Docker build..."
+            sudo docker build -t test-build . 2>&1 | head -20 || echo "Build failed"
+          fi
+          echo ""
+          
+          echo "=== END DIAGNOSTIC ==="

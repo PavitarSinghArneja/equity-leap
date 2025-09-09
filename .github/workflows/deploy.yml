@@ -40,46 +40,44 @@ jobs:
           set -e
           echo "=== STARTING DEPLOYMENT ==="
           
-          # Install Docker if not present
-          if ! command -v docker >/dev/null 2>&1; then
-            echo "Installing Docker..."
-            curl -fsSL https://get.docker.com | sudo sh
-            sudo usermod -aG docker $USER
-          fi
-          
-          # Start Docker service
-          sudo systemctl start docker 2>/dev/null || true
-          
-          # Clone or update repository
-          if [ ! -d "equity-leap" ]; then
-            echo "Cloning repository..."
-            git clone https://github.com/PavitarSinghArneja/equity-leap.git
-          else
-            echo "Updating repository..."
-            cd equity-leap
-            git pull origin main
-            cd ..
-          fi
-          
+          # Navigate to project directory
           cd equity-leap
           
-          # Stop existing container
+          # Pull latest changes
+          echo "Pulling latest changes..."
+          git pull origin main
+          
+          # Find the compose project name
+          COMPOSE_PROJECT=$(basename $(dirname $(pwd)))
+          echo "Compose project name: $COMPOSE_PROJECT"
+          
+          # Stop existing equity-leap containers
           echo "Stopping existing containers..."
-          sudo docker stop equityleap-container 2>/dev/null || true
-          sudo docker rm equityleap-container 2>/dev/null || true
+          sudo docker stop ${COMPOSE_PROJECT}-equity-leap-1 2>/dev/null || true
+          sudo docker stop equity-leap-container 2>/dev/null || true
+          sudo docker rm ${COMPOSE_PROJECT}-equity-leap-1 2>/dev/null || true
+          sudo docker rm equity-leap-container 2>/dev/null || true
           
-          # Build and run
+          # Build new image
           echo "Building Docker image..."
-          sudo docker build -t equityleap-app .
+          sudo docker build -t equity-leap-app .
           
+          # Run container on port 3000 (internal) since Traefik handles port 80
           echo "Starting container..."
-          sudo docker run -d --name equityleap-container -p 80:80 --restart unless-stopped equityleap-app
+          sudo docker run -d \
+            --name ${COMPOSE_PROJECT}-equity-leap-1 \
+            --network ${COMPOSE_PROJECT}_default \
+            -p 3000:80 \
+            --restart unless-stopped \
+            equity-leap-app
           
-          # Check if container started
-          if sudo docker ps | grep equityleap-container; then
+          # Verify container is running
+          if sudo docker ps | grep equity-leap; then
             echo "=== DEPLOYMENT SUCCESS ==="
+            echo "Container is running on port 3000"
+            echo "Traefik will route traffic from port 80 to the container"
           else
-            echo "=== DEPLOYMENT FAILED - Container not running ==="
-            sudo docker logs equityleap-container
+            echo "=== DEPLOYMENT FAILED ==="
+            sudo docker logs ${COMPOSE_PROJECT}-equity-leap-1
             exit 1
           fi

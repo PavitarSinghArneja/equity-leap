@@ -37,47 +37,9 @@ jobs:
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_KEY }}
         script: |
-          set -e
           echo "=== STARTING DEPLOYMENT ==="
           
-          # Navigate to project directory
-          cd equity-leap
+          # Run the deployment script created by Claude Code on the server
+          /root/deploy-equity-leap.sh
           
-          # Pull latest changes
-          echo "Pulling latest changes..."
-          git pull origin main
-          
-          # Find the compose project name
-          COMPOSE_PROJECT=$(basename $(dirname $(pwd)))
-          echo "Compose project name: $COMPOSE_PROJECT"
-          
-          # Stop existing equity-leap containers
-          echo "Stopping existing containers..."
-          sudo docker stop ${COMPOSE_PROJECT}-equity-leap-1 2>/dev/null || true
-          sudo docker stop equity-leap-container 2>/dev/null || true
-          sudo docker rm ${COMPOSE_PROJECT}-equity-leap-1 2>/dev/null || true
-          sudo docker rm equity-leap-container 2>/dev/null || true
-          
-          # Build new image
-          echo "Building Docker image..."
-          sudo docker build -t equity-leap-app .
-          
-          # Run container on port 3000 (internal) since Traefik handles port 80
-          echo "Starting container..."
-          sudo docker run -d \
-            --name ${COMPOSE_PROJECT}-equity-leap-1 \
-            --network ${COMPOSE_PROJECT}_default \
-            -p 3000:80 \
-            --restart unless-stopped \
-            equity-leap-app
-          
-          # Verify container is running
-          if sudo docker ps | grep equity-leap; then
-            echo "=== DEPLOYMENT SUCCESS ==="
-            echo "Container is running on port 3000"
-            echo "Traefik will route traffic from port 80 to the container"
-          else
-            echo "=== DEPLOYMENT FAILED ==="
-            sudo docker logs ${COMPOSE_PROJECT}-equity-leap-1
-            exit 1
-          fi
+          echo "=== DEPLOYMENT COMPLETED ==="

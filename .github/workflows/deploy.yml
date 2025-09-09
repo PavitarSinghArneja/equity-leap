@@ -39,7 +39,17 @@ jobs:
         script: |
           echo "=== STARTING DEPLOYMENT ==="
           
-          # Run the deployment script created by Claude Code on the server
-          /root/deploy-equity-leap.sh
+          # Check if script exists
+          if [ ! -f "/root/deploy-equity-leap.sh" ]; then
+            echo "❌ Deployment script not found at /root/deploy-equity-leap.sh"
+            exit 1
+          fi
+          
+          # Make script executable
+          chmod +x /root/deploy-equity-leap.sh
+          
+          # Run the deployment script
+          echo "Running deployment script..."
+          bash /root/deploy-equity-leap.sh
           
           echo "=== DEPLOYMENT COMPLETED ==="

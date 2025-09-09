@@ -1,0 +1,32 @@
+name: Test Actual Deployment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Test deployment script execution
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          echo "=== TESTING ACTUAL DEPLOYMENT ==="
+          
+          # Check if script exists
+          if [ ! -f "/root/deploy-equity-leap.sh" ]; then
+            echo "❌ Deployment script not found"
+            exit 1
+          fi
+          
+          # Make script executable
+          chmod +x /root/deploy-equity-leap.sh
+          
+          # Run the deployment script with full output
+          echo "Running deployment script..."
+          bash -x /root/deploy-equity-leap.sh
+          
+          echo "=== DEPLOYMENT TEST COMPLETED ==="

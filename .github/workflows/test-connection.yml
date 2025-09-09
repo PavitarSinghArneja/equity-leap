@@ -1,0 +1,24 @@
+name: Test Server Connection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Test SSH Connection
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          echo "=== CONNECTION TEST ==="
+          echo "Successfully connected to server!"
+          echo "User: $(whoami)"
+          echo "Directory: $(pwd)"
+          echo "OS: $(uname -a)"
+          echo "Available space:"
+          df -h
+          echo "=== TEST COMPLETED ==="

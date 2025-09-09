@@ -1,0 +1,38 @@
+name: Test Deploy Script
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Test deployment script
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          echo "=== TESTING DEPLOYMENT SCRIPT ==="
+          
+          # Check if script exists and permissions
+          echo "1. Script file check:"
+          ls -la /root/deploy-equity-leap.sh
+          
+          # Check if script is executable
+          echo ""
+          echo "2. Script permissions:"
+          file /root/deploy-equity-leap.sh
+          
+          # Show script content
+          echo ""
+          echo "3. Script content:"
+          cat /root/deploy-equity-leap.sh
+          
+          # Try to run the script with verbose output
+          echo ""
+          echo "4. Running deployment script:"
+          bash -x /root/deploy-equity-leap.sh
+          
+          echo "=== TEST COMPLETED ==="

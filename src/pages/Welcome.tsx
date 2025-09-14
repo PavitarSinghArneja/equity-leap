@@ -18,18 +18,27 @@ import {
 } from 'lucide-react';
 
 const Welcome = () => {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const { isAdmin } = useAdmin();
 
   useEffect(() => {
-    if (!user || !profile) return;
+    // Wait for auth to finish loading
+    if (loading) return;
+
+    // Redirect unauthenticated users to auth page
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    if (!profile) return;
 
     // Check if trial has expired for unpaid users
     if (!profile.subscription_active) {
       const trialExpires = new Date(profile.trial_expires_at);
       const now = new Date();
-      
+
       if (now > trialExpires) {
         navigate('/trial-expired');
         return;
@@ -54,6 +63,23 @@ const Welcome = () => {
       navigate('/dashboard/overview');
     }
   };
+
+  // Show loading state while authentication is being checked
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render anything if user is not authenticated (will redirect)
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">

@@ -46,11 +46,8 @@ const Properties = () => {
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
 
   // Require authentication to view properties; KYC not required
-  useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    }
-  }, [user, navigate]);
+  // Removed authentication requirement for viewing properties
+  // Users can browse properties without logging in
 
   const handleDashboardClick = () => {
     // Route to different dashboards based on user tier
@@ -377,6 +374,19 @@ const Properties = () => {
                         size="sm"
                         className="w-full flex items-center gap-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                         onClick={async () => {
+                          // Check if user is authenticated first
+                          if (!user) {
+                            addNotification({
+                              name: "Sign In Required",
+                              description: "Please sign in to use watchlist",
+                              icon: "SHIELD_ALERT",
+                              color: "#DC2626",
+                              isLogo: true
+                            });
+                            navigate('/auth');
+                            return;
+                          }
+
                           const result = await toggleWatchlist(property.id);
                           if (result.success) {
                             addNotification({
@@ -400,6 +410,19 @@ const Properties = () => {
                       <Button 
                         className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                         onClick={() => {
+                          // Check if user is authenticated first
+                          if (!user) {
+                            addNotification({
+                              name: "Sign In Required",
+                              description: "Please sign in to start investing",
+                              icon: "SHIELD_ALERT",
+                              color: "#DC2626",
+                              isLogo: true
+                            });
+                            navigate('/auth');
+                            return;
+                          }
+
                           // If admin override + investor tier => allow invest without KYC
                           const isInvestorTier = profile?.tier === 'small_investor' || profile?.tier === 'large_investor';
                           if (!(profile?.tier_override_by_admin && isInvestorTier) && profile?.kyc_status !== 'approved') {
@@ -424,6 +447,19 @@ const Properties = () => {
                         size="sm"
                         className="w-full flex items-center gap-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                         onClick={async () => {
+                          // Check if user is authenticated first
+                          if (!user) {
+                            addNotification({
+                              name: "Sign In Required",
+                              description: "Please sign in to use watchlist",
+                              icon: "SHIELD_ALERT",
+                              color: "#DC2626",
+                              isLogo: true
+                            });
+                            navigate('/auth');
+                            return;
+                          }
+
                           const result = await toggleWatchlist(property.id);
                           if (result.success) {
                             addNotification({

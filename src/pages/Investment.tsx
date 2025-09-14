@@ -80,24 +80,8 @@ const Investment = () => {
   const remainingBalance = (escrowBalance?.available_balance || 0) - investmentAmount;
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
-
-    // If admin override is active and tier is investor, allow access without KYC
-    const isInvestorTier = profile?.tier === 'small_investor' || profile?.tier === 'large_investor';
-    if (!(profile?.tier_override_by_admin && isInvestorTier) && profile?.kyc_status !== 'approved') {
-      addNotification({
-        name: "KYC Required",
-        description: "Please complete your KYC verification to start investing",
-        icon: "SHIELD_ALERT",
-        color: "#DC2626",
-        isLogo: true
-      });
-      navigate('/kyc');
-      return;
-    }
+    // Removed authentication and KYC requirements for viewing property details
+    // These checks are now moved to the investment action buttons
 
     fetchData();
   }, [user, profile, propertyId]);
@@ -286,7 +270,34 @@ const Investment = () => {
   };
 
   const executeInvestment = async () => {
-    if (!user || !property || !validateInvestment()) return;
+    // Check if user is authenticated first
+    if (!user) {
+      addNotification({
+        name: "Sign In Required",
+        description: "Please sign in to start investing",
+        icon: "SHIELD_ALERT",
+        color: "#DC2626",
+        isLogo: true
+      });
+      navigate('/auth');
+      return;
+    }
+
+    // Check KYC status before allowing investment
+    const isInvestorTier = profile?.tier === 'small_investor' || profile?.tier === 'large_investor';
+    if (!(profile?.tier_override_by_admin && isInvestorTier) && profile?.kyc_status !== 'approved') {
+      addNotification({
+        name: "KYC Required",
+        description: "Please complete your KYC verification to start investing",
+        icon: "SHIELD_ALERT",
+        color: "#DC2626",
+        isLogo: true
+      });
+      navigate('/kyc');
+      return;
+    }
+
+    if (!property || !validateInvestment()) return;
 
     setInvesting(true);
     try {

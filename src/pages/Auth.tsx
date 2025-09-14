@@ -173,7 +173,7 @@ const Auth = () => {
               <BarChart3 className="w-7 h-7 text-white" />
             </div>
             <span className="text-3xl font-bold text-foreground">
-              EquityLeap
+              Retreat Slice
             </span>
           </Link>
           <h1 className="text-3xl font-bold mb-2">Welcome</h1>
@@ -190,7 +190,7 @@ const Auth = () => {
             <CardHeader className="border-b border-border p-6 text-center">
               <CardTitle>Access Your Account</CardTitle>
               <CardDescription>
-                Start your investment journey with EquityLeap
+                Start your investment journey with Retreat Slice
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6">

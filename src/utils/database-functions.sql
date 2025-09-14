@@ -1,4 +1,4 @@
--- Database functions for EquityLeap platform
+-- Database functions for Retreat Slice platform
 -- Run these functions in your Supabase SQL editor
 
 -- Function to create property alerts for all relevant users

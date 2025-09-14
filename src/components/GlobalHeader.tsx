@@ -1,5 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -21,7 +21,7 @@ interface GlobalHeaderProps {
 }
 
 const GlobalHeader = ({ 
-  title = "EquityLeap", 
+  title = "Retreat Slice", 
   subtitle,
   showBackButton = false,
   backTo = "/welcome",
@@ -50,15 +50,15 @@ const GlobalHeader = ({
             </Button>
           )}
           
-          <div className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-3 group">
             <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
               <BarChart3 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="text-xl font-bold text-foreground">{title}</span>
+              <span className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{title}</span>
               {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
             </div>
-          </div>
+          </Link>
           
           {isAdminPage && (
             <Badge variant="secondary" className="ml-2">Admin Panel</Badge>
@@ -94,14 +94,16 @@ const GlobalHeader = ({
                 Properties
               </Button>
               
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/support')}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Support
-              </Button>
+              {isAdmin && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/admin/support')}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Support
+                </Button>
+              )}
               
               {profile?.subscription_active && (
                 <Button
@@ -109,9 +111,9 @@ const GlobalHeader = ({
                   size="sm"
                   onClick={() => {
                     if (profile?.tier === 'waitlist_player' && profile?.subscription_active) {
-                      navigate('/waitlist-dashboard');
+                      navigate('/waitlist-dashboard/overview');
                     } else {
-                      navigate('/dashboard');
+                      navigate('/dashboard/overview');
                     }
                   }}
                   className="text-muted-foreground hover:text-foreground"

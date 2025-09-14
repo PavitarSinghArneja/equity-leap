@@ -207,17 +207,17 @@ const MyWatchlistEnhanced: React.FC = () => {
           <div className="space-y-6">
             {/* Alert for properties with available shares */}
             {watchlistItems.some(item => item.has_available_shares) && (
-              <div className="bg-gradient-to-r from-orange-50 to-red-50 border-l-4 border-orange-500 p-4 rounded-lg">
+              <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border-l-4 border-primary p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-5 h-5 text-orange-600" />
-                  <h4 className="font-semibold text-orange-800">🚨 Watchlist Alert!</h4>
+                  <Zap className="w-5 h-5 text-primary" />
+                  <h4 className="font-semibold text-foreground">Watchlist Alert</h4>
                 </div>
-                <p className="text-sm text-orange-700 mb-3">
+                <p className="text-sm text-muted-foreground mb-3">
                   Some of your watchlist properties now have shares available for purchase. Act fast!
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   {watchlistItems.filter(item => item.has_available_shares).map(item => (
-                    <Badge key={item.id} className="bg-orange-100 text-orange-800">
+                    <Badge key={item.id} className="bg-primary/15 text-primary border border-primary/30">
                       {item.properties.title}
                     </Badge>
                   ))}
@@ -230,13 +230,14 @@ const MyWatchlistEnhanced: React.FC = () => {
               {watchlistItems.map((item) => (
                 <div 
                   key={item.id} 
-                  className={`border rounded-lg overflow-hidden transition-all duration-300 hover:shadow-md ${
-                    item.has_available_shares ? 'border-orange-300 bg-orange-50/30 shadow-sm' : 'hover:bg-muted/30'
+                  className={`border rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg ${
+                    item.has_available_shares ? 'border-primary/30 bg-primary/5 shadow-sm' : 'hover:bg-muted/30'
                   }`}
                 >
-                  <div className="flex">
+                  <div className="flex flex-col sm:flex-row sm:items-stretch">
                     {/* Property Image */}
-                    <div className="relative w-48 h-32 bg-muted flex-shrink-0">
+                    <div className="relative w-full sm:flex-[0_0_42%] md:flex-[0_0_46%] bg-muted flex-shrink-0 overflow-hidden">
+                      <div className="aspect-[16/10] sm:aspect-auto sm:h-full w-full h-auto">
                       {item.properties.images && item.properties.images.length > 0 ? (
                         <img
                           src={item.properties.images[0]}
@@ -251,6 +252,7 @@ const MyWatchlistEnhanced: React.FC = () => {
                           <Building2 className="w-8 h-8 text-primary/40" />
                         </div>
                       )}
+                      </div>
                       
                       {/* Status Badge on Image */}
                       <div className="absolute top-2 left-2">
@@ -260,19 +262,19 @@ const MyWatchlistEnhanced: React.FC = () => {
                       {/* Availability Badge */}
                       {item.has_available_shares && (
                         <div className="absolute bottom-2 left-2">
-                          <Badge className="bg-orange-500 text-white animate-pulse shadow-lg text-xs">
+                          <Badge className="bg-primary text-primary-foreground shadow-lg text-xs">
                             <Zap className="w-3 h-3 mr-1" />
-                            Available!
+                            Available
                           </Badge>
                         </div>
                       )}
                     </div>
 
                     {/* Property Details */}
-                    <div className="flex-1 p-4">
+                    <div className="flex-1 p-4 sm:p-5">
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex-1">
-                          <h4 className="font-semibold text-lg mb-1">{item.properties.title}</h4>
+                          <h4 className="font-semibold text-lg mb-1 line-clamp-2">{item.properties.title}</h4>
                           <div className="flex items-center text-sm text-muted-foreground mb-2">
                             <MapPin className="w-4 h-4 mr-1" />
                             {item.properties.city}, {item.properties.country}
@@ -294,51 +296,49 @@ const MyWatchlistEnhanced: React.FC = () => {
                       </div>
                       
                       {/* Key Metrics */}
-                      <div className="grid grid-cols-3 gap-3 mb-4">
-                        <div className="bg-muted/50 rounded-lg p-2 text-center">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                        <div className="bg-card/50 rounded-lg p-3 text-center border border-border">
                           <p className="text-xs text-muted-foreground">Share Price</p>
                           <p className="font-semibold text-sm">{formatCurrency(item.properties.share_price)}</p>
                         </div>
-                        <div className="bg-muted/50 rounded-lg p-2 text-center">
+                        <div className="bg-card/50 rounded-lg p-3 text-center border border-border">
                           <p className="text-xs text-muted-foreground">Expected ROI</p>
                           <div className="flex items-center justify-center">
-                            <span className="font-semibold text-sm text-green-600">
+                            <span className="font-semibold text-sm text-primary">
                               {item.properties.expected_annual_return}%
                             </span>
-                            <TrendingUp className="w-3 h-3 ml-1 text-green-600" />
+                            <TrendingUp className="w-3 h-3 ml-1 text-primary" />
                           </div>
                         </div>
-                        <div className="bg-muted/50 rounded-lg p-2 text-center">
+                        <div className="bg-card/50 rounded-lg p-3 text-center border border-border">
                           <p className="text-xs text-muted-foreground">Min. Investment</p>
                           <p className="font-semibold text-sm">{formatCurrency(item.properties.minimum_investment)}</p>
                         </div>
                       </div>
 
-                      {/* Action Button and Date */}
-                      <div className="flex justify-between items-center">
-                        <Button
-                          size="sm"
-                          onClick={() => navigate(`/invest/${item.property_id}`)}
-                          className={`${
-                            item.has_available_shares 
-                              ? 'bg-orange-600 hover:bg-orange-700 text-white' 
-                              : ''
-                          }`}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          {item.has_available_shares ? 'Buy Shares Now!' : 'View Property'}
-                        </Button>
-                        
-                        <p className="text-xs text-muted-foreground">
+                      {/* Actions & Meta - responsive, avoids awkward spacing */}
+                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                        <div className="sm:col-span-2">
+                          <Button
+                            size="sm"
+                            onClick={() => navigate(`/invest/${item.property_id}`)}
+                            className={`w-full ${ item.has_available_shares ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-transparent border border-border hover:bg-muted/30'}`}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            {item.has_available_shares ? 'Buy Shares Now!' : 'View Property'}
+                          </Button>
+                        </div>
+
+                        <p className="text-xs text-muted-foreground sm:text-right">
                           Added {formatDate(item.added_at)}
                         </p>
                       </div>
                       
                       {/* Availability Alert */}
                       {item.has_available_shares && (
-                        <div className="mt-3 p-2 bg-gradient-to-r from-orange-100 to-yellow-100 border border-orange-200 rounded-lg">
-                          <p className="text-xs text-orange-700 font-medium">
-                            💡 Investors are selling shares in this property. This is your chance to invest!
+                        <div className="mt-3 p-2 bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-lg">
+                          <p className="text-xs text-foreground/80 font-medium">
+                            Investors are selling shares in this property. This is your chance to invest.
                           </p>
                         </div>
                       )}

@@ -330,32 +330,25 @@ const AdminProperties = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/admin')}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
             <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
               <Building2 className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">Property Management</span>
+            <h1 className="text-2xl font-bold">Property Management</h1>
           </div>
-          
-          <Button onClick={() => navigate('/admin/properties/new')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add New Property
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin')}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Admin
+            </Button>
+            <Button onClick={() => navigate('/admin/properties/new')}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add New Property
+            </Button>
+          </div>
         </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
         <div className="space-y-6">
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

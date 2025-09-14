@@ -30,12 +30,18 @@ interface ShareSellDialogProps {
     price_per_share: number;
     total_investment: number;
   };
+  buttonSize?: 'sm' | 'default' | 'lg';
+  buttonVariant?: 'default' | 'outline' | 'secondary' | 'ghost';
+  buttonClassName?: string;
 }
 
 const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
   property,
   userShares,
-  userInvestment
+  userInvestment,
+  buttonSize = 'sm',
+  buttonVariant = 'outline',
+  buttonClassName
 }) => {
   const { user, addNotification } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -160,7 +166,11 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700">
+        <Button
+          variant={buttonVariant}
+          size={buttonSize}
+          className={`text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 ${buttonClassName || ''}`}
+        >
           <TrendingDown className="w-4 h-4 mr-2" />
           Sell Shares
         </Button>

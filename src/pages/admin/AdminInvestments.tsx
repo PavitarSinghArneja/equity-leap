@@ -127,34 +127,21 @@ const AdminInvestments = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-foreground">Investment Management</span>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/admin')}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Admin
-            </Button>
-          </div>
-        </div>
-      </header>
-
       <div className="container mx-auto px-4 py-8">
         {/* Header Section */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Investments</h1>
-          <p className="text-muted-foreground">Monitor and manage all investment transactions</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Investments</h1>
+            <p className="text-muted-foreground">Monitor and manage all investment transactions</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/admin')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Admin
+          </Button>
         </div>
 
         {/* Summary Cards */}

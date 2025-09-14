@@ -7,10 +7,25 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { DevProvider } from "@/contexts/DevContext";
 import { AnimatedNotifications } from "@/components/ui/notification";
 import LandingPage from "@/components/LandingPage";
+import TopNav from "@/components/TopNav";
 import Auth from "@/pages/Auth";
 import Welcome from "@/pages/Welcome";
 import Dashboard from "@/pages/Dashboard";
+import DashboardLayout from "@/pages/dashboard/DashboardLayout";
+import Overview from "@/pages/dashboard/Overview";
+import WalletPage from "@/pages/dashboard/Wallet";
+import TransactionsPage from "@/pages/dashboard/Transactions";
+import WatchlistPage from "@/pages/dashboard/Watchlist";
+import SellRequestsPage from "@/pages/dashboard/SellRequests";
+import PropertyDetailPage from "@/pages/dashboard/PropertyDetail";
+import { Navigate } from "react-router-dom";
 import WaitlistDashboard from "@/pages/WaitlistDashboard";
+import WaitlistLayout from "@/pages/waitlist/WaitlistLayout";
+import WaitlistOverview from "@/pages/waitlist/Overview";
+import WaitlistWallet from "@/pages/waitlist/Wallet";
+import WaitlistWatchlist from "@/pages/waitlist/Watchlist";
+import WaitlistLearn from "@/pages/waitlist/Learn";
+import WaitlistSupport from "@/pages/waitlist/Support";
 import TrialExpired from "@/pages/TrialExpired";
 import KYC from "@/pages/KYC";
 import Properties from "@/pages/Properties";
@@ -27,6 +42,7 @@ import AdminShareTrading from "@/pages/admin/AdminShareTrading";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
 
 const AppContent = () => {
   const { notifications } = useAuth();
@@ -50,12 +66,28 @@ const AppContent = () => {
           v7_relativeSplatPath: true
         }}
       >
+        <TopNav />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/welcome" element={<Welcome />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/waitlist-dashboard" element={<WaitlistDashboard />} />
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<Overview />} />
+            <Route path="wallet" element={<WalletPage />} />
+            <Route path="transactions" element={<TransactionsPage />} />
+            <Route path="sell-requests" element={<SellRequestsPage />} />
+            <Route path="watchlist" element={<WatchlistPage />} />
+            <Route path="p/:propertyId" element={<PropertyDetailPage />} />
+          </Route>
+          <Route path="/waitlist-dashboard" element={<WaitlistLayout />}>
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<WaitlistOverview />} />
+            <Route path="wallet" element={<WaitlistWallet />} />
+            <Route path="watchlist" element={<WaitlistWatchlist />} />
+            <Route path="learn" element={<WaitlistLearn />} />
+            <Route path="support" element={<WaitlistSupport />} />
+          </Route>
           <Route path="/trial-expired" element={<TrialExpired />} />
           <Route path="/kyc" element={<KYC />} />
           <Route path="/properties" element={<Properties />} />
@@ -81,7 +113,7 @@ const AppContent = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+    <TooltipProvider delayDuration={0}>
       <DevProvider>
         <AuthProvider>
           <AppContent />

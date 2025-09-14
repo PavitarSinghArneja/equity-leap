@@ -204,6 +204,16 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
         }
       }
 
+      // Recalculate positions for buyer and seller (best-effort)
+      try {
+        await Promise.all([
+          supabase.rpc('recalc_user_property_position', { p_user_id: user.id, p_property_id: sellRequest.property_id }),
+          supabase.rpc('recalc_user_property_position', { p_user_id: sellRequest.seller_id, p_property_id: sellRequest.property_id })
+        ]);
+      } catch (e) {
+        console.warn('Position snapshot recalc failed (non-fatal):', e);
+      }
+
       // Create audit trail entries
       await Promise.all([
         supabase.from('user_audit_trail').insert([{
@@ -305,10 +315,10 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
   }
 
   return (
-    <Card>
+    <Card className="border-border">
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <ShoppingCart className="w-5 h-5 mr-2" />
+        <CardTitle className="flex items-center text-foreground">
+          <ShoppingCart className="w-5 h-5 mr-2 text-primary" />
           Available Shares {!propertyId && 'Marketplace'}
         </CardTitle>
         {sellRequests.length > 0 && (
@@ -317,7 +327,7 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
           </p>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {sellRequests.length === 0 ? (
           <div className="text-center py-8">
             <ShoppingCart className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
@@ -333,7 +343,7 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
 
               return (
                 <div key={request.id} className={`border rounded-lg p-4 transition-colors ${
-                  isOwnRequest ? 'bg-blue-50 border-blue-200' : 'hover:bg-muted/50'
+                  isOwnRequest ? 'bg-primary/5 border-primary/20' : 'hover:bg-muted/40 border-border'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -348,7 +358,7 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
                           </div>
                         )}
                         {isOwnRequest && (
-                          <Badge variant="secondary" className="text-xs">Your Listing</Badge>
+                          <Badge className="text-xs bg-primary/15 text-primary border border-primary/30">Your Listing</Badge>
                         )}
                       </div>
 
@@ -375,7 +385,7 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
 
                       {discount > 0 && (
                         <div className="mt-2">
-                          <Badge className="bg-green-100 text-green-800">
+                          <Badge className="bg-success/15 text-success border border-success/30">
                             {discount.toFixed(1)}% below market price
                           </Badge>
                         </div>
@@ -392,7 +402,7 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
                       {!isOwnRequest && (
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button size="sm" disabled={purchasing === request.id}>
+                            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" disabled={purchasing === request.id}>
                               {purchasing === request.id ? (
                                 <>
                                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -409,7 +419,7 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
                           <DialogContent className="sm:max-w-md">
                             <DialogHeader>
                               <DialogTitle className="flex items-center gap-2">
-                                <CheckCircle className="w-5 h-5 text-green-600" />
+                                <CheckCircle className="w-5 h-5 text-primary" />
                                 Confirm Purchase
                               </DialogTitle>
                             </DialogHeader>
@@ -440,7 +450,7 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
                                   <span>{formatCurrency(request.total_amount)}</span>
                                 </div>
                                 {discount > 0 && (
-                                  <div className="flex justify-between text-green-600 font-medium">
+                                  <div className="flex justify-between text-primary font-medium">
                                     <span>You save:</span>
                                     <span>{discount.toFixed(1)}%</span>
                                   </div>

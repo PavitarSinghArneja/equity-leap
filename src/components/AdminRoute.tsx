@@ -32,7 +32,7 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
 
   // Redirect to dashboard if not admin
   if (!isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/dashboard/overview" replace />;
   }
 
   return <>{children}</>;

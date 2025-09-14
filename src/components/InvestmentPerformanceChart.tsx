@@ -46,111 +46,65 @@ const InvestmentPerformanceChart = ({ investments, transactions }: InvestmentPer
         trend: 'neutral' as const
       };
     }
+    // Build day-wise cumulative value using events (buys/sells/dividends)
+    const earliestDate = new Date(
+      investments.reduce((min, inv) => {
+        const d = new Date(inv.investment_date || inv.created_at).getTime();
+        return Math.min(min, d);
+      }, Date.now())
+    );
 
-    // Find the earliest investment date
-    const earliestInvestment = investments.reduce((earliest, inv) => {
-      const invDate = new Date(inv.investment_date || inv.created_at);
-      const earliestDate = new Date(earliest.investment_date || earliest.created_at);
-      return invDate < earliestDate ? inv : earliest;
-    });
+    const today = new Date();
+    const deltasByDay = new Map<string, number>();
 
-    const firstInvestmentDate = new Date(earliestInvestment.investment_date || earliestInvestment.created_at);
-    
-    // Generate months from first investment to now
-    const months = [];
-    const now = new Date();
-    const startMonth = new Date(firstInvestmentDate.getFullYear(), firstInvestmentDate.getMonth(), 1);
-    
-    let currentMonth = new Date(startMonth);
-    while (currentMonth <= now) {
-      months.push({
-        date: new Date(currentMonth),
-        month: currentMonth.toLocaleDateString('en-US', { month: 'short' }),
-        fullMonth: currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-      });
-      currentMonth.setMonth(currentMonth.getMonth() + 1);
+    const toKey = (d: Date) => d.toISOString().slice(0, 10);
+
+    // Investment buys (use cash invested)
+    for (const inv of investments) {
+      const d = new Date(inv.investment_date || inv.created_at);
+      const k = toKey(d);
+      deltasByDay.set(k, (deltasByDay.get(k) || 0) + (inv.total_investment || 0));
     }
 
-    // Calculate cumulative investment value and current market value over time
+    // Transactions: treat share_purchase as cash in, share_sale as cash out, dividends as income (add)
+    for (const tx of transactions) {
+      const k = toKey(new Date(tx.created_at));
+      if (tx.transaction_type === 'share_purchase' || tx.transaction_type === 'investment' || tx.transaction_type === 'deposit') {
+        deltasByDay.set(k, (deltasByDay.get(k) || 0) + (tx.amount || 0));
+      } else if (tx.transaction_type === 'share_sale' || tx.transaction_type === 'withdrawal' || tx.transaction_type === 'fee') {
+        deltasByDay.set(k, (deltasByDay.get(k) || 0) - (tx.amount || 0));
+      } else if (tx.transaction_type === 'dividend') {
+        deltasByDay.set(k, (deltasByDay.get(k) || 0) + (tx.amount || 0));
+      }
+    }
+
+    // Build daily cumulative series
     const data: ChartDataPoint[] = [];
-    const investmentsByMonth: Investment[] = [];
+    const cursor = new Date(earliestDate.getFullYear(), earliestDate.getMonth(), earliestDate.getDate());
+    let cumulative = 0;
+    while (cursor <= today) {
+      const key = toKey(cursor);
+      if (deltasByDay.has(key)) cumulative += deltasByDay.get(key)!;
+      data.push({ month: key, value: cumulative, displayValue: cumulative });
+      cursor.setDate(cursor.getDate() + 1);
+    }
 
-    months.forEach(({ month, date }) => {
-      const monthStart = new Date(date);
-      const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    // Trend: last 7 days
+    const last = data.slice(-7);
+    const trend = last.length >= 2 && last[last.length - 1].value > last[0].value ? 'up' :
+                  last.length >= 2 && last[last.length - 1].value < last[0].value ? 'down' : 'neutral';
 
-      // Add investments made up to this month
-      const investmentsMadeByThisMonth = investments.filter(inv => {
-        const invDate = new Date(inv.investment_date || inv.created_at);
-        return invDate <= monthEnd;
-      });
-
-      // Calculate total invested amount up to this month
-      const totalInvestedByMonth = investmentsMadeByThisMonth.reduce((sum, inv) => sum + inv.total_investment, 0);
-
-      // Calculate current market value based on current share prices
-      const currentMarketValue = investmentsMadeByThisMonth.reduce((sum, inv) => {
-        const currentSharePrice = inv.properties?.share_price || inv.price_per_share || 0;
-        const sharesOwned = inv.shares_owned || 0;
-        const value = currentSharePrice * sharesOwned;
-        return sum + (isFinite(value) ? value : 0);
-      }, 0);
-
-      // Add returns (dividends) received up to this month
-      const dividendsReceivedByMonth = transactions.filter(txn => {
-        const txnDate = new Date(txn.created_at);
-        return txn.transaction_type === 'dividend' && txnDate <= monthEnd;
-      });
-
-      const totalDividends = dividendsReceivedByMonth.reduce((sum, txn) => sum + txn.amount, 0);
-
-      // Total value = current market value + dividends received
-      const totalPortfolioValue = currentMarketValue + totalDividends;
-
-      // Ensure values are finite numbers
-      const safePortfolioValue = isFinite(totalPortfolioValue) ? totalPortfolioValue : 0;
-      
-      data.push({
-        month,
-        value: safePortfolioValue,
-        displayValue: safePortfolioValue
-      });
-    });
-
-    // Calculate overall performance metrics
-    const totalInvested = investments.reduce((sum, inv) => sum + inv.total_investment, 0);
-    const currentMarketValue = investments.reduce((sum, inv) => {
-      return sum + (inv.properties.share_price * inv.shares_owned);
-    }, 0);
-    const totalDividends = transactions
-      .filter(txn => txn.transaction_type === 'dividend')
-      .reduce((sum, txn) => sum + txn.amount, 0);
-    
-    const currentTotalValue = currentMarketValue + totalDividends;
-    const totalReturn = currentTotalValue - totalInvested;
-    const percentageReturn = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0;
-    
-    // Determine trend based on last 3 months
-    const lastThreeMonths = data.slice(-3);
-    const trend = lastThreeMonths.length >= 2 && 
-      lastThreeMonths[lastThreeMonths.length - 1].value > lastThreeMonths[0].value 
-      ? 'up' : lastThreeMonths.length >= 2 && 
-        lastThreeMonths[lastThreeMonths.length - 1].value < lastThreeMonths[0].value 
-        ? 'down' : 'neutral';
-
-    // Ensure we have at least one data point to prevent empty chart errors
-    const safeData = data.length > 0 ? data : [{
-      month: 'Current',
-      value: 0,
-      displayValue: 0
-    }];
+    const totalInvested = data.length ? data[data.length - 1].value : 0;
+    const currentValue = totalInvested; // In this proxy series, cumulative value equals net value over time
+    const totalReturn = 0; // Not computed here; tiles above show accurate P&L using snapshots
+    const percentageReturn = 0;
 
     return {
-      data: safeData,
-      totalInvested: isFinite(totalInvested) ? totalInvested : 0,
-      currentValue: isFinite(currentTotalValue) ? currentTotalValue : 0,
-      totalReturn: isFinite(totalReturn) ? Math.round(totalReturn * 100) / 100 : 0,
-      percentageReturn: isFinite(percentageReturn) ? Math.round(percentageReturn * 10) / 10 : 0,
+      data,
+      totalInvested,
+      currentValue,
+      totalReturn,
+      percentageReturn,
       trend
     };
   }, [investments, transactions]);
@@ -172,7 +126,7 @@ const InvestmentPerformanceChart = ({ investments, transactions }: InvestmentPer
   const minValue = Math.min(...chartData.data.map(d => d.value), 0);
   const valueRange = maxValue - minValue || 1;
 
-  // Generate SVG path for the line chart
+  // Generate SVG path for the line chart (line only)
   const chartWidth = 100;
   const chartHeight = 60;
   const padding = 5;
@@ -193,12 +147,7 @@ const InvestmentPerformanceChart = ({ investments, transactions }: InvestmentPer
     return `${index === 0 ? 'M' : 'L'} ${validX} ${validY}`;
   }).join(' ');
 
-  // Create area fill path only if we have valid path data
-  const areaPath = pathData && chartData.data.length > 0 ? 
-    pathData + 
-    ` L ${chartWidth - padding} ${chartHeight - padding}` +
-    ` L ${padding} ${chartHeight - padding} Z` : 
-    `M ${padding} ${chartHeight - padding} L ${chartWidth - padding} ${chartHeight - padding} L ${padding} ${chartHeight - padding} Z`;
+  // We intentionally remove the area fill for a clean line-only chart
 
   const getTrendColor = () => {
     switch (chartData.trend) {
@@ -217,7 +166,7 @@ const InvestmentPerformanceChart = ({ investments, transactions }: InvestmentPer
   };
 
   return (
-    <div className="h-64">
+    <div className="h-72">
       {/* Chart Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
@@ -233,7 +182,7 @@ const InvestmentPerformanceChart = ({ investments, transactions }: InvestmentPer
       </div>
 
       {/* Chart */}
-      <div className="relative h-40 bg-gradient-to-b from-background to-muted/20 rounded-lg p-4">
+      <div className="relative h-48 bg-gradient-to-b from-muted/10 to-muted/30 rounded-lg p-4 border border-border">
         <svg 
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
           className="w-full h-full"
@@ -245,46 +194,18 @@ const InvestmentPerformanceChart = ({ investments, transactions }: InvestmentPer
               <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-muted-foreground/20"/>
             </pattern>
           </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-
-          {/* Area fill */}
-          <path 
-            d={areaPath}
-            className="fill-primary/10"
-          />
+          <rect width="100%" height="100%" fill="url(#grid)" opacity="0.6" />
 
           {/* Line */}
           <path 
             d={pathData}
             fill="none" 
             stroke="currentColor" 
-            strokeWidth="2"
+            strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
             className="text-primary"
           />
-
-          {/* Data points */}
-          {chartData.data.map((point, index) => {
-            // Use the same logic as for the path data
-            const normalizedIndex = dataLength === 1 ? 0 : index / (dataLength - 1);
-            const x = normalizedIndex * (chartWidth - 2 * padding) + padding;
-            const y = chartHeight - padding - ((point.value - minValue) / valueRange) * (chartHeight - 2 * padding);
-            
-            // Ensure coordinates are valid numbers
-            const validX = isFinite(x) ? x : padding;
-            const validY = isFinite(y) ? y : chartHeight - padding;
-            
-            return (
-              <circle
-                key={index}
-                cx={validX}
-                cy={validY}
-                r="1.5"
-                className="fill-primary"
-              />
-            );
-          })}
         </svg>
 
         {/* Hover tooltip area */}

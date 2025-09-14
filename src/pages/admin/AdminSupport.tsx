@@ -156,35 +156,20 @@ const AdminSupport = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-foreground">Support Tickets</span>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/admin')}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Admin
-            </Button>
-          </div>
-        </div>
-      </header>
-
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-2">Support Tickets</h1>
             <p className="text-muted-foreground">Manage customer support requests and fund addition requests</p>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/admin')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Admin
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

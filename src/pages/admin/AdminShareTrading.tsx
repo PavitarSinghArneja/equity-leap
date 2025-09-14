@@ -13,44 +13,37 @@ const AdminShareTrading: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+      {/* Content */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
               <TrendingDown className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="text-xl font-bold text-foreground">Share Trading Controls</span>
+              <h1 className="text-2xl font-bold">Share Trading Controls</h1>
               <p className="text-sm text-muted-foreground">Manage property share selling permissions</p>
             </div>
           </div>
-          
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => navigate('/admin')}
-              className="text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Admin
             </Button>
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="sm"
-              onClick={() => navigate('/dashboard')}
-              className="text-muted-foreground hover:text-foreground"
+              onClick={() => navigate('/dashboard/overview')}
             >
               <Home className="w-4 h-4 mr-2" />
               Dashboard
             </Button>
           </div>
         </div>
-      </header>
-
-      {/* Content */}
-      <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
           {/* Instructions */}
           <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">

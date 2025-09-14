@@ -8,11 +8,12 @@ interface UserProfile {
   user_id: string;
   email: string;
   full_name?: string;
-  tier: 'explorer' | 'waitlist_player' | 'investor';
+  tier: 'explorer' | 'waitlist_player' | 'small_investor' | 'large_investor';
   kyc_status: 'pending' | 'under_review' | 'approved' | 'rejected';
   trial_expires_at: string;
   subscription_active: boolean;
   is_admin?: boolean;
+  tier_override_by_admin?: boolean;
 }
 
 interface NotificationItem {
@@ -122,7 +123,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             if (isGoogleAuth && isNewUser) {
               // Google Sign-Up (new account)
               addNotification({
-                name: "Welcome to EquityLeap! 🎉",
+                name: "Welcome to Retreat Slice! 🎉",
                 description: "Your Google account has been connected successfully",
                 icon: "GOOGLE",
                 color: "#4285F4",
@@ -212,13 +213,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         isLogo: true
       });
     } else {
-      addNotification({
-        name: "Welcome to EquityLeap! 🎉",
-        description: "Check your email to verify your account and get started",
-        icon: "CHECK_CIRCLE",
-        color: "#059669",
-        isLogo: true
-      });
+              addNotification({
+                name: "Welcome to Retreat Slice! 🎉",
+                description: "Check your email to verify your account and get started",
+                icon: "CHECK_CIRCLE",
+                color: "#059669",
+                isLogo: true
+              });
     }
 
     return { error };
@@ -325,7 +326,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } else {
       addNotification({
         name: "See You Soon! 👋",
-        description: "Successfully signed out. Thanks for using EquityLeap!",
+        description: "Successfully signed out. Thanks for using Retreat Slice!",
         icon: "CHECK_CIRCLE",
         color: "#D97706",
         isLogo: true

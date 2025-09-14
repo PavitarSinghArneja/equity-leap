@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { useAdmin } from '@/hooks/useAdmin';
 import { supabase } from '@/integrations/supabase/client';
 import { 
-  BarChart3, 
   ChevronRight, 
   ChevronLeft, 
   Upload,
@@ -21,10 +20,7 @@ import {
   CreditCard,
   Camera,
   CheckCircle2,
-  AlertTriangle,
-  Home,
-  LogOut,
-  Crown
+  AlertTriangle
 } from 'lucide-react';
 
 interface PersonalInfo {
@@ -107,9 +103,9 @@ const KYC = () => {
       });
       
       if (profile.tier === 'waitlist_player') {
-        navigate('/waitlist-dashboard');
+        navigate('/waitlist-dashboard/overview');
       } else {
-        navigate('/dashboard');
+        navigate('/dashboard/overview');
       }
     }
   }, [user, profile, navigate, addNotification]);
@@ -321,9 +317,9 @@ const KYC = () => {
       // Redirect to appropriate dashboard
       setTimeout(() => {
         if (profile?.tier === 'waitlist_player') {
-          navigate('/waitlist-dashboard');
+          navigate('/waitlist-dashboard/overview');
         } else {
-          navigate('/dashboard');
+          navigate('/dashboard/overview');
         }
       }, 2000);
 
@@ -610,49 +606,6 @@ const KYC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-foreground">EquityLeap</span>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            {isAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/admin')}
-                className="border-orange-200 text-orange-700 hover:bg-orange-50"
-              >
-                <Crown className="w-4 h-4 mr-2" />
-                Admin Panel
-              </Button>
-            )}
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => navigate('/welcome')}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Home
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={signOut}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}

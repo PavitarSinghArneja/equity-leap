@@ -10,7 +10,6 @@ import { Separator } from '@/components/ui/separator';
 import { useAdmin } from '@/hooks/useAdmin';
 import { supabase } from '@/integrations/supabase/client';
 import { 
-  BarChart3, 
   ArrowLeft,
   Building2,
   MapPin,
@@ -19,10 +18,7 @@ import {
   Calculator,
   CheckCircle2,
   AlertTriangle,
-  Info,
-  Home,
-  LogOut,
-  Crown
+  Info
 } from 'lucide-react';
 import { recalculateUserTierAfterInvestment } from '@/utils/tierManagement';
 import WatchlistButton from '@/components/WatchlistButton';
@@ -89,8 +85,9 @@ const Investment = () => {
       return;
     }
 
-    // Check KYC status
-    if (profile?.kyc_status !== 'approved') {
+    // If admin override is active and tier is investor, allow access without KYC
+    const isInvestorTier = profile?.tier === 'small_investor' || profile?.tier === 'large_investor';
+    if (!(profile?.tier_override_by_admin && isInvestorTier) && profile?.kyc_status !== 'approved') {
       addNotification({
         name: "KYC Required",
         description: "Please complete your KYC verification to start investing",
@@ -360,6 +357,16 @@ const Investment = () => {
       // Automatically update user tier based on their investment portfolio
       await recalculateUserTierAfterInvestment(user.id);
 
+      // Recalculate consolidated position snapshot in Supabase (best-effort)
+      try {
+        await supabase.rpc('recalc_user_property_position', {
+          p_user_id: user.id,
+          p_property_id: property.id
+        });
+      } catch (e) {
+        console.warn('Position snapshot recalc failed (non-fatal):', e);
+      }
+
       addNotification({
         name: "Investment Successful",
         description: `You've successfully invested ${formatCurrency(investmentAmount)} in ${property.title}`,
@@ -370,7 +377,7 @@ const Investment = () => {
 
       // Navigate to portfolio/dashboard
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/dashboard/overview');
       }, 2000);
 
     } catch (error) {
@@ -441,59 +448,6 @@ const Investment = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <span className="text-xl font-bold text-foreground">Investment Details</span>
-              <p className="text-sm text-muted-foreground">{property?.title}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            {isAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/admin')}
-                className="border-orange-200 text-orange-700 hover:bg-orange-50"
-              >
-                <Crown className="w-4 h-4 mr-2" />
-                Admin Panel
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/properties')}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => {
-                if (profile?.tier === 'waitlist_player') {
-                  navigate('/waitlist-dashboard');
-                } else {
-                  navigate('/dashboard');
-                }
-              }}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Dashboard
-            </Button>
-          </div>
-        </div>
-      </header>
-
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Property Header */}

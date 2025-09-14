@@ -1,0 +1,44 @@
+name: Check Environment Variables
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-env:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check server environment
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          echo "=== ENVIRONMENT CHECK ==="
+          
+          cd /root/equity-leap
+          
+          echo "1. Checking .env files:"
+          ls -la | grep env || echo "No .env files found"
+          
+          echo ""
+          echo "2. Contents of .env file (if exists):"
+          if [ -f ".env" ]; then
+            cat .env | sed 's/=.*/=***HIDDEN***/' 
+          else
+            echo "No .env file found"
+          fi
+          
+          echo ""
+          echo "3. Contents of .env.production:"
+          if [ -f ".env.production" ]; then
+            cat .env.production | sed 's/=.*/=***HIDDEN***/'
+          else
+            echo "No .env.production file found"
+          fi
+          
+          echo ""
+          echo "4. Docker container environment check:"
+          sudo docker exec root-equity-leap-1 env | grep VITE || echo "No VITE variables found in container"
+          
+          echo "=== CHECK COMPLETED ==="

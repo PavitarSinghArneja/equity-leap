@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useWatchlist } from '@/hooks/useWatchlist';
-import GlobalHeader from '@/components/GlobalHeader';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   BarChart3, 
@@ -52,6 +51,8 @@ const Properties = () => {
 
     // Add delay to let admin status propagate
     const timeoutId = setTimeout(() => {
+      // If admin override is active, do not gate by subscription/trial
+      if (profile.tier_override_by_admin) return;
 
       // Redirect expired trial users to trial-expired page
       if (!profile.subscription_active) {
@@ -71,9 +72,9 @@ const Properties = () => {
   const handleDashboardClick = () => {
     // Route to different dashboards based on user tier
     if (profile?.tier === 'waitlist_player') {
-      navigate('/waitlist-dashboard');
+      navigate('/waitlist-dashboard/overview');
     } else {
-      navigate('/dashboard');
+      navigate('/dashboard/overview');
     }
   };
   const [priceFilter, setPriceFilter] = useState('');
@@ -201,25 +202,21 @@ const Properties = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <GlobalHeader 
-        title="EquityLeap" 
-        subtitle="Investment Opportunities"
-      >
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchProperties}
-          disabled={loading}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
-      </GlobalHeader>
-
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">Properties</h1>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchProperties}
+            disabled={loading}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
         {/* Search Section */}
         <div className="mb-8">
 
@@ -420,8 +417,9 @@ const Properties = () => {
                       <Button 
                         className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                         onClick={() => {
-                          // Check KYC status first
-                          if (profile?.kyc_status !== 'approved') {
+                          // If admin override + investor tier => allow invest without KYC
+                          const isInvestorTier = profile?.tier === 'small_investor' || profile?.tier === 'large_investor';
+                          if (!(profile?.tier_override_by_admin && isInvestorTier) && profile?.kyc_status !== 'approved') {
                             addNotification({
                               name: "KYC Required",
                               description: "Please complete your KYC verification to start investing",

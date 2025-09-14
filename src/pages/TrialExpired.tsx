@@ -3,13 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAdmin } from '@/hooks/useAdmin';
-import { Clock, CreditCard, LogOut, BarChart3 } from 'lucide-react';
+import { Clock, CreditCard, LogOut } from 'lucide-react';
 
 const TrialExpired = () => {
   const { signOut, profile, user } = useAuth();
   const navigate = useNavigate();
-  const { isAdmin } = useAdmin();
 
   // Check if users shouldn't be on this page
   useEffect(() => {
@@ -20,7 +18,7 @@ const TrialExpired = () => {
       if (profile.tier === 'waitlist_player') {
         navigate('/waitlist-dashboard');
       } else {
-        navigate('/dashboard');
+        navigate('/dashboard/overview');
       }
     }
   }, [navigate, user, profile]);
@@ -31,40 +29,7 @@ const TrialExpired = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-foreground">EquityLeap</span>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-4">
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-white text-sm font-medium">
-                  {profile?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
-                </span>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={signOut}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex items-center justify-center p-4 mt-16">
+      <div className="flex items-center justify-center p-4">
       <Card className="investment-card max-w-md w-full text-center">
         <CardHeader>
           <div className="w-16 h-16 bg-warning/20 rounded-xl flex items-center justify-center mx-auto mb-4">
@@ -78,7 +43,7 @@ const TrialExpired = () => {
         <CardContent className="space-y-4">
           <div className="text-sm text-muted-foreground mb-6">
             Hi {profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'}, 
-            your free trial period has ended. Upgrade to continue accessing EquityLeap's investment platform.
+            your free trial period has ended. Upgrade to continue accessing Retreat Slice's investment platform.
           </div>
           
           <Button 

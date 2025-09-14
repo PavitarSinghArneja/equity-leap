@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, TrendingUp, Shield, Users, BarChart3, LogOut } from "lucide-react";
+import { ArrowRight, TrendingUp, Shield, Users, BarChart3 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 import heroImage from "@/assets/hero-image.jpg";
 
 const LandingPage = () => {
-  const { user, profile, signOut, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,53 +30,6 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-foreground">EquityLeap</span>
-          </div>
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            {user && profile ? (
-              <>
-                <span className="hidden sm:inline text-foreground font-medium">
-                  Welcome, {profile.full_name || user.email?.split('@')[0] || 'User'}
-                </span>
-                <Link to="/welcome">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm sm:text-base px-3 sm:px-4">
-                    Dashboard
-                  </Button>
-                </Link>
-                <Button 
-                  variant="outline" 
-                  onClick={signOut}
-                  className="flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base px-3 sm:px-4"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:inline">Sign Out</span>
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link to="/auth">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm sm:text-base px-3 sm:px-4">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link to="/auth">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm sm:text-base px-3 sm:px-4">
-                    <span className="hidden sm:inline">Get Started</span>
-                    <span className="sm:hidden">Start</span>
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
@@ -116,7 +69,7 @@ const LandingPage = () => {
       <section className="py-24 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Why Choose EquityLeap?</h2>
+            <h2 className="text-4xl font-bold mb-4">Why Choose Retreat Slice?</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Professional-grade property investment platform with institutional-quality opportunities
             </p>
@@ -241,10 +194,10 @@ const LandingPage = () => {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <BarChart3 className="w-5 h-5 text-white" />
               </div>
-              <span className="text-2xl font-bold">EquityLeap</span>
+              <span className="text-2xl font-bold">Retreat Slice</span>
             </div>
             <p className="text-muted-foreground">
-              © 2024 EquityLeap. All rights reserved.
+              © 2024 Retreat Slice. All rights reserved.
             </p>
           </div>
         </div>

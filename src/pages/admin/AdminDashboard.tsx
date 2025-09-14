@@ -18,8 +18,6 @@ import {
   CheckCircle2,
   Clock,
   Settings,
-  LogOut,
-  Home,
   Plus,
   RefreshCw
 } from 'lucide-react';
@@ -35,7 +33,7 @@ interface AdminStats {
 }
 
 const AdminDashboard = () => {
-  const { user, signOut, addNotification } = useAuth();
+  const { user, addNotification } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<AdminStats>({
     totalUsers: 0,
@@ -321,63 +319,27 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-foreground">EquityLeap Admin</span>
-            <Badge variant="secondary" className="ml-2">Admin Panel</Badge>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => fetchAdminStats(true)}
-              disabled={refreshing}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => navigate('/welcome')}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Home
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={signOut}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
       <div className="container mx-auto px-4 py-8">
         <div className="space-y-8">
           {/* Welcome Section */}
           <div>
             <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
             <div className="flex items-center justify-between">
-              <p className="text-muted-foreground">
-                Manage users, properties, and platform operations
-              </p>
-              {lastUpdated && (
-                <p className="text-xs text-muted-foreground">
-                  Last updated: {lastUpdated.toLocaleTimeString()}
-                </p>
-              )}
+              <p className="text-muted-foreground">Manage users, properties, and platform operations</p>
+              <div className="flex items-center gap-3">
+                {lastUpdated && (
+                  <p className="text-xs text-muted-foreground">Last updated: {lastUpdated.toLocaleTimeString()}</p>
+                )}
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => fetchAdminStats(true)}
+                  disabled={refreshing}
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -396,7 +358,7 @@ const AdminDashboard = () => {
               icon={Users}
               description="Paid users (waitlist, investors)"
               color="text-green-600"
-              action={() => navigate('/admin/users')}
+              action={() => navigate('/admin/users?subscription=active')}
             />
             <StatCard
               title="Pending KYC"

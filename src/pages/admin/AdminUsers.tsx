@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -44,13 +44,14 @@ interface User {
 }
 
 const AdminUsers = () => {
-  const { user, addNotification } = useAuth();
+  const { user, addNotification, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [tierFilter, setTierFilter] = useState('all');
   const [kycFilter, setKycFilter] = useState('all');
+  const [subscriptionFilter, setSubscriptionFilter] = useState<'all'|'active'|'inactive'>('all');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userTransactions, setUserTransactions] = useState<any[]>([]);
   const [userInvestments, setUserInvestments] = useState<any[]>([]);
@@ -59,9 +60,19 @@ const AdminUsers = () => {
   const [expandedInvestment, setExpandedInvestment] = useState<string | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
+  const location = useLocation();
+
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  // Initialize filters from query params (e.g., subscription=active)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const sub = params.get('subscription');
+    if (sub === 'active') setSubscriptionFilter('active');
+    if (sub === 'inactive') setSubscriptionFilter('inactive');
+  }, [location.search]);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -115,6 +126,11 @@ const AdminUsers = () => {
         } : u
       ));
 
+      // If the updated user is the current session user, refresh their profile
+      if (user && user.id === userId) {
+        await refreshProfile();
+      }
+
       addNotification({
         name: "User Tier Updated",
         description: `User tier manually set to ${newTier.replace('_', ' ')}. This will override automatic calculations.`,
@@ -152,6 +168,11 @@ const AdminUsers = () => {
           tier_override_by: null
         } : u
       ));
+
+      // If the updated user is the current session user, refresh their profile
+      if (user && user.id === userId) {
+        await refreshProfile();
+      }
 
       addNotification({
         name: "Override Removed",
@@ -363,8 +384,12 @@ const AdminUsers = () => {
     
     const matchesTier = tierFilter === 'all' || user.tier === tierFilter;
     const matchesKyc = kycFilter === 'all' || user.kyc_status === kycFilter;
+    const matchesSubscription =
+      subscriptionFilter === 'all' ||
+      (subscriptionFilter === 'active' && user.subscription_active) ||
+      (subscriptionFilter === 'inactive' && !user.subscription_active);
 
-    return matchesSearch && matchesTier && matchesKyc;
+    return matchesSearch && matchesTier && matchesKyc && matchesSubscription;
   });
 
   const getTierBadge = (user: User) => {
@@ -433,28 +458,23 @@ const AdminUsers = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/admin')}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
             <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
               <Users className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">User Management</span>
+            <h1 className="text-2xl font-bold">User Management</h1>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/admin')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Admin
+          </Button>
         </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
         <div className="space-y-6">
           {/* Search and Filters */}
           <Card>
@@ -497,6 +517,17 @@ const AdminUsers = () => {
                     <SelectItem value="under_review">Under Review</SelectItem>
                     <SelectItem value="approved">Approved</SelectItem>
                     <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={subscriptionFilter} onValueChange={(v) => setSubscriptionFilter(v as any)}>
+                  <SelectTrigger className="w-full md:w-[200px]">
+                    <SelectValue placeholder="Subscription" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Subscriptions</SelectItem>
+                    <SelectItem value="active">Active Subscriptions</SelectItem>
+                    <SelectItem value="inactive">Inactive / Trial</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

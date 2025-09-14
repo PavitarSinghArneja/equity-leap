@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import WalletActions from '@/components/WalletActions';
 import { useAdmin } from '@/hooks/useAdmin';
 import InvestmentPerformanceChart from '@/components/InvestmentPerformanceChart';
-import GlobalHeader from '@/components/GlobalHeader';
 import TransactionDetailsModal from '@/components/TransactionDetailsModal';
 import MyShareSellRequests from '@/components/MyShareSellRequests';
 import MyWatchlistEnhanced from '@/components/MyWatchlistEnhanced';
@@ -146,7 +145,7 @@ const Dashboard = () => {
   const fetchTransactions = useCallback(async () => {
     if (!user) return;
     try {
-      const { data, error } = await supabase
+      const { data: transactionData, error: txError } = await supabase
         .from('transactions')
         .select(`
           *,
@@ -155,8 +154,29 @@ const Dashboard = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setTransactions(data || []);
+      if (txError) throw txError;
+
+      // For investment transactions, fetch the corresponding investment record to get shares
+      const enrichedTransactions = await Promise.all((transactionData || []).map(async (tx) => {
+        if (tx.transaction_type === 'investment' && tx.property_id) {
+          // Try to find matching investment record
+          const { data: investmentData } = await supabase
+            .from('investments')
+            .select('shares_owned')
+            .eq('user_id', user.id)
+            .eq('property_id', tx.property_id)
+            .eq('total_investment', tx.amount)
+            .single();
+
+          if (investmentData) {
+            // Add shares info to description
+            tx.description = `${investmentData.shares_owned} shares`;
+          }
+        }
+        return tx;
+      }));
+
+      setTransactions(enrichedTransactions || []);
     } catch (error) {
       console.error('Error fetching transactions:', error);
     }
@@ -184,7 +204,7 @@ const Dashboard = () => {
     if (!user) return;
     setLoadingAllTransactions(true);
     try {
-      const { data, error } = await supabase
+      const { data: transactionData, error: txError } = await supabase
         .from('transactions')
         .select(`
           *,
@@ -193,8 +213,29 @@ const Dashboard = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setAllTransactions(data || []);
+      if (txError) throw txError;
+
+      // For investment transactions, fetch the corresponding investment record to get shares
+      const enrichedTransactions = await Promise.all((transactionData || []).map(async (tx) => {
+        if (tx.transaction_type === 'investment' && tx.property_id) {
+          // Try to find matching investment record
+          const { data: investmentData } = await supabase
+            .from('investments')
+            .select('shares_owned')
+            .eq('user_id', user.id)
+            .eq('property_id', tx.property_id)
+            .eq('total_investment', tx.amount)
+            .single();
+
+          if (investmentData) {
+            // Add shares info to description
+            tx.description = `${investmentData.shares_owned} shares`;
+          }
+        }
+        return tx;
+      }));
+
+      setAllTransactions(enrichedTransactions || []);
     } catch (error) {
       console.error('Error fetching all transactions:', error);
     } finally {
@@ -389,14 +430,39 @@ const Dashboard = () => {
 
     switch (transaction.transaction_type) {
       case 'investment':
-        title = `Investment of ₹${transaction.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} confirmed`;
-        if (property && sharePrice) {
-          subtitle = `${propertyName} • Share price: ₹${sharePrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        } else if (property) {
-          subtitle = propertyName;
+      case 'share_purchase':
+        // Parse shares from description if available
+        const description = transaction.description || '';
+        const sharesMatch = description.match(/(\d+)\s+shares/i);
+        const shares = sharesMatch ? parseInt(sharesMatch[1]) : null;
+
+        if (shares && property) {
+          const pricePerShare = transaction.amount / shares;
+          title = `Bought ${shares} shares of ${propertyName} @ ₹${pricePerShare.toFixed(2)}`;
+          subtitle = `${date.toLocaleDateString('en-IN')} ${date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+        } else {
+          title = `Investment • ${propertyName}`;
+          subtitle = `${date.toLocaleDateString('en-IN')} ${date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
         }
         type = 'investment';
         icon = 'check';
+        break;
+      case 'share_sale':
+        // Parse shares from description for sales
+        const saleDesc = transaction.description || '';
+        const saleSharesMatch = saleDesc.match(/(\d+)\s+shares/i);
+        const saleShares = saleSharesMatch ? parseInt(saleSharesMatch[1]) : null;
+
+        if (saleShares && property) {
+          const salePricePerShare = transaction.amount / saleShares;
+          title = `Sold ${saleShares} shares of ${propertyName} @ ₹${salePricePerShare.toFixed(2)}`;
+          subtitle = `${date.toLocaleDateString('en-IN')} ${date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+        } else {
+          title = `Share Sale • ${propertyName}`;
+          subtitle = `${date.toLocaleDateString('en-IN')} ${date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+        }
+        type = 'return';
+        icon = 'dollar';
         break;
       case 'dividend':
         title = `Received dividend of ₹${transaction.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -482,13 +548,37 @@ const Dashboard = () => {
 
       switch (transaction.transaction_type) {
         case 'investment':
-          title = `Investment of ₹${transaction.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} confirmed`;
-          if (property && sharePrice) {
-            subtitle = `${propertyName} • Share price: ₹${sharePrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-          } else if (property) {
-            subtitle = propertyName;
+        case 'share_purchase':
+          // Parse shares from description if available
+          const description = transaction.description || '';
+          const sharesMatch = description.match(/(\d+)\s+shares/i);
+          const shares = sharesMatch ? parseInt(sharesMatch[1]) : null;
+
+          if (shares && property) {
+            const pricePerShare = transaction.amount / shares;
+            title = `Bought ${shares} shares of ${propertyName} @ ₹${pricePerShare.toFixed(2)}`;
+            subtitle = `${date.toLocaleDateString('en-IN')} ${date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+          } else {
+            title = `Investment • ${propertyName}`;
+            subtitle = `${date.toLocaleDateString('en-IN')} ${date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
           }
           icon = 'check';
+          break;
+        case 'share_sale':
+          // Parse shares from description for sales
+          const saleDesc = transaction.description || '';
+          const saleSharesMatch = saleDesc.match(/(\d+)\s+shares/i);
+          const saleShares = saleSharesMatch ? parseInt(saleSharesMatch[1]) : null;
+
+          if (saleShares && property) {
+            const salePricePerShare = transaction.amount / saleShares;
+            title = `Sold ${saleShares} shares of ${propertyName} @ ₹${salePricePerShare.toFixed(2)}`;
+            subtitle = `${date.toLocaleDateString('en-IN')} ${date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+          } else {
+            title = `Share Sale • ${propertyName}`;
+            subtitle = `${date.toLocaleDateString('en-IN')} ${date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+          }
+          icon = 'dollar';
           break;
         case 'dividend':
           title = `Received dividend of ₹${transaction.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -577,29 +667,34 @@ const Dashboard = () => {
       return;
     }
 
-    // Simple routing logic based on user tier
-    if (profile.tier === 'waitlist_player' && profile.subscription_active) {
+    // Routing logic based on tier. If admin override is active, ignore subscription flags.
+    if (profile.tier === 'waitlist_player') {
       navigate('/waitlist-dashboard');
       return;
     }
     
     // Explorer tier users
     if (profile.tier === 'explorer') {
-      if (!profile.subscription_active) {
-        // Check if trial has expired for unpaid explorer users
-        if (profile.trial_expires_at) {
-          const trialExpires = new Date(profile.trial_expires_at);
-          const now = new Date();
-          
-          if (now > trialExpires) {
-            navigate('/trial-expired');
-            return;
-          }
-        }
+      if (profile.tier_override_by_admin) {
+        // Admin override: show explorer welcome regardless of subscription/trial
         navigate('/welcome');
         return;
+      } else {
+        if (!profile.subscription_active) {
+          // Check if trial has expired for unpaid explorer users
+          if (profile.trial_expires_at) {
+            const trialExpires = new Date(profile.trial_expires_at);
+            const now = new Date();
+            if (now > trialExpires) {
+              navigate('/trial-expired');
+              return;
+            }
+          }
+          navigate('/welcome');
+          return;
+        }
+        // Paid explorer users can access dashboard
       }
-      // Paid explorer users can access dashboard
     }
     
     // Investor tier users (both small and large investors) can always access dashboard
@@ -632,32 +727,22 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <GlobalHeader 
-        title="EquityLeap" 
-        subtitle="Premium Dashboard"
-      >
-        <Button 
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
-          size="sm"
-          onClick={() => navigate('/properties')}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          New Investment
-        </Button>
-      </GlobalHeader>
-
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Premium Dashboard
-          </h1>
-          <p className="text-muted-foreground">
-            Welcome back, {profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User'}. Your exclusive features are now unlocked.
-          </p>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-foreground">Premium Dashboard</h1>
+          <Button 
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            size="sm"
+            onClick={() => navigate('/properties')}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Investment
+          </Button>
         </div>
+        <p className="text-muted-foreground mb-6">
+          Welcome back, {profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User'}. Your exclusive features are now unlocked.
+        </p>
 
         {/* Stats Cards - Row 1: Investment Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">

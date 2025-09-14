@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, CheckCircle2, Shield, ShieldAlert, Wallet, CreditCard, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Shield, ShieldAlert, Wallet, CreditCard, X, Heart } from "lucide-react";
 
 interface Item {
   id?: string;
@@ -41,6 +41,8 @@ const renderIcon = (icon: string) => {
       return <CreditCard className="w-4 h-4 text-white" />;
     case 'X':
       return <X className="w-4 h-4 text-white" />;
+    case 'HEART':
+      return <Heart className="w-4 h-4 text-white" />;
     default:
       // Fallback for any other icons (emojis)
       return <span className="text-sm">{icon}</span>;
@@ -92,6 +94,7 @@ export function AnimatedNotifications({
   className?: string;
 }) {
   const [displayNotifications, setDisplayNotifications] = useState<Item[]>([]);
+  const timersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   useEffect(() => {
     // Set notifications directly to prevent accumulation
@@ -99,18 +102,34 @@ export function AnimatedNotifications({
   }, [notifications]);
 
   useEffect(() => {
-    // Auto-remove each notification after 5 seconds
-    displayNotifications.forEach((notification) => {
-      if (notification.id) {
-        const timer = setTimeout(() => {
-          setDisplayNotifications(prev => 
-            prev.filter(item => item.id !== notification.id)
-          );
-        }, 5000);
-        
-        return () => clearTimeout(timer);
+    // Clear existing timers for notifications no longer displayed
+    const currentIds = new Set(displayNotifications.map(n => n.id).filter(Boolean));
+    timersRef.current.forEach((timer, id) => {
+      if (!currentIds.has(id)) {
+        clearTimeout(timer);
+        timersRef.current.delete(id);
       }
     });
+
+    // Auto-remove each notification after 5 seconds
+    displayNotifications.forEach((notification) => {
+      if (notification.id && !timersRef.current.has(notification.id)) {
+        const timer = setTimeout(() => {
+          setDisplayNotifications(prev =>
+            prev.filter(item => item.id !== notification.id)
+          );
+          timersRef.current.delete(notification.id!);
+        }, 5000);
+
+        timersRef.current.set(notification.id, timer);
+      }
+    });
+
+    return () => {
+      // Cleanup all timers when effect runs again or component unmounts
+      timersRef.current.forEach(timer => clearTimeout(timer));
+      timersRef.current.clear();
+    };
   }, [displayNotifications]);
 
   if (displayNotifications.length === 0) {

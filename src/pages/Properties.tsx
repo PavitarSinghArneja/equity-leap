@@ -64,14 +64,15 @@ const Properties = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchProperties = useCallback(async () => {
+  const fetchProperties = useCallback(async (abortSignal?: AbortSignal) => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('properties')
         .select('*')
         .in('property_status', ['open', 'funded'])
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .abortSignal(abortSignal);
 
       if (error) throw error;
       
@@ -79,7 +80,8 @@ const Properties = () => {
       const { data: investmentData, error: investmentError } = await supabase
         .from('investments')
         .select('property_id, total_investment')
-        .eq('investment_status', 'confirmed');
+        .eq('investment_status', 'confirmed')
+        .abortSignal(abortSignal);
 
       if (investmentError) throw investmentError;
 
@@ -132,6 +134,9 @@ const Properties = () => {
 
       setProperties(transformedProperties);
     } catch (error) {
+      // Don't update state if request was aborted
+      if (abortSignal?.aborted) return;
+
       console.error('Error fetching properties:', error);
       setProperties([]);
       addNotification({
@@ -142,23 +147,24 @@ const Properties = () => {
         isLogo: true
       });
     } finally {
-      setLoading(false);
+      // Don't update loading state if request was aborted
+      if (!abortSignal?.aborted) {
+        setLoading(false);
+      }
     }
-  }, []);
+  }, [addNotification]);
 
   useEffect(() => {
-    fetchProperties();
-  }, [fetchProperties]);
+    const abortController = new AbortController();
+    fetchProperties(abortController.signal);
 
-  // Refresh data when window gains focus (e.g., coming back from admin panel)
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchProperties();
+    return () => {
+      abortController.abort();
     };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
   }, [fetchProperties]);
+
+  // Removed automatic refresh on window focus to prevent unnecessary reloading
+  // Data will refresh when user navigates between pages within the app
 
   const getPropertyTypeIcon = (type: string) => {
     switch (type) {

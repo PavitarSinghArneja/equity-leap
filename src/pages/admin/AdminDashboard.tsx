@@ -61,15 +61,8 @@ const AdminDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Also refresh when window gains focus
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchAdminStats();
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, []);
+  // Removed automatic refresh on window focus to prevent unnecessary reloading
+  // Data will refresh when admin navigates between pages within the app
 
   const fetchAdminStats = async (forceRefresh: boolean = false) => {
     try {

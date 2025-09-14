@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode, useRef } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/hooks/use-notifications';
@@ -53,6 +53,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [hasShownWelcomeThisSession, setHasShownWelcomeThisSession] = useState<boolean>(false);
   const { notifications, addNotification } = useNotifications();
 
+  // Track active timeouts for cleanup
+  const activeTimeouts = useRef<NodeJS.Timeout[]>([]);
+
+  // Helper to manage timeouts with cleanup
+  const createManagedTimeout = (callback: () => void, delay: number): NodeJS.Timeout => {
+    const timeoutId = setTimeout(() => {
+      // Remove from active timeouts when executed
+      activeTimeouts.current = activeTimeouts.current.filter(id => id !== timeoutId);
+      callback();
+    }, delay);
+    activeTimeouts.current.push(timeoutId);
+    return timeoutId;
+  };
+
   const fetchUserProfile = async (userId: string, retries = 3) => {
     try {
       const { data, error } = await supabase
@@ -67,7 +81,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // If no profile found and we have retries left (common after OAuth signup)
       if (!data && retries > 0) {
         console.log('Profile not found, retrying in 1 second...');
-        setTimeout(() => {
+        createManagedTimeout(() => {
           fetchUserProfile(userId, retries - 1);
         }, 1000);
         return;
@@ -76,9 +90,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error('Error fetching profile:', error);
       // If profile fetch fails and we have retries, try again
       if (retries > 0) {
-        setTimeout(() => {
+        createManagedTimeout(() => {
           fetchUserProfile(userId, retries - 1);
         }, 1000);
+      } else {
+        // If all retries failed, ensure loading is set to false
+        setLoading(false);
       }
     }
   };
@@ -181,7 +198,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         } else if (event === 'USER_UPDATED') {
           // User data was updated
           if (session?.user) {
-            setTimeout(() => {
+            createManagedTimeout(() => {
               fetchUserProfile(session.user.id);
             }, 0);
           }
@@ -200,16 +217,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // the session stays valid for extended periods (e.g., 24 hours+).
     const refreshInterval = setInterval(async () => {
       try {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          await supabase.auth.refreshSession();
-        }
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Session refresh timeout')), 10000)
+        );
+
+        const refreshPromise = (async () => {
+          const { data } = await supabase.auth.getSession();
+          if (data.session) {
+            await supabase.auth.refreshSession();
+          }
+        })();
+
+        await Promise.race([refreshPromise, timeoutPromise]);
       } catch (e) {
         // Best-effort; errors here should not disrupt the UX
+        console.log('Session refresh failed (this is normal):', e);
       }
     }, 1000 * 60 * 30); // every 30 minutes
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(refreshInterval);
+
+      // Clean up all active timeouts
+      activeTimeouts.current.forEach(timeoutId => {
+        clearTimeout(timeoutId);
+      });
+      activeTimeouts.current = [];
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

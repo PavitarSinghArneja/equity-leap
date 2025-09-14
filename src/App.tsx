@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { DevProvider } from "@/contexts/DevContext";
 import { AnimatedNotifications } from "@/components/ui/notification";
@@ -44,6 +44,32 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 
+const PageTitleManager = () => {
+  const location = useLocation();
+  const path = location.pathname;
+
+  const computeTitle = () => {
+    if (path === "/") return "Retreat Slice";
+    if (path.startsWith("/auth")) return "Sign In · Retreat Slice";
+    if (path.startsWith("/welcome")) return "Welcome · Retreat Slice";
+    if (path.startsWith("/properties")) return "Properties · Retreat Slice";
+    if (path.startsWith("/invest/")) return "Invest · Retreat Slice";
+    if (path.startsWith("/dashboard")) return "Dashboard · Retreat Slice";
+    if (path.startsWith("/waitlist-dashboard")) return "Waitlist · Retreat Slice";
+    if (path.startsWith("/admin")) return "Admin · Retreat Slice";
+    if (path.startsWith("/kyc")) return "KYC · Retreat Slice";
+    if (path.startsWith("/trial-expired")) return "Trial Expired · Retreat Slice";
+    return "Retreat Slice";
+  };
+
+  const title = computeTitle();
+  if (typeof document !== 'undefined' && document.title !== title) {
+    document.title = title;
+  }
+  return null;
+};
+
+
 const AppContent = () => {
   const { notifications } = useAuth();
   
@@ -66,6 +92,7 @@ const AppContent = () => {
           v7_relativeSplatPath: true
         }}
       >
+        <PageTitleManager />
         <TopNav />
         <Routes>
           <Route path="/" element={<LandingPage />} />

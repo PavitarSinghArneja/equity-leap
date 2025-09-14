@@ -173,6 +173,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     );
 
+    // Proactive refresh to keep sessions alive for long-lived browser tabs
+    // Auto-refresh is enabled by the client, but this is a safety net to ensure
+    // the session stays valid for extended periods (e.g., 24 hours+).
+    const refreshInterval = setInterval(async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          await supabase.auth.refreshSession();
+        }
+      } catch (e) {
+        // Best-effort; errors here should not disrupt the UX
+      }
+    }, 1000 * 60 * 30); // every 30 minutes
+
     return () => subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

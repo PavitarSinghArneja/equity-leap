@@ -58,9 +58,11 @@ const LandingPage = () => {
                 Start Investing <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="bg-transparent text-white border-white hover:bg-white hover:text-slate-900 px-8 py-3">
-              View Properties
-            </Button>
+            <Link to="/auth">
+              <Button size="lg" variant="outline" className="bg-transparent text-white border-white hover:bg-white hover:text-slate-900 px-8 py-3">
+                View Properties
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

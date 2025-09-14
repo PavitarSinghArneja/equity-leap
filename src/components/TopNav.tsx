@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate, Link } from 'react-router-dom';
+import { NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -22,6 +22,12 @@ const TopNav: React.FC = () => {
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const isLanding = location.pathname === '/';
+  const isAuth = location.pathname.startsWith('/auth');
+  const isMinimal = isLanding || isAuth;
+  const firstNameRaw = (profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || '').trim();
+  const firstName = firstNameRaw ? firstNameRaw.charAt(0).toUpperCase() + firstNameRaw.slice(1) : '';
 
   const close = () => setOpen(false);
 
@@ -38,11 +44,14 @@ const TopNav: React.FC = () => {
             </div>
             <span className="text-xl font-bold text-foreground">Retreat Slice</span>
           </Link>
-          <button className="md:hidden" onClick={() => setOpen((v) => !v)} aria-label="Toggle menu">
-            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          {!isMinimal && (
+            <button className="md:hidden" onClick={() => setOpen((v) => !v)} aria-label="Toggle menu">
+              {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          )}
         </div>
 
+        {!isMinimal && (
         <nav className="hidden md:flex items-center gap-6 text-sm">
           <NavLink to="/welcome" className="text-foreground font-medium">Home</NavLink>
           <NavLink to="/properties" className="text-muted-foreground hover:text-foreground">Properties</NavLink>
@@ -60,9 +69,10 @@ const TopNav: React.FC = () => {
             </Button>
           )}
         </nav>
+        )}
 
-        <div className="hidden md:flex items-center gap-2">
-          {isAdmin && (
+        <div className="hidden md:flex items-center gap-3">
+          {!isMinimal && isAdmin && user && (
             <Button
               variant="outline"
               size="sm"
@@ -72,37 +82,52 @@ const TopNav: React.FC = () => {
               Admin Panel
             </Button>
           )}
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-white text-sm font-medium">
-              {profile?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
-            </span>
-          </div>
-          <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground">
-            Sign Out
-          </Button>
+          {user ? (
+            <>
+              {firstName && (
+                <span className="hidden sm:inline text-foreground font-medium">Welcome {firstName}</span>
+              )}
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-white text-sm font-medium">
+                  {profile?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
+                </span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground">
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <Button size="sm" onClick={() => navigate('/auth')} className="bg-green-600 text-white hover:bg-green-700">
+              Get Started
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Mobile menu */}
-      {open && (
+      {!isLanding && open && (
         <div className="md:hidden border-t border-border bg-card">
           <div className="container mx-auto px-4 py-3 grid grid-cols-2 gap-2">
             <LinkItem to="/welcome" label="Home" onClick={close} />
             <LinkItem to="/properties" label="Properties" onClick={close} />
-            {isAdmin && (
+            {isAdmin && user && (
               <LinkItem to="/admin/support" label="Support" onClick={close} />
             )}
-            {profile?.subscription_active && (
+            {profile?.subscription_active && user && (
               <Button variant="outline" size="sm" onClick={() => { close(); navigate(profile?.tier === 'waitlist_player' ? '/waitlist-dashboard/overview' : '/dashboard/overview'); }}>
                 Dashboard
               </Button>
             )}
-            {isAdmin && (
+            {isAdmin && user && (
               <Button variant="outline" size="sm" onClick={() => { close(); navigate('/admin'); }}>
                 Admin Panel
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={() => { close(); signOut(); }}>Sign Out</Button>
+            {user ? (
+              <Button variant="ghost" size="sm" onClick={() => { close(); signOut(); }}>Sign Out</Button>
+            ) : (
+              <Button size="sm" className="bg-green-600 text-white hover:bg-green-700" onClick={() => { close(); navigate('/auth'); }}>Get Started</Button>
+            )}
           </div>
       </div>
       )}

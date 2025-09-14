@@ -168,14 +168,6 @@ const Auth = () => {
       <div className="relative w-full max-w-md z-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center space-x-3 mb-12">
-            <div className="w-12 h-12 hero-gradient rounded-xl flex items-center justify-center">
-              <BarChart3 className="w-7 h-7 text-white" />
-            </div>
-            <span className="text-3xl font-bold text-foreground">
-              Retreat Slice
-            </span>
-          </Link>
           <h1 className="text-3xl font-bold mb-2">Welcome</h1>
           <p className="text-muted-foreground">
             Sign in to your account or create a new one to get started

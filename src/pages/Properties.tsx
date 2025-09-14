@@ -45,29 +45,12 @@ const Properties = () => {
   const { isAdmin } = useAdmin();
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
 
-  // Check if trial has expired for unpaid users
+  // Require authentication to view properties; KYC not required
   useEffect(() => {
-    if (!user || !profile) return;
-
-    // Add delay to let admin status propagate
-    const timeoutId = setTimeout(() => {
-      // If admin override is active, do not gate by subscription/trial
-      if (profile.tier_override_by_admin) return;
-
-      // Redirect expired trial users to trial-expired page
-      if (!profile.subscription_active) {
-        const trialExpires = new Date(profile.trial_expires_at);
-        const now = new Date();
-        
-        if (now > trialExpires) {
-          navigate('/trial-expired');
-          return;
-        }
-      }
-    }, 100); // 100ms delay
-
-    return () => clearTimeout(timeoutId);
-  }, [user, profile, navigate]);
+    if (!user) {
+      navigate('/auth');
+    }
+  }, [user, navigate]);
 
   const handleDashboardClick = () => {
     // Route to different dashboards based on user tier

@@ -51,20 +51,36 @@ const AdminDashboard = () => {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
-    fetchAdminStats();
-    
-    // Set up auto-refresh every 30 seconds
-    const interval = setInterval(() => {
-      fetchAdminStats();
-    }, 30000);
+    const abortController = new AbortController();
+    fetchAdminStats(false, abortController.signal);
 
-    return () => clearInterval(interval);
+    // Set up auto-refresh every 5 minutes (reduced from 30 seconds)
+    // Only refresh if user is actively viewing the page
+    const interval = setInterval(() => {
+      // Check if document is visible to avoid unnecessary requests
+      if (document.visibilityState === 'visible' && !abortController.signal.aborted) {
+        const intervalAbortController = new AbortController();
+        fetchAdminStats(false, intervalAbortController.signal).catch(error => {
+          if (error.name !== 'AbortError') {
+            console.log('Admin stats refresh failed:', error);
+          }
+        });
+      }
+    }, 300000); // 5 minutes instead of 30 seconds
+
+    return () => {
+      clearInterval(interval);
+      abortController.abort();
+    };
   }, []);
 
   // Removed automatic refresh on window focus to prevent unnecessary reloading
   // Data will refresh when admin navigates between pages within the app
 
-  const fetchAdminStats = async (forceRefresh: boolean = false) => {
+  const fetchAdminStats = async (forceRefresh: boolean = false, abortSignal?: AbortSignal) => {
+    // Don't proceed if already aborted
+    if (abortSignal?.aborted) return;
+
     try {
       if (forceRefresh) {
         setRefreshing(true);
@@ -244,18 +260,28 @@ const AdminDashboard = () => {
       }
 
     } catch (error) {
+      // Don't update state or show errors if request was aborted
+      if (abortSignal?.aborted) return;
+
       console.error('Error fetching admin stats:', error);
-      addNotification({
-        name: "Failed to Load Stats",
-        description: "Unable to load admin dashboard statistics",
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        isLogo: true
-      });
+
+      // Only show notification for manual refresh failures, not background ones
+      if (forceRefresh) {
+        addNotification({
+          name: "Failed to Load Stats",
+          description: "Unable to load admin dashboard statistics",
+          icon: "ALERT_TRIANGLE",
+          color: "#DC2626",
+          isLogo: true
+        });
+      }
     } finally {
-      setLoading(false);
-      setRefreshing(false);
-      setLastUpdated(new Date());
+      // Don't update state if request was aborted
+      if (!abortSignal?.aborted) {
+        setLoading(false);
+        setRefreshing(false);
+        setLastUpdated(new Date());
+      }
     }
   };
 

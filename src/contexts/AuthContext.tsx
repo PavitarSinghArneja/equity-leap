@@ -216,23 +216,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Auto-refresh is enabled by the client, but this is a safety net to ensure
     // the session stays valid for extended periods (e.g., 24 hours+).
     const refreshInterval = setInterval(async () => {
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => abortController.abort(), 10000);
+
       try {
-        // Add timeout to prevent hanging
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Session refresh timeout')), 10000)
-        );
-
-        const refreshPromise = (async () => {
-          const { data } = await supabase.auth.getSession();
-          if (data.session) {
-            await supabase.auth.refreshSession();
-          }
-        })();
-
-        await Promise.race([refreshPromise, timeoutPromise]);
+        const { data } = await supabase.auth.getSession();
+        if (data.session && !abortController.signal.aborted) {
+          await supabase.auth.refreshSession();
+        }
       } catch (e) {
-        // Best-effort; errors here should not disrupt the UX
-        console.log('Session refresh failed (this is normal):', e);
+        // Ignore aborted requests and network errors
+        if (e.name !== 'AbortError') {
+          console.log('Session refresh failed (this is normal):', e);
+        }
+      } finally {
+        clearTimeout(timeoutId);
       }
     }, 1000 * 60 * 30); // every 30 minutes
 

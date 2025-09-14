@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [hasShownWelcomeThisSession, setHasShownWelcomeThisSession] = useState<boolean>(false);
   const { notifications, addNotification } = useNotifications();
 
-  const fetchUserProfile = useCallback(async (userId: string) => {
+  const fetchUserProfile = async (userId: string, retries = 3) => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
@@ -63,24 +63,39 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (error) throw error;
       setProfile(data);
+
+      // If no profile found and we have retries left (common after OAuth signup)
+      if (!data && retries > 0) {
+        console.log('Profile not found, retrying in 1 second...');
+        setTimeout(() => {
+          fetchUserProfile(userId, retries - 1);
+        }, 1000);
+        return;
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
+      // If profile fetch fails and we have retries, try again
+      if (retries > 0) {
+        setTimeout(() => {
+          fetchUserProfile(userId, retries - 1);
+        }, 1000);
+      }
     }
-  }, []);
+  };
 
   const refreshProfile = useCallback(async () => {
     if (user) {
       await fetchUserProfile(user.id);
     }
-  }, [user, fetchUserProfile]);
+  }, [user]);
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserProfile(session.user.id);
+        await fetchUserProfile(session.user.id);
         // Check if we've already shown welcome notification for this session
         const sessionKey = `welcome_shown_${session.user.id}`;
         const hasShownThisSession = sessionStorage.getItem(sessionKey);
@@ -93,16 +108,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         // Handle different auth events with notifications
         if (event === 'SIGNED_IN' && session?.user) {
           // User signed in successfully (including email verification and OAuth)
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
-          }, 0);
+          // Set loading to true while fetching profile
+          setLoading(true);
+          await fetchUserProfile(session.user.id);
           
           // Check if we've already shown welcome notification for this session
           const sessionKey = `welcome_shown_${session.user.id}`;
@@ -149,6 +164,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               });
             }
           }
+
+          // Set loading to false after profile is fetched and notifications are processed
+          setLoading(false);
         } else if (event === 'SIGNED_OUT') {
           setProfile(null);
           setHasShownWelcomeThisSession(false);
@@ -168,8 +186,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             }, 0);
           }
         }
-        
-        setLoading(false);
+
+        // Only set loading to false if this is not a SIGNED_IN event
+        // For SIGNED_IN, loading is set to false after profile is fetched
+        if (event !== 'SIGNED_IN') {
+          setLoading(false);
+        }
       }
     );
 

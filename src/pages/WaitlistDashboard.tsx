@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/NewAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import WalletActions from '@/components/WalletActions';
-import { useAdmin } from '@/hooks/useAdmin';
+import { useAdmin } from '@/hooks/useNewAdmin';
 import { useWatchlist } from '@/hooks/useWatchlist';
 import { supabase } from '@/integrations/supabase/client';
 import { 

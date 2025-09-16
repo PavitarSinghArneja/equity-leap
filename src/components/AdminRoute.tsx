@@ -1,15 +1,13 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAdmin } from '@/hooks/useAdmin';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAdmin } from '@/hooks/useNewAdmin';
 
 interface AdminRouteProps {
   children: ReactNode;
 }
 
 const AdminRoute = ({ children }: AdminRouteProps) => {
-  const { isAdmin, isAuthenticated } = useAdmin();
-  const { loading } = useAuth();
+  const { isAdmin, isAuthenticated, loading } = useAdmin();
 
   // Show loading while checking auth status
   if (loading) {

@@ -78,6 +78,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (error) throw error;
       setProfile(data);
 
+      // Cache the profile data immediately (your requested feature)
+      if (data) {
+        try {
+          localStorage.setItem('retreat_slice_cached_profile', JSON.stringify(data));
+          console.log('💾 Profile cached to localStorage');
+        } catch (cacheError) {
+          console.warn('Failed to cache profile:', cacheError);
+        }
+      }
+
       // If no profile found and we have retries left (common after OAuth signup)
       if (!data && retries > 0) {
         console.log('Profile not found, retrying in 1 second...');
@@ -104,24 +114,168 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (user) {
       await fetchUserProfile(user.id);
     }
-  }, [user]);
+  }, [user, fetchUserProfile]);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchUserProfile(session.user.id);
-        // Check if we've already shown welcome notification for this session
-        const sessionKey = `welcome_shown_${session.user.id}`;
-        const hasShownThisSession = sessionStorage.getItem(sessionKey);
-        if (hasShownThisSession) {
-          setHasShownWelcomeThisSession(true);
+    // Local storage cache keys for your requested caching system
+    const CACHED_SESSION_KEY = 'retreat_slice_cached_session';
+    const CACHED_PROFILE_KEY = 'retreat_slice_cached_profile';
+    const CACHE_TIMESTAMP_KEY = 'retreat_slice_cache_timestamp';
+    const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+    const initializeAuth = async () => {
+      try {
+        console.log('🔧 Initializing auth with local storage caching system');
+
+        // First, try to load from cache (your requested feature)
+        const loadFromCache = () => {
+          try {
+            const cacheTimestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+            const cachedSession = localStorage.getItem(CACHED_SESSION_KEY);
+            const cachedProfile = localStorage.getItem(CACHED_PROFILE_KEY);
+
+            if (cacheTimestamp && cachedSession) {
+              const cacheAge = Date.now() - parseInt(cacheTimestamp);
+              if (cacheAge < CACHE_DURATION) {
+                console.log('📦 Loading auth data from cache - no Supabase call needed!');
+                console.log('🔍 Cache debug:', {
+                  sessionExists: !!cachedSession,
+                  profileExists: !!cachedProfile,
+                  profileValueType: typeof cachedProfile,
+                  profileLength: cachedProfile?.length,
+                  profilePreview: cachedProfile?.substring(0, 100)
+                });
+                let session, profile;
+                try {
+                  session = JSON.parse(cachedSession);
+                  profile = cachedProfile ? JSON.parse(cachedProfile) : null;
+                  console.log('🔍 Parsed cache data:', {
+                    sessionUser: !!session?.user,
+                    profileData: !!profile
+                  });
+                } catch (parseError) {
+                  console.error('❌ Cache parse error, clearing corrupted cache:', parseError);
+                  localStorage.removeItem(CACHED_SESSION_KEY);
+                  localStorage.removeItem(CACHED_PROFILE_KEY);
+                  localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+                  return false;
+                }
+
+                // Validate session structure
+                if (!session?.user || !session?.access_token) {
+                  console.warn('🔍 Invalid cached session, clearing cache');
+                  localStorage.removeItem(CACHED_SESSION_KEY);
+                  localStorage.removeItem(CACHED_PROFILE_KEY);
+                  localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+                  return false;
+                }
+
+                setSession(session);
+                setUser(session?.user ?? null);
+
+                // If profile is missing from cache, fetch it from Supabase
+                if (!profile && session?.user) {
+                  console.log('📡 Profile missing from cache, fetching from Supabase');
+                  setProfile(null); // Ensure profile is explicitly null
+                  fetchUserProfile(session.user.id).finally(() => {
+                    console.log('✅ Profile fetch completed, setting loading to false');
+                    setLoading(false);
+                  });
+                } else {
+                  console.log('✅ Profile available in cache, setting profile and loading state');
+                  setProfile(profile);
+                  // Use a microtask to ensure state updates are processed
+                  Promise.resolve().then(() => {
+                    console.log('🔄 Setting loading to false via microtask');
+                    setLoading(false);
+                  });
+                }
+
+                // Check welcome notification state
+                if (session?.user) {
+                  try {
+                    const sessionKey = `welcome_shown_${session.user.id}`;
+                    const hasShownThisSession = sessionStorage.getItem(sessionKey);
+                    if (hasShownThisSession) {
+                      setHasShownWelcomeThisSession(true);
+                    }
+                  } catch (e) {
+                    console.warn('Failed to read sessionStorage:', e);
+                  }
+                }
+
+                return true;
+              } else {
+                console.log('🗓️ Cache expired, clearing old data');
+                localStorage.removeItem(CACHED_SESSION_KEY);
+                localStorage.removeItem(CACHED_PROFILE_KEY);
+                localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+              }
+            }
+            return false;
+          } catch (error) {
+            console.warn('Cache load failed:', error);
+            try {
+              localStorage.removeItem(CACHED_SESSION_KEY);
+              localStorage.removeItem(CACHED_PROFILE_KEY);
+              localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+            } catch (e) {
+              console.warn('Failed to clear corrupted cache:', e);
+            }
+            return false;
+          }
+        };
+
+        // Try cache first - this prevents the timeout issues you experienced
+        if (loadFromCache()) {
+          console.log('🎯 Successfully loaded from cache - refresh works!');
+          return;
         }
+
+        // Cache miss - fetch from Supabase
+        console.log('📡 Cache miss - fetching fresh session from Supabase');
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error('❌ Error getting session:', error);
+          setLoading(false);
+          return;
+        }
+
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          // Cache the session immediately after successful fetch
+          localStorage.setItem(CACHED_SESSION_KEY, JSON.stringify(session));
+          localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+
+          await fetchUserProfile(session.user.id);
+
+          // Check welcome notification state
+          try {
+            const sessionKey = `welcome_shown_${session.user.id}`;
+            const hasShownThisSession = sessionStorage.getItem(sessionKey);
+            if (hasShownThisSession) {
+              setHasShownWelcomeThisSession(true);
+            }
+          } catch (e) {
+            console.warn('Failed to read sessionStorage:', e);
+          }
+        } else {
+          // No session - clear any stale cache
+          localStorage.removeItem(CACHED_SESSION_KEY);
+          localStorage.removeItem(CACHED_PROFILE_KEY);
+          localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('💥 Auth initialization failed:', error);
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    };
+
+    initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -403,7 +557,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
       setProfile(null);
       setHasShownWelcomeThisSession(false);
-      
+
+      // Clear auth cache (your requested feature)
+      try {
+        localStorage.removeItem('retreat_slice_cached_session');
+        localStorage.removeItem('retreat_slice_cached_profile');
+        localStorage.removeItem('retreat_slice_cache_timestamp');
+        console.log('🧹 Auth cache cleared on sign out');
+      } catch (e) {
+        console.warn('Failed to clear auth cache:', e);
+      }
+
       // Clear welcome notification flags from sessionStorage
       Object.keys(sessionStorage).forEach(key => {
         if (key.startsWith('welcome_shown_')) {
@@ -445,3 +609,6 @@ export const useAuth = () => {
   }
   return context;
 };
+
+// Add display name for better HMR compatibility
+useAuth.displayName = 'useAuth';

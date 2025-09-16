@@ -1,8 +1,8 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/NewAuthContext';
 
 export const useAdmin = () => {
-  const { user, profile } = useAuth();
-  
+  const { user, profile, loading } = useAuth();
+
   const isAdmin = Boolean(profile?.is_admin);
   const isAuthenticated = Boolean(user);
 
@@ -10,6 +10,7 @@ export const useAdmin = () => {
     isAdmin,
     isAuthenticated,
     user,
-    profile
+    profile,
+    loading
   };
 };

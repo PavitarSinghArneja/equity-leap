@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/NewAuthContext';
 import { Building2, Heart } from 'lucide-react';
 
 const LinkItem = ({ to, icon: Icon, label }: { to: string; icon: any; label: string }) => (

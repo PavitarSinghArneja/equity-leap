@@ -1,16 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/NewAuthContext';
+import { useNotifications } from '@/hooks/useNotifications';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useInvestments, useInvestmentMutations } from '@/hooks/useInvestmentService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useAdmin } from '@/hooks/useAdmin';
+import { useAdmin } from '@/hooks/useNewAdmin';
 import { supabase } from '@/integrations/supabase/client';
-import { 
+import {
   ArrowLeft,
+  BarChart3,
   Building2,
   MapPin,
   TrendingUp,
@@ -61,7 +64,8 @@ interface EscrowBalance {
 }
 
 const Investment = () => {
-  const { user, profile, addNotification } = useAuth();
+  const { user, profile } = useAuth();
+  const { error } = useNotifications();
   const navigate = useNavigate();
   const { propertyId } = useParams();
   const { isAdmin } = useAdmin();
@@ -74,24 +78,31 @@ const Investment = () => {
   const [actualInvested, setActualInvested] = useState<number>(0);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
   const [userInvestment, setUserInvestment] = useState<UserInvestment | null>(null);
+
+  // Investment service hooks
+  const { data: investments, loading: investmentsLoading, error: investmentsError } = useInvestments(
+    user && propertyId ? { userId: user.id, propertyId, status: ['confirmed'] } : undefined,
+    { immediate: false }
+  );
+
+  const { data: totalInvestments } = useInvestments(
+    propertyId && propertyId !== 'dummy-1' ? { propertyId, status: ['confirmed'] } : undefined,
+    { immediate: false }
+  );
+
+  const { createInvestment, loading: creating, error: createError } = useInvestmentMutations();
   
   // Calculate investment amount
   const investmentAmount = shares * (property?.share_price || 0);
   const remainingBalance = (escrowBalance?.available_balance || 0) - investmentAmount;
 
-  useEffect(() => {
-    // Removed authentication and KYC requirements for viewing property details
-    // These checks are now moved to the investment action buttons
-
-    fetchData();
-  }, [user, profile, propertyId]);
-
   const fetchData = useCallback(async () => {
-    if (!user || !propertyId) return;
+    console.log('🔥 Investment.tsx fetchData called!', { user: !!user, propertyId });
+    if (!propertyId) return;
 
     try {
       setLoading(true);
-      
+
       // Fetch property details or use dummy data
       if (propertyId === 'dummy-1') {
         // Use dummy data
@@ -131,75 +142,66 @@ const Investment = () => {
 
         if (error) throw error;
         setProperty(data);
-        
-        // Check if user has existing investment in this property
-        const { data: investmentData, error: investmentError } = await supabase
-          .from('investments')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('property_id', propertyId)
-          .single();
-
-        if (!investmentError && investmentData) {
-          setUserInvestment(investmentData);
-        }
       }
-      
+
       // Reset image index when property loads
       setSelectedImageIndex(0);
 
-      // Fetch actual investment totals for this property
-      if (propertyId !== 'dummy-1') {
-        const { data: investmentData, error: investmentError } = await supabase
-          .from('investments')
-          .select('total_investment')
-          .eq('property_id', propertyId)
-          .eq('investment_status', 'confirmed');
-
-        if (investmentError) throw investmentError;
-        
-        const totalInvested = investmentData?.reduce((sum, inv) => sum + inv.total_investment, 0) || 0;
-        setActualInvested(totalInvested);
-      }
-
-      // Fetch user's wallet balance
-      const { data: balanceData, error: balanceError } = await supabase
-        .from('escrow_balances')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (balanceError) throw balanceError;
-      setEscrowBalance(balanceData);
-      
-      // For non-dummy properties, also check user's investment
-      if (propertyId !== 'dummy-1') {
-        const { data: investmentData, error: investmentError } = await supabase
-          .from('investments')
+      // Fetch user's wallet balance if authenticated
+      if (user) {
+        const { data: balanceData, error: balanceError } = await supabase
+          .from('escrow_balances')
           .select('*')
           .eq('user_id', user.id)
-          .eq('property_id', propertyId)
           .single();
 
-        if (!investmentError && investmentData) {
-          setUserInvestment(investmentData);
+        if (balanceError) {
+          console.error('Wallet balance error:', balanceError);
+          // Don't throw - allow viewing without wallet
+        } else {
+          setEscrowBalance(balanceData);
         }
       }
 
     } catch (error) {
       console.error('Error fetching data:', error);
-      addNotification({
-        name: "Failed to Load Property",
-        description: "Unable to load property details. Please try again.",
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        isLogo: true
-      });
+      // TODO: Add proper notification
       navigate('/properties');
     } finally {
       setLoading(false);
     }
-  }, [user, propertyId, addNotification, navigate]);
+  }, [propertyId, navigate]);
+
+  useEffect(() => {
+    // Removed authentication and KYC requirements for viewing property details
+    // These checks are now moved to the investment action buttons
+
+    fetchData();
+  }, [fetchData]);
+
+  // Handle user investment data from service
+  useEffect(() => {
+    if (investments && investments.length > 0) {
+      const investment = investments[0];
+      setUserInvestment({
+        id: investment.id,
+        shares_owned: investment.shares_owned || 0,
+        price_per_share: investment.price_per_share || 0,
+        total_investment: investment.total_investment || 0,
+        investment_date: investment.investment_date || new Date().toISOString()
+      });
+    } else {
+      setUserInvestment(null);
+    }
+  }, [investments]);
+
+  // Handle total investments data from service
+  useEffect(() => {
+    if (propertyId !== 'dummy-1' && totalInvestments) {
+      const totalInvested = totalInvestments.reduce((sum, inv) => sum + (inv.total_investment || 0), 0);
+      setActualInvested(totalInvested);
+    }
+  }, [totalInvestments, propertyId]);
 
   const handleSharesChange = (value: string) => {
     const numShares = parseInt(value) || 0;
@@ -212,7 +214,7 @@ const Investment = () => {
     if (!property || !escrowBalance) return false;
 
     if (shares <= 0) {
-      addNotification({
+      console.log({
         name: "Invalid Shares",
         description: "Please enter a valid number of shares",
         icon: "ALERT_TRIANGLE",
@@ -223,7 +225,7 @@ const Investment = () => {
     }
 
     if (investmentAmount < property.minimum_investment) {
-      addNotification({
+      console.log({
         name: "Below Minimum Investment",
         description: `Minimum investment is ${formatCurrency(property.minimum_investment)}`,
         icon: "ALERT_TRIANGLE",
@@ -234,7 +236,7 @@ const Investment = () => {
     }
 
     if (investmentAmount > property.maximum_investment) {
-      addNotification({
+      console.log({
         name: "Exceeds Maximum Investment",
         description: `Maximum investment is ${formatCurrency(property.maximum_investment)}`,
         icon: "ALERT_TRIANGLE",
@@ -245,7 +247,7 @@ const Investment = () => {
     }
 
     if (investmentAmount > escrowBalance.available_balance) {
-      addNotification({
+      console.log({
         name: "Insufficient Balance",
         description: "You don't have enough balance in your wallet",
         icon: "ALERT_TRIANGLE",
@@ -256,7 +258,7 @@ const Investment = () => {
     }
 
     if (shares > property.available_shares) {
-      addNotification({
+      console.log({
         name: "Shares Not Available",
         description: `Only ${property.available_shares} shares are available`,
         icon: "ALERT_TRIANGLE",
@@ -272,7 +274,7 @@ const Investment = () => {
   const executeInvestment = async () => {
     // Check if user is authenticated first
     if (!user) {
-      addNotification({
+      console.log({
         name: "Sign In Required",
         description: "Please sign in to start investing",
         icon: "SHIELD_ALERT",
@@ -286,7 +288,7 @@ const Investment = () => {
     // Check KYC status before allowing investment
     const isInvestorTier = profile?.tier === 'small_investor' || profile?.tier === 'large_investor';
     if (!(profile?.tier_override_by_admin && isInvestorTier) && profile?.kyc_status !== 'approved') {
-      addNotification({
+      console.log({
         name: "KYC Required",
         description: "Please complete your KYC verification to start investing",
         icon: "SHIELD_ALERT",
@@ -301,21 +303,17 @@ const Investment = () => {
 
     setInvesting(true);
     try {
-      // Create investment record
-      const { data: investmentData, error: investmentError } = await supabase
-        .from('investments')
-        .insert([{
-          user_id: user.id,
-          property_id: property.id,
-          shares_owned: shares,
-          price_per_share: property.share_price,
-          total_investment: investmentAmount,
-          investment_status: 'confirmed'
-        }])
-        .select()
-        .single();
+      // Create investment using service
+      const investmentData = await createInvestment({
+        user_id: user.id,
+        property_id: property.id,
+        shares_owned: shares,
+        price_per_share: property.share_price,
+        total_investment: investmentAmount,
+        investment_status: 'confirmed'
+      });
 
-      if (investmentError) throw investmentError;
+      if (!investmentData) throw new Error('Investment creation failed');
 
       // Update user's wallet balance
       const newBalance = (escrowBalance?.available_balance || 0) - investmentAmount;
@@ -378,7 +376,7 @@ const Investment = () => {
         console.warn('Position snapshot recalc failed (non-fatal):', e);
       }
 
-      addNotification({
+      console.log({
         name: "Investment Successful",
         description: `You've successfully invested ${formatCurrency(investmentAmount)} in ${property.title}`,
         icon: "CHECK_CIRCLE",
@@ -393,7 +391,7 @@ const Investment = () => {
 
     } catch (error) {
       console.error('Investment error:', error);
-      addNotification({
+      console.log({
         name: "Investment Failed",
         description: "Unable to complete your investment. Please try again.",
         icon: "ALERT_TRIANGLE",

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/NewAuthContext';
 import { updateUserTier, recalculateUserTierAfterInvestment } from '@/utils/tierManagement';
 
 export const useTierManagement = () => {

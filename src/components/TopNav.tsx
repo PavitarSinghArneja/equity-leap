@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAdmin } from '@/hooks/useAdmin';
+import { useAuth } from '@/contexts/NewAuthContext';
+import { useAdmin } from '@/hooks/useNewAdmin';
 import { BarChart3, Menu, X } from 'lucide-react';
 
 const LinkItem = ({ to, label, onClick }: { to: string; label: string; onClick?: () => void }) => (

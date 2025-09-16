@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/NewAuthContext';
+import { useInvestments, useInvestmentMutations } from '@/hooks/useInvestmentService';
 import {
   ShoppingCart,
   User,
@@ -43,6 +44,7 @@ interface ShareMarketplaceProps {
 }
 
 const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
+  console.log('🔥 ShareMarketplace component rendered!', { propertyId });
   const { user, addNotification } = useAuth();
   const [sellRequests, setSellRequests] = useState<ShareSellRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,6 +86,7 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
   };
 
   useEffect(() => {
+    console.log('🔥 ShareMarketplace mounted!', { propertyId });
     fetchSellRequests();
   }, [propertyId]);
 
@@ -138,13 +141,26 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
 
       if (sellerTransactionError) throw sellerTransactionError;
 
-      // Update buyer's investment record
-      const { data: existingInvestment } = await supabase
+      // Get buyer's existing investment
+      const { data: buyerInvestments } = await new Promise((resolve) => {
+        // Use the investment service to get buyer's existing investment
+        const tempService = require('@/hooks/useInvestmentService');
+        resolve({ data: [] }); // Temporary - will be properly handled by service
+      });
+
+      // Handle buyer's investment update through manual database calls
+      // (Investment service will be used for reads, direct calls for complex updates)
+      const { data: existingInvestment, error: investmentQueryError } = await supabase
         .from('investments')
-        .select('*')
+        .select('id, shares_owned, total_investment, price_per_share')
         .eq('user_id', user.id)
         .eq('property_id', sellRequest.property_id)
         .single();
+
+      if (investmentQueryError && investmentQueryError.code !== 'PGRST116') {
+        console.error('Investment query failed:', investmentQueryError);
+        throw investmentQueryError;
+      }
 
       if (existingInvestment) {
         // Update existing investment
@@ -175,12 +191,17 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
       }
 
       // Update seller's investment record
-      const { data: sellerInvestment } = await supabase
+      const { data: sellerInvestment, error: sellerInvestmentError } = await supabase
         .from('investments')
-        .select('*')
+        .select('id, shares_owned, total_investment, price_per_share')
         .eq('user_id', sellRequest.seller_id)
         .eq('property_id', sellRequest.property_id)
         .single();
+
+      if (sellerInvestmentError) {
+        console.error('🚨 ShareMarketplace: Seller investment query failed:', sellerInvestmentError);
+        throw sellerInvestmentError;
+      }
 
       if (sellerInvestment) {
         const newShares = sellerInvestment.shares_owned - sellRequest.shares_to_sell;

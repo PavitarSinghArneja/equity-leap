@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Heart, HeartIcon } from 'lucide-react';
 import { useWatchlist } from '@/hooks/useWatchlist';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/NewAuthContext';
 import { cn } from '@/lib/utils';
 
 interface WatchlistButtonProps {

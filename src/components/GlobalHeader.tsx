@@ -1,8 +1,8 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/NewAuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useAdmin } from '@/hooks/useAdmin';
+import { useAdmin } from '@/hooks/useNewAdmin';
 import { 
   BarChart3, 
   Home,

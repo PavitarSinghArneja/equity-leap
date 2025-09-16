@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/NewAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import WalletActions from '@/components/WalletActions';
-import { useAdmin } from '@/hooks/useAdmin';
+import { useAdmin } from '@/hooks/useNewAdmin';
 import InvestmentPerformanceChart from '@/components/InvestmentPerformanceChart';
 import TransactionDetailsModal from '@/components/TransactionDetailsModal';
 import MyShareSellRequests from '@/components/MyShareSellRequests';

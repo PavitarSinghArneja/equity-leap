@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/NewAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { useAdmin } from '@/hooks/useAdmin';
+import { useAdmin } from '@/hooks/useNewAdmin';
 import { useWatchlist } from '@/hooks/useWatchlist';
 import { supabase } from '@/integrations/supabase/client';
 import { 

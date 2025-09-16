@@ -17,5 +17,24 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
+  },
+  global: {
+    headers: {
+      'Accept': '*/*',
+    }
+  }
+});
+
+// Temporary workaround client for investment queries (avoids 406 errors)
+export const supabaseInvestments = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+  global: {
+    headers: {
+      'Accept': '*/*',
+      'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+    }
   }
 });

@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/NewAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAdmin } from '@/hooks/useAdmin';
+import { useAdmin } from '@/hooks/useNewAdmin';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -23,16 +23,39 @@ const Welcome = () => {
   const { isAdmin } = useAdmin();
 
   useEffect(() => {
+    const timestamp = new Date().toISOString().substr(11, 12);
+    console.log(`🔍 [${timestamp}] Welcome useEffect - State:`, {
+      loading,
+      user: !!user,
+      profile: !!profile,
+      profileId: profile?.id,
+      profileTier: profile?.tier
+    });
+
     // Wait for auth to finish loading
-    if (loading) return;
+    if (loading) {
+      console.log(`⏳ [${timestamp}] Welcome: Still loading, waiting...`);
+      return;
+    }
 
     // Redirect unauthenticated users to auth page
     if (!user) {
+      console.log(`❌ [${timestamp}] Welcome: No user, redirecting to auth`);
       navigate('/auth');
       return;
     }
 
-    if (!profile) return;
+    if (!profile) {
+      console.log(`❌ [${timestamp}] Welcome: No profile, staying in loading state`);
+      console.log(`🔍 [${timestamp}] Welcome: Profile debug:`, {
+        profile,
+        type: typeof profile,
+        keys: profile ? Object.keys(profile) : 'N/A'
+      });
+      return;
+    }
+
+    console.log(`✅ [${timestamp}] Welcome: Auth complete, proceeding with app logic`);
 
     // Check if trial has expired for unpaid users
     if (!profile.subscription_active) {
@@ -44,7 +67,7 @@ const Welcome = () => {
         return;
       }
     }
-  }, [user, profile, navigate]);
+  }, [loading, user, profile, navigate]);
 
   const getTrialDaysLeft = () => {
     if (!profile || profile.subscription_active) return null;

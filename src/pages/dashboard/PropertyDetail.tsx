@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/NewAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,7 @@ interface SnapshotPosition {
 
 const PropertyDetailPage: React.FC = () => {
   const { propertyId } = useParams();
-  const { user, addNotification } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [property, setProperty] = useState<Property | null>(null);
@@ -60,13 +60,27 @@ const PropertyDetailPage: React.FC = () => {
         .single();
       setProperty(p as any);
 
-      const { data: invRows } = await supabase
+      // Debug: Check current session and token
+      const session = await supabase.auth.getSession();
+      console.log('🔍 Debug - Current session:', {
+        user_id: user.id,
+        property_id: propertyId,
+        session_exists: !!session.data.session,
+        access_token_length: session.data.session?.access_token?.length || 'no token',
+        token_preview: session.data.session?.access_token?.substring(0, 50) + '...'
+      });
+
+      const { data: invRows, error: invError } = await supabase
         .from('investments')
         .select('id, shares_owned, price_per_share, total_investment, investment_date')
         .eq('user_id', user.id)
         .eq('property_id', propertyId)
         .eq('investment_status', 'confirmed')
         .order('investment_date', { ascending: true }); // FIFO: oldest first
+
+      if (invError) {
+        console.error('🚨 Investment query error:', invError);
+      }
       if (invRows && invRows.length) {
         const totals = invRows.reduce((acc, r) => {
           acc.shares += r.shares_owned || 0;

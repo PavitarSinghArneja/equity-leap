@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/NewAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
   LayoutGrid,

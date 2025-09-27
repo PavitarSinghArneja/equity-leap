@@ -42,13 +42,6 @@ import {
   ErrorScreen
 } from "@/components/AuthGuards";
 import AdminPanel from "@/pages/admin/AdminPanel";
-import AdminUsers from "@/pages/admin/AdminUsers";
-import AdminKYC from "@/pages/admin/AdminKYC";
-import AdminProperties from "@/pages/admin/AdminProperties";
-import AdminSupport from "@/pages/admin/AdminSupport";
-import AdminInvestments from "@/pages/admin/AdminInvestments";
-import AdminAddProperty from "@/pages/admin/AdminAddProperty";
-import AdminShareTrading from "@/pages/admin/AdminShareTrading";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -211,7 +204,7 @@ const AppContent = () => {
             }
           />
 
-          {/* Admin Routes - require both auth and admin privileges */}
+          {/* Admin Routes - All admin functionality in one integrated panel */}
           <Route
             path="/admin"
             element={
@@ -221,58 +214,10 @@ const AppContent = () => {
             }
           />
           <Route
-            path="/admin/users"
+            path="/admin/*"
             element={
               <AdminRoute>
-                <AdminUsers />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/admin/kyc"
-            element={
-              <AdminRoute>
-                <AdminKYC />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/admin/properties"
-            element={
-              <AdminRoute>
-                <AdminProperties />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/admin/properties/new"
-            element={
-              <AdminRoute>
-                <AdminAddProperty />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/admin/share-trading"
-            element={
-              <AdminRoute>
-                <AdminShareTrading />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/admin/support"
-            element={
-              <AdminRoute>
-                <AdminSupport />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/admin/investments"
-            element={
-              <AdminRoute>
-                <AdminInvestments />
+                <AdminPanel />
               </AdminRoute>
             }
           />

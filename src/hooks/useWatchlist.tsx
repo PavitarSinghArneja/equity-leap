@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/NewAuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { canAccessNotes, canAccessWatchlist } from '@/utils/permissions';
 
 interface WatchlistItem {
   id: string;
@@ -22,7 +23,7 @@ interface WatchlistItem {
 }
 
 export const useWatchlist = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [watchedPropertyIds, setWatchedPropertyIds] = useState<Set<string>>(new Set());
@@ -75,6 +76,12 @@ export const useWatchlist = () => {
   // Add property to watchlist
   const addToWatchlist = useCallback(async (propertyId: string, notes?: string) => {
     if (!user) return { success: false, error: 'User not authenticated' };
+    if (!canAccessWatchlist(profile)) return { success: false, error: 'Access denied' };
+
+    // Check notes permission if notes are provided
+    if (notes && !canAccessNotes(profile)) {
+      return { success: false, error: 'Notes feature requires waitlist player tier or higher' };
+    }
 
     try {
       const { data, error } = await supabase
@@ -152,6 +159,9 @@ export const useWatchlist = () => {
   // Update watchlist item notes
   const updateWatchlistNotes = useCallback(async (propertyId: string, notes: string) => {
     if (!user) return { success: false, error: 'User not authenticated' };
+    if (!canAccessNotes(profile)) {
+      return { success: false, error: 'Notes feature requires waitlist player tier or higher' };
+    }
 
     try {
       const { error } = await supabase
@@ -189,6 +199,8 @@ export const useWatchlist = () => {
     toggleWatchlist,
     isInWatchlist,
     updateWatchlistNotes,
-    watchlistCount: watchlist.length
+    watchlistCount: watchlist.length,
+    canAccessNotes: canAccessNotes(profile),
+    canAccessWatchlist: canAccessWatchlist(profile)
   };
 };

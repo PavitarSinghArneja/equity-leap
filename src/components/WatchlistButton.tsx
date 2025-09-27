@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Heart, HeartIcon } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Heart, HeartIcon, StickyNote } from 'lucide-react';
 import { useWatchlist } from '@/hooks/useWatchlist';
 import { useAuth } from '@/contexts/NewAuthContext';
 import { cn } from '@/lib/utils';
@@ -20,55 +22,74 @@ const WatchlistButton: React.FC<WatchlistButtonProps> = ({
   className,
   showText = true
 }) => {
-  const { user, addNotification } = useAuth();
-  const { isInWatchlist, toggleWatchlist, loading } = useWatchlist();
+  const { user, profile } = useAuth();
+  const {
+    isInWatchlist,
+    toggleWatchlist,
+    addToWatchlist,
+    removeFromWatchlist,
+    loading,
+    canAccessNotes
+  } = useWatchlist();
   const [isToggling, setIsToggling] = useState(false);
+  const [showNotesDialog, setShowNotesDialog] = useState(false);
+  const [notes, setNotes] = useState('');
 
   const isWatched = isInWatchlist(propertyId);
 
   const handleToggleWatchlist = async () => {
     if (!user) {
-      addNotification({
-        name: "Login Required",
-        description: "Please log in to add properties to your watchlist",
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        time: new Date().toLocaleTimeString(),
-        isLogo: false
-      });
+      console.log("Login Required - Please log in to add properties to your watchlist");
       return;
     }
 
+    if (isWatched) {
+      // Remove from watchlist
+      setIsToggling(true);
+      try {
+        const result = await removeFromWatchlist(propertyId);
+        if (result.success) {
+          console.log("Property removed from your watchlist");
+        } else {
+          console.error('Error removing from watchlist:', result.error);
+        }
+      } catch (error) {
+        console.error('Watchlist remove error:', error);
+      } finally {
+        setIsToggling(false);
+      }
+    } else {
+      // Add to watchlist - show notes dialog if user can access notes
+      if (canAccessNotes) {
+        setShowNotesDialog(true);
+      } else {
+        // Add without notes
+        await handleAddToWatchlist();
+      }
+    }
+  };
+
+  const handleAddToWatchlist = async () => {
     setIsToggling(true);
     try {
-      const result = await toggleWatchlist(propertyId);
-      
+      const result = await addToWatchlist(propertyId, notes);
       if (result.success) {
-        addNotification({
-          name: isWatched ? "Removed from Watchlist" : "Added to Watchlist",
-          description: isWatched 
-            ? "Property removed from your watchlist" 
-            : "Property saved to your watchlist",
-          icon: "CHECK_CIRCLE",
-          color: "#059669",
-          time: new Date().toLocaleTimeString(),
-          isLogo: false
-        });
+        console.log("Property saved to your watchlist");
+        setShowNotesDialog(false);
+        setNotes('');
       } else {
-        addNotification({
-          name: "Watchlist Error",
-          description: result.error || "Something went wrong",
-          icon: "ALERT_TRIANGLE",
-          color: "#DC2626",
-          time: new Date().toLocaleTimeString(),
-          isLogo: false
-        });
+        console.error('Error adding to watchlist:', result.error);
       }
     } catch (error) {
-      console.error('Watchlist toggle error:', error);
+      console.error('Watchlist add error:', error);
     } finally {
       setIsToggling(false);
     }
+  };
+
+  const handleDialogClose = () => {
+    setShowNotesDialog(false);
+    setNotes('');
   };
 
   const getButtonProps = () => {
@@ -93,40 +114,8 @@ const WatchlistButton: React.FC<WatchlistButtonProps> = ({
 
   const { size: buttonSize, iconSize } = getButtonProps();
 
-  if (variant === 'icon') {
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
-        className={cn(
-          "w-8 h-8 p-0 hover:bg-background/80",
-          isWatched ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-foreground",
-          className
-        )}
-        onClick={handleToggleWatchlist}
-        disabled={isToggling || loading}
-      >
-        {isWatched ? (
-          <HeartIcon className={cn(iconSize, "fill-current")} />
-        ) : (
-          <Heart className={iconSize} />
-        )}
-      </Button>
-    );
-  }
-
-  return (
-    <Button
-      variant={isWatched ? 'default' : variant}
-      size={buttonSize}
-      className={cn(
-        "transition-all duration-200",
-        isWatched && "bg-red-500 hover:bg-red-600 text-white",
-        className
-      )}
-      onClick={handleToggleWatchlist}
-      disabled={isToggling || loading}
-    >
+  const buttonContent = (
+    <>
       {isWatched ? (
         <HeartIcon className={cn(iconSize, "fill-current", showText && "mr-2")} />
       ) : (
@@ -134,16 +123,107 @@ const WatchlistButton: React.FC<WatchlistButtonProps> = ({
       )}
       {showText && (
         <span>
-          {isToggling 
-            ? 'Updating...' 
-            : isWatched 
-              ? 'Saved' 
+          {isToggling
+            ? 'Updating...'
+            : isWatched
+              ? 'Saved'
               : 'Save'
           }
         </span>
       )}
-    </Button>
+    </>
   );
+
+  if (variant === 'icon') {
+    return (
+      <>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn(
+            "w-8 h-8 p-0 hover:bg-background/80",
+            isWatched ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-foreground",
+            className
+          )}
+          onClick={handleToggleWatchlist}
+          disabled={isToggling || loading}
+        >
+          {isWatched ? (
+            <HeartIcon className={cn(iconSize, "fill-current")} />
+          ) : (
+            <Heart className={iconSize} />
+          )}
+        </Button>
+        {renderNotesDialog()}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Button
+        variant={isWatched ? 'default' : variant}
+        size={buttonSize}
+        className={cn(
+          "transition-all duration-200",
+          isWatched && "bg-red-500 hover:bg-red-600 text-white",
+          className
+        )}
+        onClick={handleToggleWatchlist}
+        disabled={isToggling || loading}
+      >
+        {buttonContent}
+      </Button>
+      {renderNotesDialog()}
+    </>
+  );
+
+  function renderNotesDialog() {
+    return (
+      <Dialog open={showNotesDialog} onOpenChange={handleDialogClose}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <StickyNote className="w-5 h-5 mr-2" />
+              Add Notes (Optional)
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Add your thoughts or analysis about this property to help you remember why you're interested.
+            </p>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Why does this property interest you? What are your concerns? Any specific details to remember?"
+              className="min-h-[100px]"
+              maxLength={500}
+            />
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-muted-foreground">
+                {notes.length}/500 characters
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleDialogClose}
+                  disabled={isToggling}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleAddToWatchlist}
+                  disabled={isToggling}
+                >
+                  {isToggling ? 'Adding...' : 'Add to Watchlist'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 };
 
 export default WatchlistButton;

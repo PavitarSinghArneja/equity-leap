@@ -352,6 +352,378 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sessions: {
+        Row: {
+          id: string
+          user_id: string | null
+          session_start: string | null
+          session_end: string | null
+          ip_address: string | null
+          user_agent: string | null
+          device_type: string | null
+          browser: string | null
+          os: string | null
+          country: string | null
+          city: string | null
+          referrer: string | null
+          utm_source: string | null
+          utm_medium: string | null
+          utm_campaign: string | null
+          session_duration: number | null
+          pages_visited: number | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          session_start?: string | null
+          session_end?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          device_type?: string | null
+          browser?: string | null
+          os?: string | null
+          country?: string | null
+          city?: string | null
+          referrer?: string | null
+          utm_source?: string | null
+          utm_medium?: string | null
+          utm_campaign?: string | null
+          session_duration?: number | null
+          pages_visited?: number | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          session_start?: string | null
+          session_end?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          device_type?: string | null
+          browser?: string | null
+          os?: string | null
+          country?: string | null
+          city?: string | null
+          referrer?: string | null
+          utm_source?: string | null
+          utm_medium?: string | null
+          utm_campaign?: string | null
+          session_duration?: number | null
+          pages_visited?: number | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      user_events: {
+        Row: {
+          id: string
+          user_id: string | null
+          session_id: string | null
+          event_type: string
+          event_category: string
+          event_action: string
+          event_label: string | null
+          page_url: string | null
+          page_title: string | null
+          property_id: string | null
+          investment_amount: number | null
+          metadata: Json | null
+          timestamp: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          session_id?: string | null
+          event_type: string
+          event_category: string
+          event_action: string
+          event_label?: string | null
+          page_url?: string | null
+          page_title?: string | null
+          property_id?: string | null
+          investment_amount?: number | null
+          metadata?: Json | null
+          timestamp?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          session_id?: string | null
+          event_type?: string
+          event_category?: string
+          event_action?: string
+          event_label?: string | null
+          page_url?: string | null
+          page_title?: string | null
+          property_id?: string | null
+          investment_amount?: number | null
+          metadata?: Json | null
+          timestamp?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      user_analytics: {
+        Row: {
+          id: string
+          user_id: string | null
+          date: string | null
+          total_sessions: number | null
+          total_page_views: number | null
+          avg_session_duration: number | null
+          properties_viewed: number | null
+          properties_saved: number | null
+          properties_removed: number | null
+          notes_added: number | null
+          investment_flows_started: number | null
+          investment_flows_completed: number | null
+          total_investment_amount: number | null
+          avg_investment_amount: number | null
+          kyc_progress_updates: number | null
+          support_interactions: number | null
+          documents_uploaded: number | null
+          engagement_score: number | null
+          intent_score: number | null
+          risk_score: number | null
+          updated_at: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          date?: string | null
+          total_sessions?: number | null
+          total_page_views?: number | null
+          avg_session_duration?: number | null
+          properties_viewed?: number | null
+          properties_saved?: number | null
+          properties_removed?: number | null
+          notes_added?: number | null
+          investment_flows_started?: number | null
+          investment_flows_completed?: number | null
+          total_investment_amount?: number | null
+          avg_investment_amount?: number | null
+          kyc_progress_updates?: number | null
+          support_interactions?: number | null
+          documents_uploaded?: number | null
+          engagement_score?: number | null
+          intent_score?: number | null
+          risk_score?: number | null
+          updated_at?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          date?: string | null
+          total_sessions?: number | null
+          total_page_views?: number | null
+          avg_session_duration?: number | null
+          properties_viewed?: number | null
+          properties_saved?: number | null
+          properties_removed?: number | null
+          notes_added?: number | null
+          investment_flows_started?: number | null
+          investment_flows_completed?: number | null
+          total_investment_amount?: number | null
+          avg_investment_amount?: number | null
+          kyc_progress_updates?: number | null
+          support_interactions?: number | null
+          documents_uploaded?: number | null
+          engagement_score?: number | null
+          intent_score?: number | null
+          risk_score?: number | null
+          updated_at?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      property_engagements: {
+        Row: {
+          id: string
+          user_id: string | null
+          property_id: string | null
+          session_id: string | null
+          first_viewed: string | null
+          last_viewed: string | null
+          total_views: number | null
+          total_time_spent: number | null
+          sections_viewed: string[] | null
+          documents_downloaded: string[] | null
+          images_viewed: number | null
+          watchlist_added_at: string | null
+          watchlist_removed_at: string | null
+          notes_count: number | null
+          investment_started_at: string | null
+          investment_completed_at: string | null
+          investment_amount: number | null
+          sharing_events: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          property_id?: string | null
+          session_id?: string | null
+          first_viewed?: string | null
+          last_viewed?: string | null
+          total_views?: number | null
+          total_time_spent?: number | null
+          sections_viewed?: string[] | null
+          documents_downloaded?: string[] | null
+          images_viewed?: number | null
+          watchlist_added_at?: string | null
+          watchlist_removed_at?: string | null
+          notes_count?: number | null
+          investment_started_at?: string | null
+          investment_completed_at?: string | null
+          investment_amount?: number | null
+          sharing_events?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          property_id?: string | null
+          session_id?: string | null
+          first_viewed?: string | null
+          last_viewed?: string | null
+          total_views?: number | null
+          total_time_spent?: number | null
+          sections_viewed?: string[] | null
+          documents_downloaded?: string[] | null
+          images_viewed?: number | null
+          watchlist_added_at?: string | null
+          watchlist_removed_at?: string | null
+          notes_count?: number | null
+          investment_started_at?: string | null
+          investment_completed_at?: string | null
+          investment_amount?: number | null
+          sharing_events?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      sales_insights: {
+        Row: {
+          id: string
+          user_id: string | null
+          lead_score: number | null
+          lead_temperature: string | null
+          preferred_investment_range: string | null
+          favorite_property_types: string[] | null
+          favorite_locations: string[] | null
+          investment_timeline: string | null
+          risk_tolerance: string | null
+          engagement_frequency: string | null
+          last_activity: string | null
+          next_follow_up_date: string | null
+          sales_notes: string | null
+          assigned_sales_rep: string | null
+          lead_source: string | null
+          is_research_heavy: boolean | null
+          is_price_sensitive: boolean | null
+          is_location_focused: boolean | null
+          prefers_new_properties: boolean | null
+          likely_to_invest_soon: boolean | null
+          needs_nurturing: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          lead_score?: number | null
+          lead_temperature?: string | null
+          preferred_investment_range?: string | null
+          favorite_property_types?: string[] | null
+          favorite_locations?: string[] | null
+          investment_timeline?: string | null
+          risk_tolerance?: string | null
+          engagement_frequency?: string | null
+          last_activity?: string | null
+          next_follow_up_date?: string | null
+          sales_notes?: string | null
+          assigned_sales_rep?: string | null
+          lead_source?: string | null
+          is_research_heavy?: boolean | null
+          is_price_sensitive?: boolean | null
+          is_location_focused?: boolean | null
+          prefers_new_properties?: boolean | null
+          likely_to_invest_soon?: boolean | null
+          needs_nurturing?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          lead_score?: number | null
+          lead_temperature?: string | null
+          preferred_investment_range?: string | null
+          favorite_property_types?: string[] | null
+          favorite_locations?: string[] | null
+          investment_timeline?: string | null
+          risk_tolerance?: string | null
+          engagement_frequency?: string | null
+          last_activity?: string | null
+          next_follow_up_date?: string | null
+          sales_notes?: string | null
+          assigned_sales_rep?: string | null
+          lead_source?: string | null
+          is_research_heavy?: boolean | null
+          is_price_sensitive?: boolean | null
+          is_location_focused?: boolean | null
+          prefers_new_properties?: boolean | null
+          likely_to_invest_soon?: boolean | null
+          needs_nurturing?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_journey_stages: {
+        Row: {
+          id: string
+          user_id: string | null
+          stage: string
+          entered_at: string | null
+          exited_at: string | null
+          duration_in_stage: number | null
+          stage_actions: string[] | null
+          conversion_trigger: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          stage: string
+          entered_at?: string | null
+          exited_at?: string | null
+          duration_in_stage?: number | null
+          stage_actions?: string[] | null
+          conversion_trigger?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          stage?: string
+          entered_at?: string | null
+          exited_at?: string | null
+          duration_in_stage?: number | null
+          stage_actions?: string[] | null
+          conversion_trigger?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/NewAuthContext';
+import { useWatchlist } from '@/hooks/useWatchlist';
 import { useNavigate } from 'react-router-dom';
 import {
   Heart,
@@ -14,13 +17,16 @@ import {
   Eye,
   ShoppingCart,
   AlertTriangle,
-  Zap
+  Zap,
+  StickyNote,
+  Edit3
 } from 'lucide-react';
 
 interface WatchlistProperty {
   id: string;
   property_id: string;
   added_at: string;
+  notes?: string;
   properties: {
     id: string;
     title: string;
@@ -41,44 +47,31 @@ interface WatchlistProperty {
 const MyWatchlistEnhanced: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const {
+    watchlist,
+    loading,
+    canAccessNotes,
+    removeFromWatchlist,
+    updateWatchlistNotes
+  } = useWatchlist();
+
   const [watchlistItems, setWatchlistItems] = useState<WatchlistProperty[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [editingNotes, setEditingNotes] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
 
-  const fetchWatchlist = async () => {
-    if (!user) return;
+  // Process watchlist data when it changes
+  useEffect(() => {
+    if (!watchlist.length) {
+      setWatchlistItems([]);
+      return;
+    }
 
-    try {
-      setLoading(true);
-      
-      const { data, error } = await supabase
-        .from('watchlist')
-        .select(`
-          *,
-          properties (
-            id,
-            title,
-            city,
-            country,
-            property_type,
-            share_price,
-            minimum_investment,
-            property_status,
-            expected_annual_return,
-            shares_sellable,
-            available_shares,
-            images
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('added_at', { ascending: false });
-
-      if (error) throw error;
-
+    const processWatchlistItems = async () => {
       // Check for available shares for sold-out watchlist properties
       const enrichedData = await Promise.all(
-        (data || []).map(async (item) => {
+        watchlist.map(async (item) => {
           let hasAvailableShares = false;
-          
+
           if (item.properties.property_status === 'funded' && item.properties.shares_sellable) {
             const { data: sellRequests, error: sellError } = await supabase
               .from('share_sell_requests')
@@ -95,36 +88,39 @@ const MyWatchlistEnhanced: React.FC = () => {
           return {
             ...item,
             has_available_shares: hasAvailableShares
-          };
+          } as WatchlistProperty;
         })
       );
 
       setWatchlistItems(enrichedData);
-    } catch (error) {
-      console.error('Error fetching watchlist:', error);
-    } finally {
-      setLoading(false);
+    };
+
+    processWatchlistItems();
+  }, [watchlist]);
+
+  // Handle notes editing
+  const handleEditNotes = (item: WatchlistProperty) => {
+    setEditingNotes(item.id);
+    setNoteText(item.notes || '');
+  };
+
+  const handleSaveNotes = async (propertyId: string) => {
+    const result = await updateWatchlistNotes(propertyId, noteText);
+    if (result.success) {
+      setEditingNotes(null);
+      setNoteText('');
+    } else {
+      console.error('Error updating notes:', result.error);
     }
   };
 
-  useEffect(() => {
-    fetchWatchlist();
-  }, [user]);
+  const handleCancelEdit = () => {
+    setEditingNotes(null);
+    setNoteText('');
+  };
 
-  const removeFromWatchlist = async (watchlistId: string) => {
-    try {
-      const { error } = await supabase
-        .from('watchlist')
-        .delete()
-        .eq('id', watchlistId)
-        .eq('user_id', user?.id);
-
-      if (error) throw error;
-      
-      fetchWatchlist(); // Refresh the list
-    } catch (error) {
-      console.error('Error removing from watchlist:', error);
-    }
+  const handleRemoveFromWatchlist = async (propertyId: string) => {
+    await removeFromWatchlist(propertyId);
   };
 
   const getStatusBadge = (status: string) => {
@@ -288,7 +284,7 @@ const MyWatchlistEnhanced: React.FC = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => removeFromWatchlist(item.id)}
+                          onClick={() => handleRemoveFromWatchlist(item.property_id)}
                           className="ml-4"
                         >
                           <Heart className="w-4 h-4 fill-current text-red-500" />
@@ -315,6 +311,72 @@ const MyWatchlistEnhanced: React.FC = () => {
                           <p className="font-semibold text-sm">{formatCurrency(item.properties.minimum_investment)}</p>
                         </div>
                       </div>
+
+                      {/* Notes Section */}
+                      {canAccessNotes && (
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="text-sm font-medium flex items-center">
+                              <StickyNote className="w-4 h-4 mr-1" />
+                              My Notes
+                            </h5>
+                            {!editingNotes || editingNotes !== item.id ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditNotes(item)}
+                                className="h-7 px-2"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                              </Button>
+                            ) : null}
+                          </div>
+
+                          {editingNotes === item.id ? (
+                            <div className="space-y-2">
+                              <Textarea
+                                value={noteText}
+                                onChange={(e) => setNoteText(e.target.value)}
+                                placeholder="Add your notes about this property..."
+                                className="min-h-[80px] text-sm"
+                                maxLength={500}
+                              />
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-muted-foreground">
+                                  {noteText.length}/500 characters
+                                </span>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleCancelEdit}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleSaveNotes(item.property_id)}
+                                  >
+                                    Save
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="bg-muted/30 rounded-lg p-3 min-h-[60px]">
+                              {item.notes ? (
+                                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                  {item.notes}
+                                </p>
+                              ) : (
+                                <p className="text-sm text-muted-foreground italic">
+                                  No notes added yet. Click edit to add your thoughts about this property.
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Actions & Meta - responsive, avoids awkward spacing */}
                       <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">

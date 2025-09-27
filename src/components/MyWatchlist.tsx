@@ -141,7 +141,10 @@ const MyWatchlist: React.FC = () => {
     return <Badge className={config.color}>{config.label}</Badge>;
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | undefined | null) => {
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      return '₹0';
+    }
     return amount.toLocaleString('en-IN', {
       style: 'currency',
       currency: 'INR',

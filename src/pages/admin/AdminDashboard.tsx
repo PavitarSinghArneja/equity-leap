@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  BarChart3, 
-  Users, 
-  Building2, 
-  Wallet, 
-  FileCheck, 
-  MessageSquare, 
+import {
+  BarChart3,
+  Users,
+  Building2,
+  Wallet,
+  FileCheck,
+  MessageSquare,
   TrendingUp,
   TrendingDown,
   AlertCircle,
@@ -19,7 +19,9 @@ import {
   Clock,
   Settings,
   Plus,
-  RefreshCw
+  RefreshCw,
+  StickyNote,
+  LineChart
 } from 'lucide-react';
 
 interface AdminStats {
@@ -426,7 +428,7 @@ const AdminDashboard = () => {
               <CardDescription>Common administrative tasks</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
                 <Button
                   variant="outline"
                   className="h-auto p-4 flex flex-col items-center space-y-2"
@@ -479,6 +481,24 @@ const AdminDashboard = () => {
                 >
                   <Users className="w-6 h-6" />
                   <span>Manage Users</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center space-y-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+                  onClick={() => navigate('/admin/property-notes')}
+                >
+                  <StickyNote className="w-6 h-6" />
+                  <span>Property Notes</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center space-y-2 border-purple-200 text-purple-700 hover:bg-purple-50"
+                  onClick={() => navigate('/admin/sales-analytics')}
+                >
+                  <LineChart className="w-6 h-6" />
+                  <span>Sales Analytics</span>
                 </Button>
               </div>
             </CardContent>

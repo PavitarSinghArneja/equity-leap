@@ -134,6 +134,7 @@ const AppContent = () => {
           <Route path="/admin/investments" element={<AdminRoute><AdminInvestments /></AdminRoute>} />
           <Route path="/admin/property-notes" element={<AdminRoute><AdminPropertyNotes /></AdminRoute>} />
           <Route path="/admin/sales-analytics" element={<AdminRoute><SalesAnalyticsDashboard /></AdminRoute>} />
+          <Route path="/admin/debug" element={<AdminRoute><div className="p-8"><h1 className="text-2xl font-bold">Admin Routes Debug</h1><ul className="mt-4 space-y-2"><li>/admin/property-notes - Property Notes</li><li>/admin/sales-analytics - Sales Analytics</li><li>Current URL: {window.location.href}</li></ul></div></AdminRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

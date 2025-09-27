@@ -428,7 +428,9 @@ const AdminDashboard = () => {
               <CardDescription>Common administrative tasks</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+              <div className="space-y-4">
+                {/* First Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Button
                   variant="outline"
                   className="h-auto p-4 flex flex-col items-center space-y-2"
@@ -464,7 +466,10 @@ const AdminDashboard = () => {
                   <FileCheck className="w-6 h-6" />
                   <span>Review KYC</span>
                 </Button>
-                
+                </div>
+
+                {/* Second Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Button
                   variant="outline"
                   className="h-auto p-4 flex flex-col items-center space-y-2"
@@ -500,6 +505,7 @@ const AdminDashboard = () => {
                   <LineChart className="w-6 h-6" />
                   <span>Sales Analytics</span>
                 </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

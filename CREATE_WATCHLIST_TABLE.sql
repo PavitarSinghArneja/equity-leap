@@ -1,64 +1,60 @@
--- Create property watchlist table for EquityLeap
--- This allows users to save properties they're interested in
+-- Create the watchlist table that the code expects
+CREATE TABLE IF NOT EXISTS public.watchlist (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  property_id UUID NOT NULL REFERENCES public.properties(id) ON DELETE CASCADE,
+  added_at TIMESTAMPTZ DEFAULT NOW(),
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
 
--- Create the watchlist table
-CREATE TABLE IF NOT EXISTS property_watchlist (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES user_profiles(user_id) ON DELETE CASCADE,
-    property_id UUID REFERENCES properties(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    notes TEXT, -- Optional user notes about why they're interested
-    
-    -- Ensure a user can't add the same property twice
-    UNIQUE(user_id, property_id)
+  -- Ensure unique combination of user and property
+  UNIQUE(user_id, property_id)
 );
 
--- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_watchlist_user_id ON property_watchlist(user_id);
-CREATE INDEX IF NOT EXISTS idx_watchlist_property_id ON property_watchlist(property_id);
-CREATE INDEX IF NOT EXISTS idx_watchlist_created_at ON property_watchlist(created_at DESC);
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_watchlist_user_id ON public.watchlist(user_id);
+CREATE INDEX IF NOT EXISTS idx_watchlist_property_id ON public.watchlist(property_id);
+CREATE INDEX IF NOT EXISTS idx_watchlist_added_at ON public.watchlist(added_at);
 
--- Enable RLS (Row Level Security)
-ALTER TABLE property_watchlist ENABLE ROW LEVEL SECURITY;
+-- Enable RLS
+ALTER TABLE public.watchlist ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies
--- Users can only see their own watchlist items
-CREATE POLICY "Users can view their own watchlist"
-ON property_watchlist
-FOR SELECT
-USING (auth.uid()::text = user_id::text);
+-- Users can view their own watchlist items
+CREATE POLICY "Users can view own watchlist" ON public.watchlist
+  FOR SELECT USING (auth.uid() = user_id);
 
--- Users can add items to their own watchlist
-CREATE POLICY "Users can add to their own watchlist"
-ON property_watchlist
-FOR INSERT
-WITH CHECK (auth.uid()::text = user_id::text);
+-- Users can insert their own watchlist items
+CREATE POLICY "Users can insert own watchlist" ON public.watchlist
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- Users can delete from their own watchlist
-CREATE POLICY "Users can remove from their own watchlist"
-ON property_watchlist
-FOR DELETE
-USING (auth.uid()::text = user_id::text);
+-- Users can update their own watchlist items
+CREATE POLICY "Users can update own watchlist" ON public.watchlist
+  FOR UPDATE USING (auth.uid() = user_id);
 
--- Users can update their own watchlist items (notes)
-CREATE POLICY "Users can update their own watchlist"
-ON property_watchlist
-FOR UPDATE
-USING (auth.uid()::text = user_id::text)
-WITH CHECK (auth.uid()::text = user_id::text);
+-- Users can delete their own watchlist items
+CREATE POLICY "Users can delete own watchlist" ON public.watchlist
+  FOR DELETE USING (auth.uid() = user_id);
 
--- Add comments
-COMMENT ON TABLE property_watchlist IS 'Stores user watchlists for properties they are interested in investing';
-COMMENT ON COLUMN property_watchlist.user_id IS 'Reference to the user who added the property to their watchlist';
-COMMENT ON COLUMN property_watchlist.property_id IS 'Reference to the property being watched';
-COMMENT ON COLUMN property_watchlist.notes IS 'Optional user notes about their interest in this property';
+-- Admins can view all watchlist items
+CREATE POLICY "Admins can view all watchlist" ON public.watchlist
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.user_profiles
+      WHERE user_id = auth.uid() AND is_admin = true
+    )
+  );
 
--- Verify the table was created
-SELECT 
-    table_name,
-    column_name,
-    data_type,
-    is_nullable
-FROM information_schema.columns 
-WHERE table_name = 'property_watchlist' 
-ORDER BY ordinal_position;
+-- Create updated_at trigger
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER watchlist_updated_at
+  BEFORE UPDATE ON public.watchlist
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();

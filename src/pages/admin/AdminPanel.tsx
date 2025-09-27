@@ -99,23 +99,21 @@ const AdminPanel = () => {
         .eq('subscription_active', true);
 
       const { count: pendingKYC } = await supabase
-        .from('kyc_submissions')
+        .from('kyc_documents')
         .select('*', { count: 'exact', head: true })
         .eq('verification_status', 'pending');
 
       const { count: activeProperties } = await supabase
         .from('properties')
         .select('*', { count: 'exact', head: true })
-        .eq('property_status', 'active');
+        .in('property_status', ['active', 'funding', 'funded']);
 
       const { count: totalInvestments } = await supabase
         .from('investments')
         .select('*', { count: 'exact', head: true });
 
-      const { count: pendingTickets } = await supabase
-        .from('support_tickets')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'open');
+      // Support tickets table doesn't exist, so set to 0
+      const pendingTickets = 0;
 
       setStats({
         totalUsers: totalUsers || 0,
@@ -123,7 +121,7 @@ const AdminPanel = () => {
         pendingKYC: pendingKYC || 0,
         activeProperties: activeProperties || 0,
         totalInvestments: totalInvestments || 0,
-        pendingTickets: pendingTickets || 0
+        pendingTickets: pendingTickets
       });
 
       // Fetch property notes

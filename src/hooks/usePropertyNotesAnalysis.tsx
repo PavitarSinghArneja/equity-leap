@@ -33,14 +33,16 @@ export const usePropertyNotesAnalysis = () => {
   // Get all notes for a specific property
   const getPropertyNotes = useCallback(async (propertyId: string): Promise<PropertyNote[]> => {
     try {
-      const { data, error } = await supabase
+      // First try the watchlist table if it exists
+      const { data: watchlistData, error: watchlistError } = await supabase
         .from('watchlist')
         .select(`
           id,
-          notes,
-          created_at,
           user_id,
-          profiles!inner(
+          property_id,
+          notes,
+          added_at,
+          user_profiles!inner(
             email,
             full_name
           )
@@ -48,18 +50,49 @@ export const usePropertyNotesAnalysis = () => {
         .eq('property_id', propertyId)
         .not('notes', 'is', null)
         .neq('notes', '')
+        .order('added_at', { ascending: false });
+
+      if (!watchlistError && watchlistData) {
+        // Transform watchlist data to PropertyNote interface
+        const notes: PropertyNote[] = watchlistData.map(item => ({
+          id: item.id,
+          notes: item.notes,
+          created_at: item.added_at,
+          user_id: item.user_id,
+          user_email: item.user_profiles?.email,
+          user_name: item.user_profiles?.full_name
+        }));
+        return notes;
+      }
+
+      // Fallback: If watchlist table doesn't exist, try property_engagements
+      const { data: engagementData, error: engagementError } = await supabase
+        .from('property_engagements')
+        .select(`
+          id,
+          user_id,
+          property_id,
+          watchlist_added_at,
+          created_at,
+          user_profiles!inner(
+            email,
+            full_name
+          )
+        `)
+        .eq('property_id', propertyId)
+        .not('watchlist_added_at', 'is', null)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (engagementError) throw engagementError;
 
-      // Transform the data to match PropertyNote interface
-      const notes: PropertyNote[] = (data || []).map(item => ({
+      // Create placeholder notes from engagement data
+      const notes: PropertyNote[] = (engagementData || []).map(item => ({
         id: item.id,
-        notes: item.notes,
-        created_at: item.created_at,
+        notes: `User showed interest in this property on ${new Date(item.watchlist_added_at).toLocaleDateString()}. This is placeholder data - please set up the watchlist table for real notes.`,
+        created_at: item.watchlist_added_at || item.created_at,
         user_id: item.user_id,
-        user_email: item.profiles?.email,
-        user_name: item.profiles?.full_name
+        user_email: item.user_profiles?.email,
+        user_name: item.user_profiles?.full_name
       }));
 
       return notes;

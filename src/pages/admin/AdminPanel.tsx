@@ -22,7 +22,8 @@ import {
   Calendar,
   User,
   Eye,
-  Brain
+  Brain,
+  DollarSign
 } from 'lucide-react';
 
 interface PropertyNote {
@@ -60,6 +61,18 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
+  // Format currency for display
+  const formatCurrency = (amount: number): string => {
+    if (amount >= 1e7) {
+      return (amount / 1e7).toFixed(1) + 'Cr';
+    } else if (amount >= 1e5) {
+      return (amount / 1e5).toFixed(1) + 'L';
+    } else if (amount >= 1e3) {
+      return (amount / 1e3).toFixed(1) + 'K';
+    }
+    return amount.toLocaleString('en-IN');
+  };
+
   // Overview state
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -67,6 +80,7 @@ const AdminPanel = () => {
     pendingKYC: 0,
     activeProperties: 0,
     totalInvestments: 0,
+    totalInvestmentValue: 0,
     pendingTickets: 0
   });
 
@@ -98,19 +112,32 @@ const AdminPanel = () => {
         .select('*', { count: 'exact', head: true })
         .eq('subscription_active', true);
 
+      // Count pending KYC documents (could be multiple docs per user)
       const { count: pendingKYC } = await supabase
         .from('kyc_documents')
         .select('*', { count: 'exact', head: true })
-        .eq('verification_status', 'pending');
+        .in('verification_status', ['pending', 'under_review']);
 
+      // Count active properties using correct enum values
       const { count: activeProperties } = await supabase
         .from('properties')
         .select('*', { count: 'exact', head: true })
-        .in('property_status', ['active', 'funding', 'funded']);
+        .in('property_status', ['upcoming', 'open', 'funded']);
 
+      // Get investment counts and totals
       const { count: totalInvestments } = await supabase
         .from('investments')
         .select('*', { count: 'exact', head: true });
+
+      // Get total investment value (sum of all investment amounts)
+      const { data: investmentSums } = await supabase
+        .from('investments')
+        .select('total_investment');
+
+      const totalInvestmentValue = (investmentSums || []).reduce(
+        (sum, investment) => sum + (investment.total_investment || 0),
+        0
+      );
 
       // Support tickets table doesn't exist, so set to 0
       const pendingTickets = 0;
@@ -121,6 +148,7 @@ const AdminPanel = () => {
         pendingKYC: pendingKYC || 0,
         activeProperties: activeProperties || 0,
         totalInvestments: totalInvestments || 0,
+        totalInvestmentValue: totalInvestmentValue || 0,
         pendingTickets: pendingTickets
       });
 
@@ -246,7 +274,7 @@ const AdminPanel = () => {
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
             <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/admin/users')}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -294,6 +322,16 @@ const AdminPanel = () => {
                   <span className="text-2xl font-bold">{stats.totalInvestments}</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">Total Investments</p>
+              </CardContent>
+            </Card>
+
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/admin/investments')}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <DollarSign className="w-8 h-8 text-green-600" />
+                  <span className="text-lg font-bold">₹{formatCurrency(stats.totalInvestmentValue)}</span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">Investment Value</p>
               </CardContent>
             </Card>
 

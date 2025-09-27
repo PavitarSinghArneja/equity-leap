@@ -19,11 +19,20 @@ export const usePropertyNotesAnalysis = () => {
     try {
       const { data, error } = await supabase
         .from('properties')
-        .select('id, name, city, state')
-        .order('name');
+        .select('id, title, city, country')
+        .order('title');
 
       if (error) throw error;
-      return data || [];
+
+      // Transform the data to match the Property interface
+      const properties: Property[] = (data || []).map(item => ({
+        id: item.id,
+        name: item.title, // Map title to name
+        city: item.city,
+        state: item.country // Map country to state for now
+      }));
+
+      return properties;
     } catch (err) {
       console.error('Error fetching properties:', err);
       return [];

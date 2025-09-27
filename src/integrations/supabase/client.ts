@@ -12,29 +12,45 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-  global: {
-    headers: {
-      'Accept': '*/*',
-    }
+// Singleton pattern to prevent multiple GoTrueClient instances
+let _supabaseInstance: ReturnType<typeof createClient<Database>> | null = null;
+
+export const supabase = (() => {
+  if (!_supabaseInstance) {
+    _supabaseInstance = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: {
+        storage: localStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+      global: {
+        headers: {
+          'Accept': '*/*',
+        }
+      }
+    });
   }
-});
+  return _supabaseInstance;
+})();
+
+// Singleton pattern for investment client to prevent multiple instances
+let _supabaseInvestmentsInstance: ReturnType<typeof createClient<Database>> | null = null;
 
 // Temporary workaround client for investment queries (avoids 406 errors)
-export const supabaseInvestments = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-  global: {
-    headers: {
-      'Accept': '*/*',
-      'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-    }
+export const supabaseInvestments = (() => {
+  if (!_supabaseInvestmentsInstance) {
+    _supabaseInvestmentsInstance = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+      global: {
+        headers: {
+          'Accept': '*/*',
+          'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        }
+      }
+    });
   }
-});
+  return _supabaseInvestmentsInstance;
+})();

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
+import { PropertyNotesAIAnalysis } from '@/components/admin/PropertyNotesAIAnalysis';
 import {
   BarChart3,
   Users,
@@ -20,7 +21,8 @@ import {
   LineChart,
   Calendar,
   User,
-  Eye
+  Eye,
+  Brain
 } from 'lucide-react';
 
 interface PropertyNote {
@@ -399,15 +401,19 @@ const AdminPanel = () => {
         </TabsContent>
 
         {/* Property Notes Tab */}
-        <TabsContent value="notes" className="space-y-4">
+        <TabsContent value="notes" className="space-y-6">
+          {/* AI Analysis Section */}
+          <PropertyNotesAIAnalysis />
+
+          {/* All Property Notes Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
                 <StickyNote className="w-6 h-6 mr-2 text-blue-600" />
-                Property Notes
+                All Property Notes
               </CardTitle>
               <CardDescription>
-                All user notes on properties ({propertyNotes.length} total)
+                View all user notes on properties ({propertyNotes.length} total)
               </CardDescription>
             </CardHeader>
             <CardContent>

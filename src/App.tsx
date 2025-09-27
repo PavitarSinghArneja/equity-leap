@@ -32,7 +32,7 @@ import KYC from "@/pages/KYC";
 import Properties from "@/pages/Properties";
 import Investment from "@/pages/Investment";
 import AdminRoute from "@/components/AdminRoute";
-import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminPanel from "@/pages/admin/AdminPanel";
 import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminKYC from "@/pages/admin/AdminKYC";
 import AdminProperties from "@/pages/admin/AdminProperties";
@@ -40,8 +40,6 @@ import AdminSupport from "@/pages/admin/AdminSupport";
 import AdminInvestments from "@/pages/admin/AdminInvestments";
 import AdminAddProperty from "@/pages/admin/AdminAddProperty";
 import AdminShareTrading from "@/pages/admin/AdminShareTrading";
-import PropertyNotes from "@/pages/admin/PropertyNotes";
-import SalesAnalytics from "@/pages/admin/SalesAnalytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -124,7 +122,7 @@ const AppContent = () => {
           <Route path="/invest/:propertyId" element={<Investment />} />
           
           {/* Admin Routes */}
-          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
           <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
           <Route path="/admin/kyc" element={<AdminRoute><AdminKYC /></AdminRoute>} />
           <Route path="/admin/properties" element={<AdminRoute><AdminProperties /></AdminRoute>} />
@@ -132,8 +130,6 @@ const AppContent = () => {
           <Route path="/admin/share-trading" element={<AdminRoute><AdminShareTrading /></AdminRoute>} />
           <Route path="/admin/support" element={<AdminRoute><AdminSupport /></AdminRoute>} />
           <Route path="/admin/investments" element={<AdminRoute><AdminInvestments /></AdminRoute>} />
-          <Route path="/admin/property-notes" element={<AdminRoute><PropertyNotes /></AdminRoute>} />
-          <Route path="/admin/sales-analytics" element={<AdminRoute><SalesAnalytics /></AdminRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

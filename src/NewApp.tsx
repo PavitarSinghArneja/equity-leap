@@ -41,7 +41,7 @@ import {
   LoadingScreen,
   ErrorScreen
 } from "@/components/AuthGuards";
-import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminPanel from "@/pages/admin/AdminPanel";
 import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminKYC from "@/pages/admin/AdminKYC";
 import AdminProperties from "@/pages/admin/AdminProperties";
@@ -216,7 +216,7 @@ const AppContent = () => {
             path="/admin"
             element={
               <AdminRoute>
-                <AdminDashboard />
+                <AdminPanel />
               </AdminRoute>
             }
           />

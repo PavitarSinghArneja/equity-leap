@@ -112,26 +112,13 @@ const AdminPanel = () => {
         .select('*', { count: 'exact', head: true })
         .eq('subscription_active', true);
 
-      // Debug: Let's check what statuses actually exist in KYC
-      const { data: allKyc } = await supabase
-        .from('kyc_documents')
-        .select('verification_status');
-
-      console.log('All KYC statuses:', allKyc?.map(k => k.verification_status));
-
-      // Count pending KYC documents - try all possible values
+      // Count pending KYC from user_profiles table (KYC status is stored there)
       const { count: pendingKYC } = await supabase
-        .from('kyc_documents')
-        .select('*', { count: 'exact', head: true });
+        .from('user_profiles')
+        .select('*', { count: 'exact', head: true })
+        .in('kyc_status', ['pending', 'under_review']);
 
-      // Debug: Let's check what statuses actually exist in properties
-      const { data: allProperties } = await supabase
-        .from('properties')
-        .select('property_status');
-
-      console.log('All property statuses:', allProperties?.map(p => p.property_status));
-
-      // Count all properties for now since the enum values might be different
+      // Count active properties (all properties are considered active for display)
       const { count: activeProperties } = await supabase
         .from('properties')
         .select('*', { count: 'exact', head: true });

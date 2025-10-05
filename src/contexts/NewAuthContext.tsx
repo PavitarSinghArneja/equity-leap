@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { AuthService, UserProfile } from '@/services/AuthService';
 import { CacheService } from '@/services/CacheService';
 import { NotificationService } from '@/services/NotificationService';
+import { AnalyticsService } from '@/services/AnalyticsService';
 
 // Clear authentication phases - no ambiguity
 type AuthPhase = 'INITIALIZING' | 'LOADING' | 'AUTHENTICATED' | 'UNAUTHENTICATED' | 'ERROR';
@@ -240,6 +241,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           // Show welcome back notification
           const firstName = cacheResult.profile.full_name?.split(' ')[0] || 'there';
           NotificationService.success('👋 Welcome back!', `Good to see you again, ${firstName}`, 4000);
+          // Track login
+          AnalyticsService.login();
           return;
         }
 
@@ -307,6 +310,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Show welcome notification for new sign-in
         const firstName = profileResult.data.full_name?.split(' ')[0] || 'there';
         NotificationService.authSuccess('signin', firstName);
+        AnalyticsService.login();
       } else {
         NotificationService.authError('Profile not found');
         dispatch({ type: 'AUTH_ERROR', payload: { error: 'Profile not found' } });

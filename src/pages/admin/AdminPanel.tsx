@@ -55,6 +55,16 @@ interface UserAnalytic {
   last_activity: string;
 }
 
+interface RecentEvent {
+  id: string;
+  user_id: string;
+  event_name: string;
+  property_id?: string | null;
+  event_props?: any;
+  created_at: string;
+  user?: { full_name?: string | null; email?: string | null };
+}
+
 const AdminPanel = () => {
   const { user, profile, addNotification } = useAuth();
   const navigate = useNavigate();
@@ -89,6 +99,31 @@ const AdminPanel = () => {
 
   // User Analytics state
   const [userAnalytics, setUserAnalytics] = useState<UserAnalytic[]>([]);
+  const [recentEvents, setRecentEvents] = useState<RecentEvent[]>([]);
+  const exportAnalyticsCsv = () => {
+    const rows = [
+      ['User ID','Name','Email','Tier','Watchlist Count','Notes Count','Engagement Score','Last Activity'] as string[]
+    ].concat(
+      userAnalytics.map(u => [
+        u.user_id,
+        u.full_name,
+        u.email,
+        u.tier,
+        String(u.watchlist_count),
+        String(u.notes_count),
+        String(u.engagement_score),
+        u.last_activity,
+      ])
+    );
+    const csv = rows.map(r => r.map(v => '"' + (v?.replace?.(/"/g,'""') || '') + '"').join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `user_analytics_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Check admin access
   useEffect(() => {
@@ -181,7 +216,7 @@ const AdminPanel = () => {
       // Fetch user analytics
       const { data: usersData } = await supabase
         .from('user_profiles')
-        .select('user_id, full_name, email, tier, updated_at')
+        .select('user_id, full_name, email, tier, last_activity_at, updated_at')
         .order('updated_at', { ascending: false })
         .limit(20);
 
@@ -204,11 +239,28 @@ const AdminPanel = () => {
           watchlist_count: watchlistCount,
           notes_count: notesCount,
           engagement_score: engagementScore,
-          last_activity: user.updated_at
+          last_activity: user.last_activity_at || user.updated_at
         };
       });
 
       setUserAnalytics(analytics);
+
+      // Fetch recent events (latest 50) for Activity tab
+      const { data: eventsData } = await supabase
+        .from('user_events')
+        .select('id, user_id, event_name, property_id, event_props, created_at, user_profiles: user_id(full_name, email)')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      setRecentEvents((eventsData || []).map((e: any) => ({
+        id: e.id,
+        user_id: e.user_id,
+        event_name: e.event_name,
+        property_id: e.property_id,
+        event_props: e.event_props,
+        created_at: e.created_at,
+        user: { full_name: e.user_profiles?.full_name, email: e.user_profiles?.email }
+      })));
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -226,6 +278,33 @@ const AdminPanel = () => {
     if (profile?.is_admin) {
       fetchData();
     }
+  }, [profile]);
+
+  // Realtime updates for Admin Activity (user_events)
+  useEffect(() => {
+    if (!profile?.is_admin) return;
+    const ch = supabase
+      .channel('admin_activity')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_events' }, async () => {
+        const { data: eventsData } = await supabase
+          .from('user_events')
+          .select('id, user_id, event_name, property_id, event_props, created_at, user_profiles: user_id(full_name, email)')
+          .order('created_at', { ascending: false })
+          .limit(50);
+        setRecentEvents((eventsData || []).map((e: any) => ({
+          id: e.id,
+          user_id: e.user_id,
+          event_name: e.event_name,
+          property_id: e.property_id,
+          event_props: e.event_props,
+          created_at: e.created_at,
+          user: { full_name: e.user_profiles?.full_name, email: e.user_profiles?.email }
+        })));
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [profile]);
 
   const formatDate = (dateString: string) => {
@@ -264,10 +343,11 @@ const AdminPanel = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
+        <TabsList className="grid w-full grid-cols-4 max-w-xl">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="notes">Property Notes</TabsTrigger>
           <TabsTrigger value="analytics">User Analytics</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -507,6 +587,9 @@ const AdminPanel = () => {
               <CardDescription>
                 User engagement and behavioral insights
               </CardDescription>
+              <div className="mt-2">
+                <button onClick={exportAnalyticsCsv} className="text-sm px-3 py-1 border rounded hover:bg-muted">Export CSV</button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -553,6 +636,44 @@ const AdminPanel = () => {
                   ))
                 )}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Activity Tab */}
+        <TabsContent value="activity" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Eye className="w-6 h-6 mr-2 text-blue-600" />
+                Recent User Activity
+              </CardTitle>
+              <CardDescription>Latest 50 actions across the platform</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {recentEvents.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground text-sm">No recent activity</div>
+              ) : (
+                <div className="space-y-2">
+                  {recentEvents.map((ev) => (
+                    <div key={ev.id} className="flex items-start justify-between p-3 border rounded-md hover:bg-muted/40">
+                      <div className="space-y-0.5">
+                        <div className="text-sm">
+                          <span className="font-medium">{ev.user?.full_name || ev.user_id}</span>
+                          <span className="text-muted-foreground"> • </span>
+                          <span>{ev.event_name}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(ev.created_at).toLocaleString()} {ev.property_id ? `• Property ${ev.property_id}` : ''}
+                        </div>
+                      </div>
+                      {ev.event_props && (
+                        <pre className="text-[10px] bg-muted/40 p-2 rounded max-w-[40%] overflow-auto">{JSON.stringify(ev.event_props)}</pre>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { TradingServiceFactory } from '@/services/trading/TradingServiceFactory';
+import { isFeatureEnabled } from '@/config/featureFlags';
 import { useAuth } from '@/contexts/NewAuthContext';
-import {
+import { 
   TrendingDown,
   Clock,
   Building2,
@@ -15,6 +17,7 @@ import {
   CheckCircle,
   Calendar
 } from 'lucide-react';
+import { Countdown } from '@/components/ui/countdown';
 
 interface ShareSellRequest {
   id: string;
@@ -40,6 +43,10 @@ const MyShareSellRequests: React.FC = () => {
   const [sellRequests, setSellRequests] = useState<ShareSellRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [pendingHolds, setPendingHolds] = useState<any[]>([]);
+
+  const tradingEnabled = isFeatureEnabled('secondary_market_enabled');
+  const tradingService = TradingServiceFactory.create();
 
   const fetchSellRequests = async () => {
     if (!user) return;
@@ -64,6 +71,22 @@ const MyShareSellRequests: React.FC = () => {
 
       if (error) throw error;
       setSellRequests(data || []);
+
+      // Also load pending buyer holds requiring seller confirmation (flagged flow)
+      if (tradingEnabled) {
+        const { data: holds, error: holdsError } = await supabase
+          .from('share_buyer_holds')
+          .select(`
+            id, order_id, buyer_id, shares, hold_status, buyer_confirmed, seller_confirmed, hold_expires_at,
+            share_sell_requests!inner(id, seller_id, property_id, price_per_share, properties(title, city, country))
+          `)
+          .eq('share_sell_requests.seller_id', user.id)
+          .eq('buyer_confirmed', true)
+          .eq('seller_confirmed', false)
+          .order('hold_expires_at', { ascending: true });
+
+        if (!holdsError) setPendingHolds(holds || []);
+      }
     } catch (error) {
       console.error('Error fetching sell requests:', error);
     } finally {
@@ -73,19 +96,38 @@ const MyShareSellRequests: React.FC = () => {
 
   useEffect(() => {
     fetchSellRequests();
+    // Realtime refresh for the seller's requests and holds
+    const ch1 = supabase
+      .channel('seller_requests')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'share_sell_requests', filter: user ? `seller_id=eq.${user.id}` : undefined }, () => fetchSellRequests())
+      .subscribe();
+    const ch2 = supabase
+      .channel('seller_holds')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'share_buyer_holds' }, () => fetchSellRequests())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch1);
+      supabase.removeChannel(ch2);
+    };
   }, [user]);
 
   const cancelSellRequest = async (requestId: string) => {
     try {
       setCancelling(requestId);
 
-      const { error } = await supabase
-        .from('share_sell_requests')
-        .update({ 
-          status: 'cancelled'
-        })
-        .eq('id', requestId)
-        .eq('seller_id', user?.id); // Ensure user can only cancel their own requests
+      // Use RPC when secondary market is enabled to ensure parked shares release correctly
+      const isNewFlow = isFeatureEnabled('secondary_market_enabled');
+      if (isNewFlow) {
+        const { error: rpcError } = await supabase.rpc('cancel_sell_order', { p_order_id: requestId });
+        if (rpcError) throw rpcError;
+      } else {
+        const { error } = await supabase
+          .from('share_sell_requests')
+          .update({ status: 'cancelled' })
+          .eq('id', requestId)
+          .eq('seller_id', user?.id);
+        if (error) throw error;
+      }
 
       if (error) throw error;
 
@@ -110,6 +152,30 @@ const MyShareSellRequests: React.FC = () => {
       });
     } finally {
       setCancelling(null);
+    }
+  };
+
+  const confirmBuyerHold = async (holdId: string) => {
+    try {
+      const res = await tradingService.sellerConfirmHold(holdId);
+      if (!res.success) throw new Error(res.error?.message || 'Failed to confirm');
+      addNotification({
+        name: 'Hold Confirmed',
+        description: 'Reservation created. Waiting for admin settlement.',
+        icon: 'CHECK_CIRCLE',
+        color: '#059669',
+        time: new Date().toLocaleTimeString(),
+      });
+      try { await import('@/services/AnalyticsService').then(m => m.AnalyticsService.tradingSellerConfirmed(holdId)); } catch {}
+      fetchSellRequests();
+    } catch (e: any) {
+      addNotification({
+        name: 'Confirmation Failed',
+        description: e?.message || 'Could not confirm hold',
+        icon: 'ALERT_TRIANGLE',
+        color: '#DC2626',
+        time: new Date().toLocaleTimeString(),
+      });
     }
   };
 
@@ -292,7 +358,7 @@ const MyShareSellRequests: React.FC = () => {
                          request.status === 'completed' ? 'Sold' : 'Created'}
                       </p>
                       <p className="font-medium">
-                        {request.status === 'active' ? formatDate(request.expires_at) :
+                        {request.status === 'active' ? <Countdown to={request.expires_at} /> :
                          request.status === 'completed' ? 'Recently' :
                          formatDate(request.created_at)}
                       </p>
@@ -322,6 +388,29 @@ const MyShareSellRequests: React.FC = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {tradingEnabled && pendingHolds.length > 0 && (
+          <div className="mt-8">
+            <h4 className="text-sm font-semibold mb-2">Pending Buyer Holds (Need Your Confirmation)</h4>
+            <div className="space-y-3">
+              {pendingHolds.map((h) => (
+                <div key={h.id} className="border rounded p-3 flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">{h.share_sell_requests.properties?.title || 'Property'}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {h.shares} shares requested · Expires {new Date(h.hold_expires_at).toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => confirmBuyerHold(h.id)}>
+                      Confirm
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>

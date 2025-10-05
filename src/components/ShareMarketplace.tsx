@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/NewAuthContext';
+import { TradingServiceFactory } from '@/services/trading/TradingServiceFactory';
+import { isFeatureEnabled } from '@/config/featureFlags';
 import { useInvestments, useInvestmentMutations } from '@/hooks/useInvestmentService';
 import {
   ShoppingCart,
@@ -24,6 +26,7 @@ interface ShareSellRequest {
   seller_id: string;
   property_id: string;
   shares_to_sell: number;
+  remaining_shares?: number;
   price_per_share: number;
   total_amount: number;
   status: string;
@@ -49,6 +52,11 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
   const [sellRequests, setSellRequests] = useState<ShareSellRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
+  const [walletAvailable, setWalletAvailable] = useState<number | null>(null);
+  const [desiredShares, setDesiredShares] = useState<Record<string, number>>({});
+
+  const tradingEnabled = isFeatureEnabled('secondary_market_enabled');
+  const tradingService = TradingServiceFactory.create();
 
   const fetchSellRequests = async () => {
     try {
@@ -88,7 +96,30 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
   useEffect(() => {
     console.log('🔥 ShareMarketplace mounted!', { propertyId });
     fetchSellRequests();
+    const channel = supabase
+      .channel(`market_${propertyId || 'all'}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'share_sell_requests' },
+        () => fetchSellRequests()
+      )
+      .subscribe();
+    // Load wallet available for user (for trading flow UX)
+    const loadWallet = async () => {
+      if (!user || !tradingEnabled) return;
+      const { data } = await supabase
+        .from('escrow_balances')
+        .select('available_balance')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setWalletAvailable(data?.available_balance ?? 0);
+    };
+    loadWallet();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [propertyId]);
+
 
   const handlePurchaseShares = async (sellRequest: ShareSellRequest) => {
     if (!user || sellRequest.seller_id === user.id) return;
@@ -96,180 +127,36 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
     try {
       setPurchasing(sellRequest.id);
 
-      // Start a transaction
-      const { data: updatedRequest, error: updateError } = await supabase
-        .from('share_sell_requests')
-        .update({
-          status: 'completed',
-          buyer_id: user.id,
-          sold_at: new Date().toISOString()
-        })
-        .eq('id', sellRequest.id)
-        .eq('status', 'active') // Ensure it's still active
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-
-      // Create transaction record for buyer
-      const { error: buyerTransactionError } = await supabase
-        .from('transactions')
-        .insert([{
-          user_id: user.id,
-          property_id: sellRequest.property_id,
-          transaction_type: 'share_purchase',
-          amount: sellRequest.total_amount,
-          status: 'completed',
-          description: `Purchased ${sellRequest.shares_to_sell} shares from another investor`,
-          reference_id: sellRequest.id
-        }]);
-
-      if (buyerTransactionError) throw buyerTransactionError;
-
-      // Create transaction record for seller
-      const { error: sellerTransactionError } = await supabase
-        .from('transactions')
-        .insert([{
-          user_id: sellRequest.seller_id,
-          property_id: sellRequest.property_id,
-          transaction_type: 'share_sale',
-          amount: sellRequest.total_amount,
-          status: 'completed',
-          description: `Sold ${sellRequest.shares_to_sell} shares to another investor`,
-          reference_id: sellRequest.id
-        }]);
-
-      if (sellerTransactionError) throw sellerTransactionError;
-
-      // Get buyer's existing investment
-      const { data: buyerInvestments } = await new Promise((resolve) => {
-        // Use the investment service to get buyer's existing investment
-        const tempService = require('@/hooks/useInvestmentService');
-        resolve({ data: [] }); // Temporary - will be properly handled by service
-      });
-
-      // Handle buyer's investment update through manual database calls
-      // (Investment service will be used for reads, direct calls for complex updates)
-      const { data: existingInvestment, error: investmentQueryError } = await supabase
-        .from('investments')
-        .select('id, shares_owned, total_investment, price_per_share')
-        .eq('user_id', user.id)
-        .eq('property_id', sellRequest.property_id)
-        .single();
-
-      if (investmentQueryError && investmentQueryError.code !== 'PGRST116') {
-        console.error('Investment query failed:', investmentQueryError);
-        throw investmentQueryError;
-      }
-
-      if (existingInvestment) {
-        // Update existing investment
-        const newShares = existingInvestment.shares_owned + sellRequest.shares_to_sell;
-        const newTotalInvestment = existingInvestment.total_investment + sellRequest.total_amount;
-        const newPricePerShare = newTotalInvestment / newShares;
-
-        await supabase
-          .from('investments')
-          .update({
-            shares_owned: newShares,
-            total_investment: newTotalInvestment,
-            price_per_share: newPricePerShare
-          })
-          .eq('id', existingInvestment.id);
+      if (tradingEnabled) {
+        // New flow: create hold and auto-confirm buyer side
+        const holdRes = await tradingService.createBuyerHold(sellRequest.id, sellRequest.shares_to_sell);
+        if (!holdRes.success || !holdRes.data) throw new Error(holdRes.error?.message || 'Failed to hold');
+        // Track
+        try { await import('@/services/AnalyticsService').then(m => m.AnalyticsService.tradingHoldCreated(sellRequest.id, sellRequest.shares_to_sell)); } catch {}
+        const confirmRes = await tradingService.buyerConfirmHold(holdRes.data.id);
+        if (!confirmRes.success) throw new Error(confirmRes.error?.message || 'Failed to confirm hold');
+        try { await import('@/services/AnalyticsService').then(m => m.AnalyticsService.tradingBuyerConfirmed(holdRes.data.id)); } catch {}
       } else {
-        // Create new investment record
-        await supabase
-          .from('investments')
-          .insert([{
-            user_id: user.id,
-            property_id: sellRequest.property_id,
-            shares_owned: sellRequest.shares_to_sell,
-            total_investment: sellRequest.total_amount,
-            price_per_share: sellRequest.price_per_share,
-            investment_status: 'confirmed'
-          }]);
-      }
-
-      // Update seller's investment record
-      const { data: sellerInvestment, error: sellerInvestmentError } = await supabase
-        .from('investments')
-        .select('id, shares_owned, total_investment, price_per_share')
-        .eq('user_id', sellRequest.seller_id)
-        .eq('property_id', sellRequest.property_id)
-        .single();
-
-      if (sellerInvestmentError) {
-        console.error('🚨 ShareMarketplace: Seller investment query failed:', sellerInvestmentError);
-        throw sellerInvestmentError;
-      }
-
-      if (sellerInvestment) {
-        const newShares = sellerInvestment.shares_owned - sellRequest.shares_to_sell;
-        const newTotalInvestment = sellerInvestment.total_investment - 
-          (sellRequest.shares_to_sell * sellerInvestment.price_per_share);
-
-        if (newShares > 0) {
-          await supabase
-            .from('investments')
-            .update({
-              shares_owned: newShares,
-              total_investment: newTotalInvestment
-            })
-            .eq('id', sellerInvestment.id);
-        } else {
-          // Remove investment record if no shares left
-          await supabase
-            .from('investments')
-            .delete()
-            .eq('id', sellerInvestment.id);
-        }
-      }
-
-      // Recalculate positions for buyer and seller (best-effort)
-      try {
-        await Promise.all([
-          supabase.rpc('recalc_user_property_position', { p_user_id: user.id, p_property_id: sellRequest.property_id }),
-          supabase.rpc('recalc_user_property_position', { p_user_id: sellRequest.seller_id, p_property_id: sellRequest.property_id })
-        ]);
-      } catch (e) {
-        console.warn('Position snapshot recalc failed (non-fatal):', e);
-      }
-
-      // Create audit trail entries
-      await Promise.all([
-        supabase.from('user_audit_trail').insert([{
-          user_id: user.id,
-          action_type: 'share_purchase',
-          description: `Purchased ${sellRequest.shares_to_sell} shares of ${sellRequest.properties.title}`,
-          related_entity_type: 'property',
-          related_entity_id: sellRequest.property_id,
-          metadata: {
-            shares_purchased: sellRequest.shares_to_sell,
-            price_per_share: sellRequest.price_per_share,
-            total_amount: sellRequest.total_amount,
-            seller_id: sellRequest.seller_id,
-            sell_request_id: sellRequest.id
-          }
-        }]),
-        supabase.from('user_audit_trail').insert([{
-          user_id: sellRequest.seller_id,
-          action_type: 'share_sale',
-          description: `Sold ${sellRequest.shares_to_sell} shares of ${sellRequest.properties.title}`,
-          related_entity_type: 'property',
-          related_entity_id: sellRequest.property_id,
-          metadata: {
-            shares_sold: sellRequest.shares_to_sell,
-            price_per_share: sellRequest.price_per_share,
-            total_amount: sellRequest.total_amount,
+        // Legacy direct-settle flow (kept for backward compatibility)
+        // Note: retained as-is to avoid regressions; will be removed once new flow is fully rolled out.
+        const { error: updateError } = await supabase
+          .from('share_sell_requests')
+          .update({
+            status: 'completed',
             buyer_id: user.id,
-            sell_request_id: sellRequest.id
-          }
-        }])
-      ]);
+            sold_at: new Date().toISOString()
+          })
+          .eq('id', sellRequest.id)
+          .eq('status', 'active');
+
+        if (updateError) throw updateError;
+      }
 
       addNotification({
-        name: "Shares Purchased",
-        description: `Successfully purchased ${sellRequest.shares_to_sell} shares of ${sellRequest.properties.title}`,
+        name: tradingEnabled ? 'Hold Created' : 'Shares Purchased',
+        description: tradingEnabled
+          ? `Your hold is created and confirmed. Waiting for seller confirmation.`
+          : `Successfully purchased ${sellRequest.shares_to_sell} shares of ${sellRequest.properties.title}`,
         icon: "CHECK_CIRCLE",
         color: "#059669",
         time: new Date().toLocaleTimeString()
@@ -361,6 +248,10 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
               const isOwnRequest = request.seller_id === user?.id;
               const daysLeft = getDaysUntilExpiry(request.expires_at);
               const discount = ((request.properties.share_price - request.price_per_share) / request.properties.share_price) * 100;
+              const remaining = request.remaining_shares ?? request.shares_to_sell;
+              const desired = desiredShares[request.id] ?? Math.min(remaining, request.shares_to_sell);
+              const totalSelected = request.price_per_share * desired;
+              const canAfford = walletAvailable == null || walletAvailable >= totalSelected;
 
               return (
                 <div key={request.id} className={`border rounded-lg p-4 transition-colors ${
@@ -392,6 +283,20 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
                           <DollarSign className="w-4 h-4 text-muted-foreground" />
                           <span>{formatCurrency(request.price_per_share)} per share</span>
                         </div>
+                        {tradingEnabled && (
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                            <span className={`${(request as any).remaining_shares && (request as any).remaining_shares <= 5 ? 'text-red-600 font-medium' : ''}`}>
+                              {(request as any).remaining_shares ?? request.shares_to_sell} remaining
+                            </span>
+                          </div>
+                        )}
+                        {tradingEnabled && (
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                            <span className={`${remaining <= 5 ? 'text-red-600 font-medium' : ''}`}>{remaining} remaining</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2">
                           <TrendingUp className="w-4 h-4 text-muted-foreground" />
                           <span className="font-medium">{formatCurrency(request.total_amount)} total</span>
@@ -441,7 +346,7 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
                             <DialogHeader>
                               <DialogTitle className="flex items-center gap-2">
                                 <CheckCircle className="w-5 h-5 text-primary" />
-                                Confirm Purchase
+                                {tradingEnabled ? 'Create Hold' : 'Confirm Purchase'}
                               </DialogTitle>
                             </DialogHeader>
                             
@@ -454,10 +359,27 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
                               </div>
 
                               <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                  <span>Shares:</span>
-                                  <span className="font-medium">{request.shares_to_sell}</span>
-                                </div>
+                                {tradingEnabled ? (
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span>Shares to hold:</span>
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      max={remaining}
+                                      value={desired}
+                                      onChange={(e) => {
+                                        const v = Math.max(1, Math.min(remaining, parseInt(e.target.value || '1')));
+                                        setDesiredShares(prev => ({ ...prev, [request.id]: v }));
+                                      }}
+                                      className="w-24 border rounded px-2 py-1"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-between">
+                                    <span>Shares:</span>
+                                    <span className="font-medium">{request.shares_to_sell}</span>
+                                  </div>
+                                )}
                                 <div className="flex justify-between">
                                   <span>Price per share:</span>
                                   <span className="font-medium">{formatCurrency(request.price_per_share)}</span>
@@ -468,8 +390,14 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
                                 </div>
                                 <div className="flex justify-between font-semibold text-base border-t pt-2">
                                   <span>Total:</span>
-                                  <span>{formatCurrency(request.total_amount)}</span>
+                                  <span>{formatCurrency(tradingEnabled ? totalSelected : request.total_amount)}</span>
                                 </div>
+                                {tradingEnabled && walletAvailable != null && (
+                                  <div className="flex justify-between text-xs">
+                                    <span>Wallet available:</span>
+                                    <span className={canAfford ? 'text-green-600' : 'text-red-600'}>{formatCurrency(walletAvailable)}</span>
+                                  </div>
+                                )}
                                 {discount > 0 && (
                                   <div className="flex justify-between text-primary font-medium">
                                     <span>You save:</span>
@@ -478,24 +406,34 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
                                 )}
                               </div>
 
-                              <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                                <div className="text-xs text-yellow-800">
-                                  <p className="font-medium mb-1">Confirm Purchase:</p>
-                                  <p>This transaction cannot be undone. You will own these shares immediately after purchase.</p>
+                              {tradingEnabled ? (
+                                <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                  <AlertTriangle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                  <div className="text-xs text-blue-800">
+                                    <p className="font-medium mb-1">About Holds:</p>
+                                    <p>We will place a hold for selected shares and lock funds in your wallet. Seller must confirm within 60 minutes. After both confirm, a reservation is created and admin completes the offline settlement.</p>
+                                  </div>
                                 </div>
-                              </div>
+                              ) : (
+                                <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                  <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                                  <div className="text-xs text-yellow-800">
+                                    <p className="font-medium mb-1">Confirm Purchase:</p>
+                                    <p>This transaction cannot be undone. You will own these shares immediately after purchase.</p>
+                                  </div>
+                                </div>
+                              )}
 
                               <div className="flex gap-3">
                                 <DialogTrigger asChild>
                                   <Button variant="outline" className="flex-1">Cancel</Button>
                                 </DialogTrigger>
                                 <Button 
-                                  onClick={() => handlePurchaseShares(request)}
+                                  onClick={() => handlePurchaseShares({ ...request, shares_to_sell: tradingEnabled ? desired : request.shares_to_sell })}
                                   className="flex-1"
-                                  disabled={purchasing === request.id}
+                                  disabled={purchasing === request.id || (tradingEnabled && !canAfford)}
                                 >
-                                  {purchasing === request.id ? 'Processing...' : 'Confirm Purchase'}
+                                  {purchasing === request.id ? 'Processing...' : (tradingEnabled ? 'Create Hold' : 'Confirm Purchase')}
                                 </Button>
                               </div>
                             </div>

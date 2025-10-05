@@ -162,3 +162,28 @@ Your platform now has:
 - ✅ Mobile-responsive design
 
 The watchlist alerts will now prominently show "Your watchlist property is now up for grabs. Act fast." exactly as requested! 🎉
+
+## ⏱️ Secondary Market Scheduler
+
+To ensure expired holds and reservations are cleaned up automatically (and funds/shares are released), add a scheduled job in Supabase:
+
+1. Open Supabase SQL Editor and run:
+
+```
+-- Runs every minute
+select cron.schedule(
+  'expire_trading_artifacts',
+  '*/1 * * * *',
+  $$select public.expire_holds_and_reservations();$$
+);
+```
+
+If `pg_cron` is not enabled in your project, you can use Supabase Scheduled Jobs UI to call:
+
+```
+SELECT public.expire_holds_and_reservations();
+```
+
+every minute.
+
+This complements the new trading flow (holds/reservations) and prevents stale locks.

@@ -14,6 +14,7 @@ import {
   Menu,
   X,
 } from 'lucide-react';
+import { Bell } from 'lucide-react';
 
 interface InvestmentWithProperty {
   id: string;
@@ -143,6 +144,11 @@ const DashboardLayout: React.FC = () => {
           to="/dashboard/watchlist"
           icon={<Heart className="w-4 h-4" />}
           label="Watchlist"
+        />
+        <SidebarLink
+          to="/dashboard/notifications"
+          icon={<Bell className="w-4 h-4" />}
+          label="Notifications"
         />
       </nav>
 

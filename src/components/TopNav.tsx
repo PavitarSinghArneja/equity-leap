@@ -3,7 +3,9 @@ import { NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/NewAuthContext';
 import { useAdmin } from '@/hooks/useNewAdmin';
-import { BarChart3, Menu, X } from 'lucide-react';
+import { BarChart3, Menu, X, Bell } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useUserAlerts } from '@/hooks/useUserAlerts';
 
 const LinkItem = ({ to, label, onClick }: { to: string; label: string; onClick?: () => void }) => (
   <NavLink
@@ -28,6 +30,7 @@ const TopNav: React.FC = () => {
   const isMinimal = isLanding || isAuth;
   const firstNameRaw = (profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || '').trim();
   const firstName = firstNameRaw ? firstNameRaw.charAt(0).toUpperCase() + firstNameRaw.slice(1) : '';
+  const { alerts, unreadCount, markRead, markAllRead } = useUserAlerts();
 
   const close = () => setOpen(false);
 
@@ -72,6 +75,40 @@ const TopNav: React.FC = () => {
         )}
 
         <div className="hidden md:flex items-center gap-3">
+          {user && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="relative p-2 rounded-md hover:bg-muted" aria-label="Notifications">
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0" align="end">
+                <div className="p-3 border-b font-medium flex items-center justify-between">
+                  <span>Notifications</span>
+                  {alerts.length > 0 && (
+                    <button onClick={markAllRead} className="text-xs text-primary hover:underline">Mark all read</button>
+                  )}
+                </div>
+                <div className="max-h-80 overflow-auto">
+                  {alerts.length === 0 ? (
+                    <div className="p-4 text-sm text-muted-foreground">No notifications</div>
+                  ) : (
+                    alerts.map(a => (
+                      <button key={a.id} onClick={() => markRead(a.id)} className={`w-full text-left p-3 border-b hover:bg-muted ${a.is_read ? 'opacity-70' : ''}`}>
+                        <div className="text-sm font-medium">{a.title}</div>
+                        <div className="text-xs text-muted-foreground">{a.message}</div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
           {!isMinimal && isAdmin && user && (
             <Button
               variant="outline"

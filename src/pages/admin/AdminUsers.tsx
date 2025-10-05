@@ -226,6 +226,36 @@ const AdminUsers = () => {
     }
   };
 
+  const toggleSubscriptionStatus = async (userId: string, current: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ subscription_active: !current })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      setUsers(prev => prev.map(u => u.user_id === userId ? { ...u, subscription_active: !current } : u));
+
+      addNotification({
+        name: 'Subscription Updated',
+        description: `Subscription ${!current ? 'activated' : 'deactivated'} for user`,
+        icon: 'CHECK_CIRCLE',
+        color: '#059669',
+        isLogo: true
+      });
+    } catch (error) {
+      console.error('Error updating subscription status:', error);
+      addNotification({
+        name: 'Update Failed',
+        description: 'Failed to update subscription status',
+        icon: 'ALERT_TRIANGLE',
+        color: '#DC2626',
+        isLogo: true
+      });
+    }
+  };
+
   const fetchUserDetails = async (userId: string) => {
     setLoadingDetails(true);
     try {
@@ -607,6 +637,14 @@ const AdminUsers = () => {
                           onClick={() => toggleAdminStatus(user.user_id, user.is_admin || false)}
                         >
                           {user.is_admin ? 'Remove Admin' : 'Make Admin'}
+                        </Button>
+
+                        <Button
+                          variant={user.subscription_active ? 'destructive' : 'outline'}
+                          size="sm"
+                          onClick={() => toggleSubscriptionStatus(user.user_id, user.subscription_active)}
+                        >
+                          {user.subscription_active ? 'Deactivate Sub' : 'Activate Sub'}
                         </Button>
 
                         {user.tier_override_by_admin && (

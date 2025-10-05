@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/NewAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { canAccessNotes, canAccessWatchlist } from '@/utils/permissions';
+import { AnalyticsService } from '@/services/AnalyticsService';
 
 interface WatchlistItem {
   id: string;
@@ -102,6 +103,9 @@ export const useWatchlist = () => {
       // Refresh watchlist
       await fetchWatchlist();
 
+      // Track
+      AnalyticsService.watchlistToggled(propertyId, true);
+
       return { success: true, data };
     } catch (error: any) {
       console.error('Error adding to watchlist:', error);
@@ -134,6 +138,8 @@ export const useWatchlist = () => {
 
       // Refresh watchlist
       await fetchWatchlist();
+
+      AnalyticsService.watchlistToggled(propertyId, false);
 
       return { success: true };
     } catch (error) {
@@ -174,6 +180,8 @@ export const useWatchlist = () => {
 
       // Refresh watchlist
       await fetchWatchlist();
+
+      AnalyticsService.noteUpdated(propertyId);
 
       return { success: true };
     } catch (error) {

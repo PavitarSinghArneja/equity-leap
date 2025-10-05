@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { TradingServiceFactory } from '@/services/trading/TradingServiceFactory';
+import { isFeatureEnabled } from '@/config/featureFlags';
 import { useAuth } from '@/contexts/NewAuthContext';
 import {
   Settings,
@@ -22,6 +24,7 @@ import {
   Edit,
   Save
 } from 'lucide-react';
+import { Countdown } from '@/components/ui/countdown';
 
 interface Property {
   id: string;
@@ -58,6 +61,7 @@ const AdminShareControls: React.FC = () => {
   const { addNotification } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [sellRequests, setSellRequests] = useState<ShareSellRequest[]>([]);
+  const [reservations, setReservations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
@@ -89,6 +93,22 @@ const AdminShareControls: React.FC = () => {
 
       if (requestsError) throw requestsError;
       setSellRequests(requestsData || []);
+
+      // Load active reservations (flagged)
+      if (isFeatureEnabled('secondary_market_enabled')) {
+        const { data: resv, error: resvErr } = await supabase
+          .from('share_reservations')
+          .select(`
+            id, order_id, buyer_id, seller_id, property_id, shares, price_per_share, status, created_at, expires_at,
+            properties(title),
+            share_sell_requests(price_per_share),
+            buyer:user_profiles!inner(full_name, email),
+            seller:user_profiles!inner(full_name, email)
+          `)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false });
+        if (!resvErr) setReservations(resv || []);
+      }
       
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -99,6 +119,24 @@ const AdminShareControls: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    // Realtime refresh for reservations and holds
+    const ch1 = supabase
+      .channel('admin_reservations')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'share_reservations' }, () => fetchData())
+      .subscribe();
+    const ch2 = supabase
+      .channel('admin_holds')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'share_buyer_holds' }, () => fetchData())
+      .subscribe();
+    const ch3 = supabase
+      .channel('admin_orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'share_sell_requests' }, () => fetchData())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch1);
+      supabase.removeChannel(ch2);
+      supabase.removeChannel(ch3);
+    };
   }, []);
 
   const toggleShareSelling = async (property: Property, enabled: boolean) => {
@@ -434,6 +472,64 @@ const AdminShareControls: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Active Reservations (Admin Settlement) */}
+      {isFeatureEnabled('secondary_market_enabled') && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Reservations Awaiting Offline Settlement
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">Confirm settlement success/failure after offline process.</p>
+          </CardHeader>
+          <CardContent>
+            {reservations.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">No active reservations</div>
+            ) : (
+              <div className="space-y-3">
+                {reservations.map((r) => (
+                  <div key={r.id} className="border rounded p-3 flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{r.properties?.title || 'Property'}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {r.shares} shares @ {Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(r.price_per_share)} · Buyer: {r.buyer?.full_name || r.buyer_id} · Seller: {r.seller?.full_name || r.seller_id}
+                      </div>
+                      <div className="text-xs text-muted-foreground">Expires {new Date(r.expires_at).toLocaleString()}</div>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <span className="text-xs text-muted-foreground mr-1">Time left:</span>
+                      <Countdown to={r.expires_at} className="text-xs" />
+                      <Button size="sm" variant="outline" onClick={async () => {
+                        const ts = TradingServiceFactory.create();
+                        const res = await ts.adminSettleReservation(r.id, true);
+                        if (res.success) {
+                          addNotification({ name: 'Reservation Settled', description: 'Positions updated.', icon: 'CHECK_CIRCLE', color: '#059669', time: new Date().toLocaleTimeString() });
+                          try { await import('@/services/AnalyticsService').then(m => m.AnalyticsService.tradingReservationSettled(r.id, true)); } catch {}
+                          fetchData();
+                        } else {
+                          addNotification({ name: 'Settle Failed', description: res.error?.message || 'Try again.', icon: 'ALERT_TRIANGLE', color: '#DC2626', time: new Date().toLocaleTimeString() });
+                        }
+                      }}>Mark Settled</Button>
+                      <Button size="sm" variant="destructive" onClick={async () => {
+                        const ts = TradingServiceFactory.create();
+                        const res = await ts.adminSettleReservation(r.id, false);
+                        if (res.success) {
+                          addNotification({ name: 'Reservation Cancelled', description: 'Reservation cancelled and released.', icon: 'CHECK_CIRCLE', color: '#059669', time: new Date().toLocaleTimeString() });
+                          try { await import('@/services/AnalyticsService').then(m => m.AnalyticsService.tradingReservationSettled(r.id, false)); } catch {}
+                          fetchData();
+                        } else {
+                          addNotification({ name: 'Cancel Failed', description: res.error?.message || 'Try again.', icon: 'ALERT_TRIANGLE', color: '#DC2626', time: new Date().toLocaleTimeString() });
+                        }
+                      }}>Cancel</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -21,6 +21,7 @@ import TransactionsPage from "@/pages/dashboard/Transactions";
 import WatchlistPage from "@/pages/dashboard/Watchlist";
 import SellRequestsPage from "@/pages/dashboard/SellRequests";
 import PropertyDetailPage from "@/pages/dashboard/PropertyDetail";
+import NotificationsPage from "@/pages/dashboard/Notifications";
 import { Navigate } from "react-router-dom";
 import WaitlistDashboard from "@/pages/WaitlistDashboard";
 import WaitlistLayout from "@/pages/waitlist/WaitlistLayout";
@@ -163,6 +164,7 @@ const AppContent = () => {
             <Route path="transactions" element={<TransactionsPage />} />
             <Route path="sell-requests" element={<SellRequestsPage />} />
             <Route path="watchlist" element={<WatchlistPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
             <Route path="p/:propertyId" element={<PropertyDetailPage />} />
           </Route>
 

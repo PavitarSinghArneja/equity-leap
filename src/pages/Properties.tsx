@@ -24,6 +24,7 @@ import {
   RefreshCw,
   Heart
 } from 'lucide-react';
+import { AnalyticsService } from '@/services/AnalyticsService';
 
 interface Property {
   id: string;
@@ -157,6 +158,7 @@ const Properties = () => {
   useEffect(() => {
     const abortController = new AbortController();
     fetchProperties(abortController.signal);
+    AnalyticsService.propertiesViewed();
 
     return () => {
       abortController.abort();
@@ -393,9 +395,9 @@ const Properties = () => {
                             return;
                           }
 
-                          const result = await toggleWatchlist(property.id);
-                          if (result.success) {
-                            addNotification({
+                        const result = await toggleWatchlist(property.id);
+                        if (result.success) {
+                          addNotification({
                               name: isInWatchlist(property.id) ? "Removed from Watchlist" : "Added to Watchlist",
                               description: isInWatchlist(property.id) 
                                 ? "Property removed from your watchlist" 
@@ -405,6 +407,7 @@ const Properties = () => {
                               isLogo: true
                             });
                           }
+                          AnalyticsService.watchlistToggled(property.id, isInWatchlist(property.id));
                         }}
                       >
                         <Heart className={`w-4 h-4 ${isInWatchlist(property.id) ? 'fill-current' : ''}`} />

@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/NewAuthContext';
+import { isFeatureEnabled } from '@/config/featureFlags';
 import { useAdmin } from '@/hooks/useNewAdmin';
 
 /**
@@ -111,11 +112,19 @@ export const AuthGuard = ({
  * Route guard for pages that require authentication
  */
 export const AuthenticatedRoute = ({ children }: { children: ReactNode }) => {
-  return (
-    <AuthGuard requireAuth={true}>
-      {children}
-    </AuthGuard>
-  );
+  const { profile } = useAuth();
+  const trialEnabled = isFeatureEnabled('trial_enforcement_enabled');
+
+  // Trial gating: if enabled and profile exists
+  if (trialEnabled && profile) {
+    const expired = profile.trial_expires_at && new Date(profile.trial_expires_at) < new Date();
+    const active = !!profile.subscription_active;
+    if (expired && !active) {
+      return <Navigate to="/trial-expired" replace />;
+    }
+  }
+
+  return <AuthGuard requireAuth={true}>{children}</AuthGuard>;
 };
 
 /**

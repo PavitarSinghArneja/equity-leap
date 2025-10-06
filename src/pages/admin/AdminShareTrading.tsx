@@ -1,15 +1,47 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AdminShareControls from '@/components/AdminShareControls';
-import { 
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/NewAuthContext';
+import {
   ArrowLeft,
   TrendingDown,
-  Home
+  Home,
+  Trash2
 } from 'lucide-react';
 
 const AdminShareTrading: React.FC = () => {
   const navigate = useNavigate();
+  const { addNotification } = useAuth();
+  const [cleaningUp, setCleaningUp] = useState(false);
+
+  const handleCleanupExpired = async () => {
+    setCleaningUp(true);
+    try {
+      const { error } = await supabase.rpc('expire_holds_and_reservations');
+      if (error) throw error;
+
+      addNotification({
+        name: 'Cleanup Complete',
+        description: 'Expired holds and reservations have been cleaned up',
+        icon: 'CHECK_CIRCLE',
+        color: '#059669',
+        isLogo: true
+      });
+    } catch (error) {
+      console.error('Cleanup error:', error);
+      addNotification({
+        name: 'Cleanup Failed',
+        description: 'Failed to clean up expired items',
+        icon: 'ALERT_TRIANGLE',
+        color: '#DC2626',
+        isLogo: true
+      });
+    } finally {
+      setCleaningUp(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,13 +61,22 @@ const AdminShareTrading: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
+              onClick={handleCleanupExpired}
+              disabled={cleaningUp}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {cleaningUp ? 'Cleaning...' : 'Cleanup Expired'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => navigate('/admin')}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Admin
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => navigate('/dashboard/overview')}
             >

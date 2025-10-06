@@ -18,7 +18,8 @@ CREATE INDEX IF NOT EXISTS idx_share_parks_seller ON public.share_parks(seller_i
 CREATE INDEX IF NOT EXISTS idx_share_parks_property ON public.share_parks(property_id);
 ALTER TABLE public.share_parks ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "seller_view_own_parks" ON public.share_parks
+DROP POLICY IF EXISTS "seller_view_own_parks" ON public.share_parks;
+CREATE POLICY "seller_view_own_parks" ON public.share_parks
   FOR SELECT USING (auth.uid()::text = seller_id::text);
 
 -- 2) Helper to compute seller free shares for a property

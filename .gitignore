@@ -23,6 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 .env
-.env.production
+# .env.production is now tracked (contains only public keys)
 .vite/
-.env.production

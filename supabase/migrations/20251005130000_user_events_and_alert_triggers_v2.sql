@@ -1,10 +1,10 @@
--- User analytics events and trading alert triggers
+-- User analytics events and trading alert triggers (Fixed)
 
 -- 1) Add last activity column on user_profiles (if not exists)
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
+    SELECT 1 FROM information_schema.columns
     WHERE table_name='user_profiles' AND column_name='last_activity_at'
   ) THEN
     ALTER TABLE public.user_profiles ADD COLUMN last_activity_at TIMESTAMPTZ;
@@ -12,8 +12,10 @@ BEGIN
   END IF;
 END $$;
 
--- 2) user_events table
-CREATE TABLE IF NOT EXISTS public.user_events (
+-- 2) Drop and recreate user_events table to ensure clean state
+DROP TABLE IF EXISTS public.user_events CASCADE;
+
+CREATE TABLE public.user_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.user_profiles(user_id) ON DELETE CASCADE,
   event_name TEXT NOT NULL,
@@ -22,9 +24,9 @@ CREATE TABLE IF NOT EXISTS public.user_events (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_user_events_user ON public.user_events(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_events_event ON public.user_events(event_name);
-CREATE INDEX IF NOT EXISTS idx_user_events_property ON public.user_events(property_id);
+CREATE INDEX idx_user_events_user ON public.user_events(user_id);
+CREATE INDEX idx_user_events_event ON public.user_events(event_name);
+CREATE INDEX idx_user_events_property ON public.user_events(property_id);
 
 ALTER TABLE public.user_events ENABLE ROW LEVEL SECURITY;
 
@@ -108,4 +110,3 @@ DROP TRIGGER IF EXISTS trg_alert_on_reservation ON public.share_reservations;
 CREATE TRIGGER trg_alert_on_reservation
 AFTER INSERT ON public.share_reservations
 FOR EACH ROW EXECUTE FUNCTION public.trg_alert_on_reservation();
-

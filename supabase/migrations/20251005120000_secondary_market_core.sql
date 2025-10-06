@@ -36,10 +36,12 @@ CREATE INDEX IF NOT EXISTS idx_share_buyer_holds_status ON public.share_buyer_ho
 ALTER TABLE public.share_buyer_holds ENABLE ROW LEVEL SECURITY;
 
 -- RLS: buyers can see/modify their holds; admins see all
-CREATE POLICY IF NOT EXISTS "buyers_view_own_holds" ON public.share_buyer_holds
+DROP POLICY IF EXISTS "buyers_view_own_holds" ON public.share_buyer_holds;
+CREATE POLICY "buyers_view_own_holds" ON public.share_buyer_holds
   FOR SELECT USING (auth.uid()::text = buyer_id::text);
 
-CREATE POLICY IF NOT EXISTS "buyers_manage_own_holds" ON public.share_buyer_holds
+DROP POLICY IF EXISTS "buyers_manage_own_holds" ON public.share_buyer_holds;
+CREATE POLICY "buyers_manage_own_holds" ON public.share_buyer_holds
   FOR UPDATE USING (auth.uid()::text = buyer_id::text)
   WITH CHECK (auth.uid()::text = buyer_id::text);
 
@@ -63,7 +65,8 @@ CREATE INDEX IF NOT EXISTS idx_share_reservations_status ON public.share_reserva
 
 ALTER TABLE public.share_reservations ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "parties_view_reservations" ON public.share_reservations
+DROP POLICY IF EXISTS "parties_view_reservations" ON public.share_reservations;
+CREATE POLICY "parties_view_reservations" ON public.share_reservations
   FOR SELECT USING (
     auth.uid()::text = buyer_id::text OR auth.uid()::text = seller_id::text
   );
@@ -81,7 +84,8 @@ CREATE TABLE IF NOT EXISTS public.share_order_events (
 CREATE INDEX IF NOT EXISTS idx_share_order_events_order ON public.share_order_events(order_id);
 ALTER TABLE public.share_order_events ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "order_events_read_authenticated" ON public.share_order_events
+DROP POLICY IF EXISTS "order_events_read_authenticated" ON public.share_order_events;
+CREATE POLICY "order_events_read_authenticated" ON public.share_order_events
   FOR SELECT USING (auth.role() = 'authenticated');
 
 -- 5) Function scaffolds (to be implemented with transactional logic)

@@ -5,19 +5,32 @@ type Props = Record<string, any> | undefined;
 class AnalyticsServiceClass {
   private enabled = import.meta?.env?.VITE_FLAG_ANALYTICS?.toString().toLowerCase() === 'true';
 
+  constructor() {
+    console.log('[Analytics] Service initialized. Enabled:', this.enabled);
+    console.log('[Analytics] Flag value:', import.meta?.env?.VITE_FLAG_ANALYTICS);
+  }
+
   private async log(name: string, props?: Props, propertyId?: string) {
     try {
-      if (!this.enabled) return;
+      if (!this.enabled) {
+        console.log('[Analytics] Skipped (disabled):', name);
+        return;
+      }
+
+      console.log('[Analytics] Logging event:', name, { propertyId, props });
+
       // Prefer server-side RPC to ensure user_id and last_activity update
       const { error } = await supabase.rpc('log_user_event', {
         p_event_name: name,
         p_property_id: propertyId || null,
         p_props: props || null,
       });
+
       if (error) throw error;
+      console.log('[Analytics] ✅ Event logged successfully:', name);
     } catch (e) {
       // Best effort only
-      console.warn('[Analytics] log failed', e);
+      console.error('[Analytics] ❌ Log failed:', name, e);
     }
   }
 

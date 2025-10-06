@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/NewAuthContext';
 import { TradingServiceFactory } from '@/services/trading/TradingServiceFactory';
 import { isFeatureEnabled } from '@/config/featureFlags';
 import { useInvestments, useInvestmentMutations } from '@/hooks/useInvestmentService';
+import { NotificationService } from '@/services/NotificationService';
 import {
   ShoppingCart,
   User,
@@ -48,7 +49,7 @@ interface ShareMarketplaceProps {
 
 const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
   console.log('🔥 ShareMarketplace component rendered!', { propertyId });
-  const { user, addNotification } = useAuth();
+  const { user } = useAuth();
   const [sellRequests, setSellRequests] = useState<ShareSellRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
@@ -152,28 +153,22 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
         if (updateError) throw updateError;
       }
 
-      addNotification({
-        name: tradingEnabled ? 'Hold Created' : 'Shares Purchased',
-        description: tradingEnabled
+      NotificationService.success(
+        tradingEnabled ? 'Hold Created' : 'Shares Purchased',
+        tradingEnabled
           ? `Your hold is created and confirmed. Waiting for seller confirmation.`
-          : `Successfully purchased ${sellRequest.shares_to_sell} shares of ${sellRequest.properties.title}`,
-        icon: "CHECK_CIRCLE",
-        color: "#059669",
-        time: new Date().toLocaleTimeString()
-      });
+          : `Successfully purchased ${sellRequest.shares_to_sell} shares of ${sellRequest.properties.title}`
+      );
 
       // Refresh the list
       fetchSellRequests();
 
     } catch (error) {
       console.error('Error purchasing shares:', error);
-      addNotification({
-        name: "Purchase Failed",
-        description: "Failed to purchase shares. Please try again.",
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        time: new Date().toLocaleTimeString()
-      });
+      NotificationService.error(
+        "Purchase Failed",
+        "Failed to purchase shares. Please try again."
+      );
     } finally {
       setPurchasing(null);
     }

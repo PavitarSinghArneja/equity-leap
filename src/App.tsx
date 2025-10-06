@@ -40,6 +40,7 @@ import AdminSupport from "@/pages/admin/AdminSupport";
 import AdminInvestments from "@/pages/admin/AdminInvestments";
 import AdminAddProperty from "@/pages/admin/AdminAddProperty";
 import AdminShareTrading from "@/pages/admin/AdminShareTrading";
+import TestAnalytics from "@/pages/TestAnalytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -130,6 +131,7 @@ const AppContent = () => {
           <Route path="/admin/share-trading" element={<AdminRoute><AdminShareTrading /></AdminRoute>} />
           <Route path="/admin/support" element={<AdminRoute><AdminSupport /></AdminRoute>} />
           <Route path="/admin/investments" element={<AdminRoute><AdminInvestments /></AdminRoute>} />
+          <Route path="/test-analytics" element={<TestAnalytics />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

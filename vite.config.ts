@@ -8,7 +8,9 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    strictPort: true,
   },
+  cacheDir: '.vite-cache',
   plugins: [
     react(),
     mode === 'development' &&

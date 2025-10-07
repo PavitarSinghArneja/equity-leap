@@ -21,7 +21,19 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error('========================================');
+    console.error('🚨 ERROR BOUNDARY CAUGHT AN ERROR 🚨');
+    console.error('========================================');
+    console.error('Error Name:', error.name);
+    console.error('Error Message:', error.message);
+    console.error('Error Stack:', error.stack);
+    console.error('Component Stack:', errorInfo.componentStack);
+    console.error('========================================');
+
+    // Alert for visibility
+    if (typeof window !== 'undefined') {
+      window.alert(`ERROR CAUGHT!\n\nError: ${error.message}\n\nCheck console for details (F12)`);
+    }
 
     // Clear potentially corrupted auth data
     try {

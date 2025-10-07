@@ -74,30 +74,36 @@ const PageTitleManager = () => {
 
 
 const AppContent = () => {
-  const { notifications } = useAuth();
-  
-  return (
-    <>
-      <Toaster />
-      <Sonner />
-      
-      {/* Global Notifications */}
-      <div className="fixed top-4 right-4 z-50 max-w-sm">
-        <AnimatedNotifications 
-          notifications={notifications} 
-          className="h-auto max-h-[80vh] overflow-hidden"
-        />
-      </div>
-      
-      <BrowserRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true
-        }}
-      >
-        <PageTitleManager />
-        <TopNav />
-        <Routes>
+  console.log('[App] 🚀 AppContent rendering...');
+  try {
+    const { notifications } = useAuth();
+    console.log('[App] ✅ Auth context loaded, notifications:', notifications?.length || 0);
+
+    return (
+      <>
+        <Toaster />
+        <Sonner />
+
+        {/* Global Notifications */}
+        <div className="fixed top-4 right-4 z-50 max-w-sm">
+          <AnimatedNotifications
+            notifications={notifications}
+            className="h-auto max-h-[80vh] overflow-hidden"
+          />
+        </div>
+
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true
+          }}
+        >
+          {(() => { console.log('[App] 📄 Rendering PageTitleManager'); return null; })()}
+          <PageTitleManager />
+          {(() => { console.log('[App] 🧭 Rendering TopNav'); return null; })()}
+          <TopNav />
+          {(() => { console.log('[App] 🛣️  Rendering Routes'); return null; })()}
+          <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/welcome" element={<Welcome />} />
@@ -134,13 +140,18 @@ const AppContent = () => {
           <Route path="/admin/investments" element={<AdminRoute><AdminInvestments /></AdminRoute>} />
           <Route path="/test-analytics" element={<TestAnalytics />} />
           <Route path="/trading" element={<Trading />} />
+          <Route path="/test-route" element={<div style={{padding: '50px', fontSize: '24px'}}>TEST ROUTE WORKS!</div>} />
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </>
-  );
+    );
+  } catch (error) {
+    console.error('[App] ❌ ERROR in AppContent:', error);
+    throw error; // Re-throw to let ErrorBoundary catch it
+  }
 };
 
 const App = () => (

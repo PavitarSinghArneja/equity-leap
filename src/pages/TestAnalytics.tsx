@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { AnalyticsService } from '@/services/AnalyticsService';
+import { AnalyticsService, getAnalyticsStats } from '@/services/AnalyticsService';
+import { featureFlags, getAllFeatureFlags } from '@/config/featureFlags';
 
 const TestAnalytics = () => {
+  console.log('[TestAnalytics] Component rendering...');
   const [result, setResult] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  console.log('[TestAnalytics] State initialized');
 
   const testDirectRPC = async () => {
     setLoading(true);
@@ -122,12 +125,27 @@ const TestAnalytics = () => {
           )}
 
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="font-semibold text-blue-900 mb-2">Environment Info:</h3>
+            <h3 className="font-semibold text-blue-900 mb-2">Feature Flags (Production System):</h3>
             <pre className="text-xs text-blue-800">
+              {JSON.stringify(getAllFeatureFlags(), null, 2)}
+            </pre>
+          </div>
+
+          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <h3 className="font-semibold text-green-900 mb-2">Analytics Statistics:</h3>
+            <pre className="text-xs text-green-800">
+              {JSON.stringify(getAnalyticsStats(), null, 2)}
+            </pre>
+          </div>
+
+          <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <h3 className="font-semibold text-purple-900 mb-2">Environment Info (for reference):</h3>
+            <pre className="text-xs text-purple-800">
               {JSON.stringify({
-                VITE_FLAG_ANALYTICS: import.meta.env.VITE_FLAG_ANALYTICS,
                 NODE_ENV: import.meta.env.NODE_ENV,
-                MODE: import.meta.env.MODE
+                MODE: import.meta.env.MODE,
+                DEV: import.meta.env.DEV,
+                PROD: import.meta.env.PROD
               }, null, 2)}
             </pre>
           </div>

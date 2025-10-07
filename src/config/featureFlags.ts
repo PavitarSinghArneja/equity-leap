@@ -70,10 +70,12 @@ export const getAllFeatureFlags = (): Readonly<FeatureFlags> => {
 export const logFeatureFlags = (): void => {
   console.group('[FeatureFlags] Current Configuration');
   console.log('🔧 Feature Flag System: PRODUCTION MODE (hardcoded)');
-  console.table(featureFlags);
+  console.log('Feature Flags:', JSON.stringify(featureFlags, null, 2));
   console.groupEnd();
 };
 
 // Auto-log on module load for easy debugging
-logFeatureFlags();
+if (typeof window !== 'undefined') {
+  logFeatureFlags();
+}
 

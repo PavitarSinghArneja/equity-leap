@@ -50,6 +50,8 @@ import AdminSupport from "@/pages/admin/AdminSupport";
 import AdminInvestments from "@/pages/admin/AdminInvestments";
 import AdminAddProperty from "@/pages/admin/AdminAddProperty";
 import AdminShareTrading from "@/pages/admin/AdminShareTrading";
+import Trading from "@/pages/Trading";
+import TestAnalytics from "@/pages/TestAnalytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -69,6 +71,8 @@ const PageTitleManager = () => {
     if (path.startsWith("/admin")) return "Admin · Retreat Slice";
     if (path.startsWith("/kyc")) return "KYC · Retreat Slice";
     if (path.startsWith("/trial-expired")) return "Trial Expired · Retreat Slice";
+    if (path.startsWith("/trading")) return "Trading · Retreat Slice";
+    if (path.startsWith("/test-analytics")) return "Analytics Test · Retreat Slice";
     return "Retreat Slice";
   };
 
@@ -276,6 +280,24 @@ const AppContent = () => {
               <AdminRoute>
                 <AdminInvestments />
               </AdminRoute>
+            }
+          />
+
+          {/* Trading & Analytics Routes */}
+          <Route
+            path="/trading"
+            element={
+              <AuthenticatedRoute>
+                <Trading />
+              </AuthenticatedRoute>
+            }
+          />
+          <Route
+            path="/test-analytics"
+            element={
+              <AuthenticatedRoute>
+                <TestAnalytics />
+              </AuthenticatedRoute>
             }
           />
 

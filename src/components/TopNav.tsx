@@ -58,14 +58,17 @@ const TopNav: React.FC = () => {
         <nav className="hidden md:flex items-center gap-6 text-sm">
           <NavLink to="/welcome" className="text-foreground font-medium">Home</NavLink>
           <NavLink to="/properties" className="text-muted-foreground hover:text-foreground">Properties</NavLink>
+          {profile?.tier && ['waitlist_player', 'small_investor', 'large_investor'].includes(profile.tier) && (
+            <NavLink to="/trading" className="text-muted-foreground hover:text-foreground">Trading</NavLink>
+          )}
           {isAdmin && (
             <NavLink to="/admin/support" className="text-muted-foreground hover:text-foreground">Support</NavLink>
           )}
           {profile?.subscription_active && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => navigate(profile?.tier === 'waitlist_player' ? '/waitlist-dashboard/overview' : '/dashboard/overview')} 
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(profile?.tier === 'waitlist_player' ? '/waitlist-dashboard/overview' : '/dashboard/overview')}
               className="ml-2"
             >
               Dashboard
@@ -147,6 +150,9 @@ const TopNav: React.FC = () => {
           <div className="container mx-auto px-4 py-3 grid grid-cols-2 gap-2">
             <LinkItem to="/welcome" label="Home" onClick={close} />
             <LinkItem to="/properties" label="Properties" onClick={close} />
+            {profile?.tier && ['waitlist_player', 'small_investor', 'large_investor'].includes(profile.tier) && (
+              <LinkItem to="/trading" label="Trading" onClick={close} />
+            )}
             {isAdmin && user && (
               <LinkItem to="/admin/support" label="Support" onClick={close} />
             )}

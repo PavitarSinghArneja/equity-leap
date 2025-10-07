@@ -28,11 +28,11 @@ const envBool = (key: string, fallback: boolean) => {
 };
 
 export const featureFlags: FeatureFlags = {
-  secondary_market_enabled: envBool('VITE_FLAG_SECONDARY_MARKET', false),
+  secondary_market_enabled: envBool('VITE_FLAG_SECONDARY_MARKET', true),  // Production-ready: enabled by default
   trading_ui_enabled: envBool('VITE_FLAG_TRADING_UI', true),
   trial_enforcement_enabled: envBool('VITE_FLAG_TRIAL_ENFORCEMENT', false),
   notifications_enabled: envBool('VITE_FLAG_NOTIFICATIONS', true),
-  analytics_enabled: envBool('VITE_FLAG_ANALYTICS', false),
+  analytics_enabled: envBool('VITE_FLAG_ANALYTICS', true),  // Production-ready: enabled by default
 };
 
 export const isFeatureEnabled = (key: keyof FeatureFlags): boolean => featureFlags[key];

@@ -22,6 +22,8 @@ import {
   CheckCircle
 } from 'lucide-react';
 
+type UserTier = 'explorer' | 'waitlist_player' | 'small_investor' | 'large_investor';
+
 interface ShareSellRequest {
   id: string;
   seller_id: string;
@@ -41,6 +43,20 @@ interface ShareSellRequest {
     country: string;
     share_price: number;
   };
+}
+
+interface UserProfile {
+  tier: UserTier;
+}
+
+interface WalletBalance {
+  available_balance: number | null;
+}
+
+interface Investment {
+  id: string;
+  shares_owned: number;
+  total_investment: number;
 }
 
 interface ShareMarketplaceProps {
@@ -128,6 +144,52 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
     try {
       setPurchasing(sellRequest.id);
 
+      // 1. Get current user profile to check tier
+      const { data: userProfile, error: profileError } = await supabase
+        .from('users')
+        .select('tier')
+        .eq('user_id', user.id)
+        .single<UserProfile>();
+
+      if (profileError) {
+        throw new Error(`Failed to fetch user profile: ${profileError.message}`);
+      }
+
+      // 2. Validate user tier - must be waitlist_player or higher
+      const validTiers: UserTier[] = ['waitlist_player', 'small_investor', 'large_investor'];
+      if (!userProfile || !validTiers.includes(userProfile.tier)) {
+        NotificationService.error(
+          "Access Denied",
+          "You must be a waitlist player or higher to purchase shares. Please upgrade your account."
+        );
+        return;
+      }
+
+      // 3. Calculate total cost
+      const totalCost = sellRequest.price_per_share * sellRequest.shares_to_sell;
+
+      // 4. Check wallet balance
+      const { data: walletData, error: walletError } = await supabase
+        .from('escrow_balances')
+        .select('available_balance')
+        .eq('user_id', user.id)
+        .maybeSingle<WalletBalance>();
+
+      if (walletError) {
+        throw new Error(`Failed to fetch wallet balance: ${walletError.message}`);
+      }
+
+      const currentBalance: number = walletData?.available_balance ?? 0;
+
+      // 5. Validate sufficient funds
+      if (currentBalance < totalCost) {
+        NotificationService.error(
+          "Insufficient Funds",
+          `Your wallet balance (${formatCurrency(currentBalance)}) is insufficient to purchase these shares. Required: ${formatCurrency(totalCost)}`
+        );
+        return;
+      }
+
       if (tradingEnabled) {
         // New flow: create hold and auto-confirm buyer side
         const holdRes = await tradingService.createBuyerHold(sellRequest.id, sellRequest.shares_to_sell);
@@ -140,6 +202,95 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
       } else {
         // Legacy direct-settle flow (kept for backward compatibility)
         // Note: retained as-is to avoid regressions; will be removed once new flow is fully rolled out.
+
+        // 6. Deduct wallet balance (atomic operation)
+        const { error: walletUpdateError } = await supabase
+          .from('escrow_balances')
+          .update({
+            available_balance: currentBalance - totalCost,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+          .eq('available_balance', currentBalance); // Optimistic locking
+
+        if (walletUpdateError) {
+          throw new Error(`Failed to deduct wallet balance: ${walletUpdateError.message}`);
+        }
+
+        // 7. Check if buyer already has an investment in this property
+        const { data: existingInvestment, error: investmentCheckError } = await supabase
+          .from('investments')
+          .select('id, shares_owned, total_investment')
+          .eq('user_id', user.id)
+          .eq('property_id', sellRequest.property_id)
+          .maybeSingle<Investment>();
+
+        if (investmentCheckError) {
+          // Rollback wallet deduction
+          await supabase
+            .from('escrow_balances')
+            .update({
+              available_balance: currentBalance,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', user.id);
+
+          throw new Error(`Failed to check existing investments: ${investmentCheckError.message}`);
+        }
+
+        // 8. Update or create investment record
+        if (existingInvestment) {
+          // Update existing investment
+          const { error: investmentUpdateError } = await supabase
+            .from('investments')
+            .update({
+              shares_owned: existingInvestment.shares_owned + sellRequest.shares_to_sell,
+              total_investment: existingInvestment.total_investment + totalCost,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingInvestment.id);
+
+          if (investmentUpdateError) {
+            // Rollback wallet deduction
+            await supabase
+              .from('escrow_balances')
+              .update({
+                available_balance: currentBalance,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', user.id);
+
+            throw new Error(`Failed to update investment: ${investmentUpdateError.message}`);
+          }
+        } else {
+          // Create new investment
+          const { error: investmentCreateError } = await supabase
+            .from('investments')
+            .insert({
+              user_id: user.id,
+              property_id: sellRequest.property_id,
+              shares_owned: sellRequest.shares_to_sell,
+              price_per_share: sellRequest.price_per_share,
+              total_investment: totalCost,
+              investment_status: 'active',
+              investment_date: new Date().toISOString()
+            });
+
+          if (investmentCreateError) {
+            // Rollback wallet deduction
+            await supabase
+              .from('escrow_balances')
+              .update({
+                available_balance: currentBalance,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', user.id);
+
+            throw new Error(`Failed to create investment: ${investmentCreateError.message}`);
+          }
+        }
+
+        // 9. Update sell request status
         const { error: updateError } = await supabase
           .from('share_sell_requests')
           .update({
@@ -150,7 +301,15 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
           .eq('id', sellRequest.id)
           .eq('status', 'active');
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          // Note: At this point, we've already updated wallet and investments
+          // Log error but don't rollback as the purchase is effectively complete
+          console.error('Failed to update sell request status:', updateError);
+          NotificationService.warning(
+            "Partial Success",
+            "Shares purchased but listing status not updated. Contact support if needed."
+          );
+        }
       }
 
       NotificationService.success(
@@ -160,14 +319,23 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
           : `Successfully purchased ${sellRequest.shares_to_sell} shares of ${sellRequest.properties.title}`
       );
 
-      // Refresh the list
+      // Refresh the list and wallet balance
       fetchSellRequests();
+      const { data: updatedWallet } = await supabase
+        .from('escrow_balances')
+        .select('available_balance')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (updatedWallet) {
+        setWalletAvailable(updatedWallet.available_balance ?? 0);
+      }
 
     } catch (error) {
       console.error('Error purchasing shares:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to purchase shares. Please try again.";
       NotificationService.error(
         "Purchase Failed",
-        "Failed to purchase shares. Please try again."
+        errorMessage
       );
     } finally {
       setPurchasing(null);

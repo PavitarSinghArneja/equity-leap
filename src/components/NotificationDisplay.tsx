@@ -57,20 +57,20 @@ const NotificationDisplay = ({ notification, onDismiss }: NotificationDisplayPro
   return (
     <div
       className={cn(
-        "relative w-full max-w-md min-w-80 rounded-lg shadow-lg overflow-hidden transition-all duration-300 transform",
+        "relative w-full max-w-sm sm:max-w-md min-w-80 rounded-lg shadow-lg overflow-hidden transition-all duration-300 transform",
         getStyles(),
         isVisible && !isExiting ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
       )}
     >
       <div className="px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="flex-shrink-0">{getIcon()}</div>
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 mt-0.5">{getIcon()}</div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">
               {notification.title}
             </p>
             {notification.message && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+              <p className="text-sm text-gray-500 dark:text-gray-400 break-words mt-1">
                 {notification.message}
               </p>
             )}

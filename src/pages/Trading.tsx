@@ -42,7 +42,7 @@ const Trading: React.FC = () => {
       const { data, error } = await supabase
         .from('properties')
         .select('id, title, city, country, share_price, available_shares')
-        .eq('status', 'active')
+        .in('property_status', ['open', 'funded'])
         .order('title');
 
       if (error) throw error;

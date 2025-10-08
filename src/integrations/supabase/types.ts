@@ -724,6 +724,132 @@ export type Database = {
         }
         Relationships: []
       }
+      share_sell_requests: {
+        Row: {
+          id: string
+          seller_id: string
+          property_id: string
+          shares_to_sell: number
+          remaining_shares: number | null
+          price_per_share: number
+          total_amount: number
+          status: string
+          expires_at: string
+          sold_at: string | null
+          buyer_id: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          seller_id: string
+          property_id: string
+          shares_to_sell: number
+          remaining_shares?: number | null
+          price_per_share: number
+          total_amount: number
+          status?: string
+          expires_at: string
+          sold_at?: string | null
+          buyer_id?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          seller_id?: string
+          property_id?: string
+          shares_to_sell?: number
+          remaining_shares?: number | null
+          price_per_share?: number
+          total_amount?: number
+          status?: string
+          expires_at?: string
+          sold_at?: string | null
+          buyer_id?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_sell_requests_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "share_sell_requests_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          }
+        ]
+      }
+      share_holds: {
+        Row: {
+          id: string
+          sell_request_id: string
+          buyer_id: string
+          shares_held: number
+          hold_expires_at: string
+          buyer_confirmed: boolean
+          seller_confirmed: boolean
+          buyer_confirmed_at: string | null
+          seller_confirmed_at: string | null
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          sell_request_id: string
+          buyer_id: string
+          shares_held: number
+          hold_expires_at: string
+          buyer_confirmed?: boolean
+          seller_confirmed?: boolean
+          buyer_confirmed_at?: string | null
+          seller_confirmed_at?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          sell_request_id?: string
+          buyer_id?: string
+          shares_held?: number
+          hold_expires_at?: string
+          buyer_confirmed?: boolean
+          seller_confirmed?: boolean
+          buyer_confirmed_at?: string | null
+          seller_confirmed_at?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_holds_sell_request_id_fkey"
+            columns: ["sell_request_id"]
+            isOneToOne: false
+            referencedRelation: "share_sell_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "share_holds_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -146,7 +146,7 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
 
       // 1. Get current user profile to check tier
       const { data: userProfile, error: profileError } = await supabase
-        .from('users')
+        .from('user_profiles')
         .select('tier')
         .eq('user_id', user.id)
         .single<UserProfile>();

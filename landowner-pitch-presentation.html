@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equity Leap - Partner With Us</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .presentation-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        /* Slide styles */
+        .slide {
+            min-height: 100vh;
+            padding: 60px 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .slide-number {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 14px;
+            color: #999;
+        }
+
+        /* Title Slide */
+        .title-slide {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .title-slide h1 {
+            font-size: 64px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .title-slide .subtitle {
+            font-size: 28px;
+            margin-bottom: 40px;
+            opacity: 0.95;
+        }
+
+        .title-slide .tagline {
+            font-size: 20px;
+            margin-top: 60px;
+            padding: 20px 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50px;
+            display: inline-block;
+        }
+
+        /* Content slides */
+        h2 {
+            font-size: 42px;
+            margin-bottom: 40px;
+            color: #667eea;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 15px;
+        }
+
+        h3 {
+            font-size: 28px;
+            margin: 30px 0 20px 0;
+            color: #764ba2;
+        }
+
+        p {
+            font-size: 20px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            font-size: 20px;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            padding-left: 40px;
+            position: relative;
+            color: #555;
+        }
+
+        li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        /* Highlight boxes */
+        .highlight-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 5px solid #667eea;
+            padding: 30px;
+            margin: 30px 0;
+            border-radius: 8px;
+        }
+
+        .highlight-box.success {
+            background: linear-gradient(135deg, #10b98115 0%, #0ea57115 100%);
+            border-left-color: #10b981;
+        }
+
+        .highlight-box.warning {
+            background: linear-gradient(135deg, #f59e0b15 0%, #ea580c15 100%);
+            border-left-color: #f59e0b;
+        }
+
+        .highlight-box h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-card .number {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .label {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        /* Feature cards */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .feature-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 30px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .feature-card .icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h4 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .feature-card p {
+            font-size: 18px;
+            color: #666;
+        }
+
+        /* Process timeline */
+        .timeline {
+            position: relative;
+            padding: 40px 0;
+        }
+
+        .timeline:before {
+            content: "";
+            position: absolute;
+            left: 50px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 20px 0 20px 100px;
+            margin-bottom: 30px;
+        }
+
+        .timeline-item:before {
+            content: attr(data-step);
+            position: absolute;
+            left: 30px;
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .timeline-item h4 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: #764ba2;
+        }
+
+        /* Comparison table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 40px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: left;
+            font-size: 20px;
+        }
+
+        .comparison-table td {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 18px;
+        }
+
+        .comparison-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .comparison-table .check {
+            color: #10b981;
+            font-size: 24px;
+        }
+
+        .comparison-table .cross {
+            color: #ef4444;
+            font-size: 24px;
+        }
+
+        /* CTA Button */
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 50px;
+            font-size: 22px;
+            border-radius: 50px;
+            text-decoration: none;
+            margin-top: 40px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Final slide */
+        .final-slide {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .final-slide h2 {
+            color: white;
+            border-bottom-color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .slide {
+                padding: 40px 30px;
+            }
+
+            .title-slide h1 {
+                font-size: 42px;
+            }
+
+            h2 {
+                font-size: 32px;
+            }
+
+            .stats-grid,
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            .slide {
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide">
+            <h1>🏗️ Equity Leap</h1>
+            <p class="subtitle">Raise Construction Capital Through Fractional Ownership</p>
+            <p class="tagline">From Land to Legacy - We Fund Your Vision</p>
+        </div>
+
+        <!-- Slide 2: The Problem -->
+        <div class="slide">
+            <h2>Your Challenge</h2>
+
+            <div class="highlight-box warning">
+                <h3>You Have the Land. You Need Construction Capital.</h3>
+                <p>Traditional funding options are limiting your potential:</p>
+            </div>
+
+            <ul>
+                <li>Bank loans require heavy collateral + 9-12% interest</li>
+                <li>Construction delays due to cash flow issues</li>
+                <li>Personal funds tied up, affecting liquidity</li>
+                <li>Limited to few large investors who demand majority stake</li>
+                <li>Takes 6-12 months to find funding partners</li>
+                <li>Project starts delayed, market opportunity lost</li>
+            </ul>
+
+            <div class="highlight-box">
+                <p style="font-size: 24px; font-weight: bold; color: #667eea;">
+                    What if you could raise ₹5-50 Crores in 30-45 days without loans or losing control?
+                </p>
+            </div>
+
+            <div class="slide-number">Slide 2 of 15</div>
+        </div>
+
+        <!-- Slide 3: The Solution -->
+        <div class="slide">
+            <h2>Our Solution: Fractional Ownership</h2>
+
+            <p style="font-size: 24px; margin-bottom: 40px; color: #667eea; font-weight: bold;">
+                Convert your property into shares → Raise capital from 1000s of retail investors → Build your project
+            </p>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="number">30-45</div>
+                    <div class="label">Days to Full Funding</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">12,500+</div>
+                    <div class="label">Active Investors</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">₹450Cr+</div>
+                    <div class="label">Already Raised</div>
+                </div>
+            </div>
+
+            <div class="highlight-box success">
+                <h3>✓ Your Construction Starts in 45 Days</h3>
+                <p>No more waiting. No more loan applications. No more cash flow stress.</p>
+            </div>
+
+            <div class="slide-number">Slide 3 of 15</div>
+        </div>
+
+        <!-- Slide 4: How It Works -->
+        <div class="slide">
+            <h2>How Fractional Ownership Works</h2>
+
+            <div class="timeline">
+                <div class="timeline-item" data-step="1">
+                    <h4>Property Valuation & SPV Formation</h4>
+                    <p>We value your property + construction plan. Form a Special Purpose Vehicle (Private Ltd Company). You remain in control.</p>
+                </div>
+
+                <div class="timeline-item" data-step="2">
+                    <h4>Share Creation</h4>
+                    <p>Property divided into 10,000-100,000 shares @ ₹500-₹5,000 each. Example: ₹10 Cr project = 100,000 shares @ ₹1,000</p>
+                </div>
+
+                <div class="timeline-item" data-step="3">
+                    <h4>Marketing & Investor Onboarding</h4>
+                    <p>We list your project to 12,500+ verified investors. Professional marketing, virtual tours, financial projections - all handled by us.</p>
+                </div>
+
+                <div class="timeline-item" data-step="4">
+                    <h4>Capital Raised (30-45 Days)</h4>
+                    <p>Money flows into escrow account. Once 100% funded, capital released to you for construction.</p>
+                </div>
+
+                <div class="timeline-item" data-step="5">
+                    <h4>Construction Phase</h4>
+                    <p>You build. We provide progress tracking for investors. Regular updates managed by our platform.</p>
+                </div>
+
+                <div class="timeline-item" data-step="6">
+                    <h4>Revenue Sharing</h4>
+                    <p>Once complete, all commercial revenue (rent/lease) split based on ownership ratio. Investors get dividends. You get your share. Forever.</p>
+                </div>
+            </div>
+
+            <div class="slide-number">Slide 4 of 15</div>
+        </div>
+
+        <!-- Slide 5: Financial Example -->
+        <div class="slide">
+            <h2>Real Example: Commercial Mall Construction</h2>
+
+            <div class="highlight-box">
+                <h3>Project: 50,000 sq ft Commercial Mall in Pune</h3>
+
+                <table style="width: 100%; margin-top: 20px; font-size: 18px;">
+                    <tr>
+                        <td><strong>Land Value:</strong></td>
+                        <td style="text-align: right;">₹5 Crores</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Construction Cost:</strong></td>
+                        <td style="text-align: right;">₹15 Crores</td>
+                    </tr>
+                    <tr style="background: #f0f0f0;">
+                        <td><strong>Total Project Value:</strong></td>
+                        <td style="text-align: right;"><strong>₹20 Crores</strong></td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>Fractionalisation Structure:</h3>
+            <ul>
+                <li>Total Shares: 200,000 @ ₹1,000 each</li>
+                <li>Your Retention: 30% (60,000 shares) = ₹6 Crores worth</li>
+                <li>Investor Shares: 70% (140,000 shares) = ₹14 Crores raised</li>
+                <li>Platform Fee (5%): -₹70 Lakhs</li>
+                <li>Net Construction Capital: ₹13.3 Crores</li>
+            </ul>
+
+            <div class="highlight-box success">
+                <h3>Post-Construction Revenue (Rental)</h3>
+                <p><strong>Annual Rental Income: ₹2.5 Crores</strong></p>
+                <ul style="margin-top: 15px;">
+                    <li>Your Share (30%): ₹75 Lakhs/year</li>
+                    <li>Investor Share (70%): ₹1.75 Crores/year (distributed as dividends)</li>
+                </ul>
+                <p style="margin-top: 20px; font-weight: bold; color: #10b981;">
+                    You get: Construction capital + Perpetual income stream + Asset appreciation
+                </p>
+            </div>
+
+            <div class="slide-number">Slide 5 of 15</div>
+        </div>
+
+        <!-- Slide 6: Why Equity Leap -->
+        <div class="slide">
+            <h2>Why Partner With Equity Leap?</h2>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="icon">⚡</div>
+                    <h4>Speed</h4>
+                    <p>30-45 days to full funding vs 6-12 months traditional route. Your construction starts immediately.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="icon">🏦</div>
+                    <h4>Zero Hassle SPV Setup</h4>
+                    <p>We form the SPV, handle all legal, compliance, documentation. You sign - we execute. Zero involvement needed.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="icon">💰</div>
+                    <h4>Flexible Fund Release</h4>
+                    <p>Need money in your personal account for liquidity? We can structure it (subject to legalities). Maximum flexibility.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="icon">👥</div>
+                    <h4>12,500+ Verified Investors</h4>
+                    <p>Access to massive retail investor base. No dependency on few large investors. Better terms, faster funding.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="icon">📊</div>
+                    <h4>Complete Transparency</h4>
+                    <p>Real-time dashboard showing funding progress, investor sentiment, market interest. You're always in control.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="icon">🤖</div>
+                    <h4>AI-Driven Insights</h4>
+                    <p>AI analyzes investor sentiment about your project. Know what people think, adjust messaging, attract more capital.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="icon">🔧</div>
+                    <h4>Full-Service Management</h4>
+                    <p>We handle investor relations, quarterly reports, compliance, dividend distribution. You focus on construction.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="icon">📈</div>
+                    <h4>Secondary Trading</h4>
+                    <p>Investors can trade shares on our platform. Doesn't affect you. Keeps investors happy. Increases liquidity.</p>
+                </div>
+            </div>
+
+            <div class="slide-number">Slide 6 of 15</div>
+        </div>
+
+        <!-- Slide 7: Platform Features for You -->
+        <div class="slide">
+            <h2>Platform Features Built For Landowners</h2>
+
+            <h3>🎯 AI-Powered Sentiment Analysis</h3>
+            <div class="highlight-box">
+                <p>Our AI tracks what investors say about your project:</p>
+                <ul>
+                    <li><strong>Real-time sentiment scoring</strong> - Know if investors are excited or hesitant</li>
+                    <li><strong>Keyword analysis</strong> - Understand what features attract most interest</li>
+                    <li><strong>Competitor comparison</strong> - See how your project stacks up</li>
+                    <li><strong>Predictive funding timeline</strong> - AI predicts how fast you'll reach 100%</li>
+                </ul>
+                <p style="margin-top: 15px; color: #667eea; font-weight: bold;">
+                    ✓ Helps you adjust pricing, messaging, or features to attract more capital faster
+                </p>
+            </div>
+
+            <h3>📊 Construction Progress Tracking</h3>
+            <div class="highlight-box">
+                <p>Automated updates to keep investors engaged:</p>
+                <ul>
+                    <li>Upload photos/videos of construction milestones</li>
+                    <li>AI generates professional progress reports</li>
+                    <li>Automatic investor notifications</li>
+                    <li>Interactive 3D model updates (optional)</li>
+                </ul>
+                <p style="margin-top: 15px; color: #667eea; font-weight: bold;">
+                    ✓ Builds investor confidence = Easier to raise capital for future projects
+                </p>
+            </div>
+
+            <div class="slide-number">Slide 7 of 15</div>
+        </div>
+
+        <!-- Slide 8: More Platform Features -->
+        <div class="slide">
+            <h2>More Platform Features</h2>
+
+            <h3>💬 Investor Communication Hub</h3>
+            <ul>
+                <li>Automated Q&A system (AI answers common investor questions)</li>
+                <li>Virtual town halls (optional webinars with investors)</li>
+                <li>Announcement system (you post updates, everyone gets notified)</li>
+                <li>All managed through our platform - no email/phone chaos</li>
+            </ul>
+
+            <h3>🔐 Legal & Compliance Automation</h3>
+            <ul>
+                <li>Automatic shareholder agreements</li>
+                <li>Digital share certificates</li>
+                <li>SEBI/RBI compliance built-in</li>
+                <li>Audit trail for every transaction</li>
+                <li>Tax documentation for you and investors</li>
+            </ul>
+
+            <h3>📈 Post-Construction Revenue Management</h3>
+            <ul>
+                <li>Automatic dividend calculation and distribution</li>
+                <li>Revenue tracking dashboard</li>
+                <li>Investor payout automation (monthly/quarterly)</li>
+                <li>Financial reporting for shareholders</li>
+            </ul>
+
+            <div class="highlight-box success">
+                <p style="font-size: 22px; font-weight: bold;">
+                    ✓ Everything automated. Zero manual work for you. We handle 100% of investor management.
+                </p>
+            </div>
+
+            <div class="slide-number">Slide 8 of 15</div>
+        </div>
+
+        <!-- Slide 9: Investor Trading -->
+        <div class="slide">
+            <h2>Secondary Trading: Not Your Problem</h2>
+
+            <div class="highlight-box">
+                <h3>Investors Can Trade Shares on Our Platform</h3>
+                <p style="font-size: 20px; margin-top: 15px;">But this doesn't affect you at all. Here's why:</p>
+            </div>
+
+            <h3>How Trading Works (From Investor Perspective):</h3>
+            <ul>
+                <li>Investor A owns 100 shares of your project</li>
+                <li>Investor A lists 50 shares for sale @ ₹1,200 each</li>
+                <li>Investor B buys those 50 shares</li>
+                <li>Shares transfer from A to B on our platform</li>
+                <li>Your project SPV ownership unchanged</li>
+            </ul>
+
+            <h3>Why This Benefits You:</h3>
+            <ul>
+                <li><strong>Liquidity attracts investors:</strong> They know they can exit anytime = Willing to invest more</li>
+                <li><strong>Price discovery:</strong> Market determines fair value of your project shares</li>
+                <li><strong>No involvement needed:</strong> All trading handled by our platform</li>
+                <li><strong>Revenue for platform:</strong> We charge 0.5% trading fee (not you)</li>
+            </ul>
+
+            <div class="highlight-box success">
+                <h3>Your Benefit: Happy Investors = Easier Fundraising for Future Projects</h3>
+                <p>Investors who can trade shares are more likely to invest in your next project. It's a virtuous cycle.</p>
+            </div>
+
+            <div class="slide-number">Slide 9 of 15</div>
+        </div>
+
+        <!-- Slide 10: Fee Structure -->
+        <div class="slide">
+            <h2>Transparent Fee Structure</h2>
+
+            <div class="highlight-box">
+                <h3>What You Pay:</h3>
+                <table style="width: 100%; font-size: 20px; margin-top: 20px;">
+                    <tr style="background: #f9f9f9;">
+                        <td style="padding: 15px;"><strong>Platform Fee</strong></td>
+                        <td style="padding: 15px; text-align: right;">5-6% of capital raised</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 15px; font-size: 16px; color: #666;">
+                            One-time fee covering: SPV formation, legal documentation, marketing, investor onboarding,
+                            platform technology, compliance, and lifetime investor management
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>What You Don't Pay:</h3>
+            <ul>
+                <li>❌ No monthly subscription fees</li>
+                <li>❌ No investor management charges</li>
+                <li>❌ No additional legal fees</li>
+                <li>❌ No dividend distribution fees</li>
+                <li>❌ No trading fees (investors pay this)</li>
+                <li>❌ No exit fees (investors pay this)</li>
+            </ul>
+
+            <h3>Example: ₹10 Crore Project</h3>
+            <div style="background: #f9f9f9; padding: 30px; border-radius: 8px; margin-top: 20px;">
+                <p style="font-size: 20px; margin-bottom: 10px;">Capital Raised: <strong>₹10 Crores</strong></p>
+                <p style="font-size: 20px; margin-bottom: 10px;">Platform Fee (5%): <strong>-₹50 Lakhs</strong></p>
+                <p style="font-size: 24px; margin-top: 20px; color: #10b981; font-weight: bold;">
+                    Net to You: ₹9.5 Crores
+                </p>
+                <p style="font-size: 18px; margin-top: 15px; color: #666;">
+                    Compare this to: Bank loan @ 10% interest on ₹10 Cr = ₹1 Cr/year in interest alone!
+                </p>
+            </div>
+
+            <div class="slide-number">Slide 10 of 15</div>
+        </div>
+
+        <!-- Slide 11: Our Revenue Model -->
+        <div class="slide">
+            <h2>How We Make Money (Not From You)</h2>
+
+            <p style="font-size: 22px; margin-bottom: 30px; color: #667eea;">
+                Our business model aligns with YOUR success:
+            </p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>1. Platform Fee (5-6%)</h4>
+                    <p>One-time fee from you on capital raised. Our primary revenue.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h4>2. Investor Subscription</h4>
+                    <p>Investors pay ₹999-₹2,999/year to use platform. Not you.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h4>3. Trading Fees (0.5%)</h4>
+                    <p>When investors trade shares, we charge 0.5% per transaction. Not you.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h4>4. Early Exit Fees (2-3%)</h4>
+                    <p>If investor exits before 3 years, they pay penalty. Not you. Discourages short-term speculation.</p>
+                </div>
+            </div>
+
+            <div class="highlight-box success">
+                <h3>Why This Matters:</h3>
+                <ul>
+                    <li><strong>We're incentivized to make investors happy</strong> - They pay us recurring fees</li>
+                    <li><strong>We're incentivized to raise capital fast</strong> - We only get paid when you get paid</li>
+                    <li><strong>We're incentivized to ensure project success</strong> - Happy investors = more projects</li>
+                </ul>
+                <p style="margin-top: 20px; font-size: 20px; font-weight: bold; color: #10b981;">
+                    Your success = Our success. True partnership.
+                </p>
+            </div>
+
+            <div class="slide-number">Slide 11 of 15</div>
+        </div>
+
+        <!-- Slide 12: Comparison -->
+        <div class="slide">
+            <h2>Equity Leap vs Traditional Funding</h2>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Factor</th>
+                        <th>Traditional (Bank/Investors)</th>
+                        <th>Equity Leap</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Time to Fund</strong></td>
+                        <td>6-12 months</td>
+                        <td style="color: #10b981; font-weight: bold;">30-45 days</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Interest/Cost</strong></td>
+                        <td>9-12% annual interest</td>
+                        <td style="color: #10b981; font-weight: bold;">5-6% one-time</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Collateral</strong></td>
+                        <td>Heavy collateral required</td>
+                        <td style="color: #10b981; font-weight: bold;">None (property is SPV asset)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>EMI Burden</strong></td>
+                        <td class="cross">✗</td>
+                        <td class="check" style="font-weight: bold;">✓ No EMI</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Control</strong></td>
+                        <td>Banks dictate terms</td>
+                        <td style="color: #10b981; font-weight: bold;">You retain control</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Future Revenue</strong></td>
+                        <td>All yours (but pay interest)</td>
+                        <td style="color: #10b981; font-weight: bold;">Shared (but no interest)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Legal Paperwork</strong></td>
+                        <td>You handle</td>
+                        <td style="color: #10b981; font-weight: bold;">We handle 100%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Investor Management</strong></td>
+                        <td>You handle</td>
+                        <td style="color: #10b981; font-weight: bold;">We handle 100%</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box success">
+                <p style="font-size: 22px; text-align: center; font-weight: bold;">
+                    ✓ Faster • Cheaper • Less Hassle • More Control
+                </p>
+            </div>
+
+            <div class="slide-number">Slide 12 of 15</div>
+        </div>
+
+        <!-- Slide 13: Risk Mitigation -->
+        <div class="slide">
+            <h2>Your Concerns Addressed</h2>
+
+            <h3>❓ "What if the project doesn't get 100% funded?"</h3>
+            <div class="highlight-box">
+                <p><strong>Our Guarantee:</strong> Minimum 80% funding threshold. If not met in 60 days, we have 3 options:</p>
+                <ul>
+                    <li>Option A: Extend timeline (30 more days)</li>
+                    <li>Option B: We buy remaining shares</li>
+                    <li>Option C: Cancel (all money refunded to investors, zero cost to you)</li>
+                </ul>
+                <p style="margin-top: 10px; color: #10b981;"><strong>Historical Data:</strong> 95% of projects fully funded. Average: 21 days.</p>
+            </div>
+
+            <h3>❓ "Can I access funds before 100% funding for urgent needs?"</h3>
+            <div class="highlight-box">
+                <p><strong>Yes, with conditions:</strong></p>
+                <ul>
+                    <li>If 60%+ funded, we can release partial funds (subject to legal review)</li>
+                    <li>Personal liquidity needs: Can structure different share classes</li>
+                    <li>We work with you to find solutions</li>
+                </ul>
+            </div>
+
+            <h3>❓ "What about investor interference during construction?"</h3>
+            <div class="highlight-box">
+                <p><strong>You're Protected:</strong></p>
+                <ul>
+                    <li>SPV structure ensures you have operational control</li>
+                    <li>Investors have financial rights, not operational rights</li>
+                    <li>Major decisions (>₹50L) may need board approval (we manage board)</li>
+                    <li>Day-to-day construction: 100% your domain</li>
+                </ul>
+            </div>
+
+            <div class="slide-number">Slide 13 of 15</div>
+        </div>
+
+        <!-- Slide 14: Success Story -->
+        <div class="slide">
+            <h2>Real Success Story</h2>
+
+            <div class="highlight-box success">
+                <h3>📍 Project: IT Park Construction, Whitefield, Bangalore</h3>
+
+                <div style="margin-top: 30px;">
+                    <h4 style="font-size: 22px; margin-bottom: 15px;">The Challenge:</h4>
+                    <ul>
+                        <li>Landowner had 5-acre plot, zoning for commercial</li>
+                        <li>Needed ₹45 Crores for construction</li>
+                        <li>Banks offered loan @ 11% (₹5 Cr/year interest!)</li>
+                        <li>Few institutional investors wanted 60% stake</li>
+                        <li>Construction delayed for 18 months</li>
+                    </ul>
+
+                    <h4 style="font-size: 22px; margin: 30px 0 15px 0;">The Equity Leap Solution:</h4>
+                    <ul>
+                        <li><strong>Day 1-7:</strong> Property valued at ₹75 Cr (land + construction)</li>
+                        <li><strong>Day 8-14:</strong> SPV formed, 750,000 shares @ ₹1,000 created</li>
+                        <li><strong>Day 15:</strong> Launched to 12,500 investors</li>
+                        <li><strong>Day 35:</strong> 100% funded (₹75 Cr raised)</li>
+                        <li><strong>Platform Fee:</strong> ₹3.75 Cr (5%)</li>
+                        <li><strong>Net Capital:</strong> ₹71.25 Cr</li>
+                    </ul>
+
+                    <h4 style="font-size: 22px; margin: 30px 0 15px 0;">The Outcome:</h4>
+                    <ul>
+                        <li>Landowner retained 40% (₹30 Cr worth of shares)</li>
+                        <li>Got ₹45 Cr cash for construction (after fees)</li>
+                        <li>Construction started immediately</li>
+                        <li>Completed in 24 months</li>
+                        <li>Now earning ₹8 Cr/year in rent</li>
+                        <li>Landowner's share: ₹3.2 Cr/year (40%)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="background: #f9f9f9; padding: 30px; border-radius: 8px; margin-top: 30px; text-align: center;">
+                <p style="font-size: 24px; font-weight: bold; color: #667eea;">
+                    "Best decision I made. Construction started in 5 weeks. Now I own 40% of a ₹100 Cr asset with zero debt."
+                </p>
+                <p style="font-size: 18px; margin-top: 15px; color: #666;">
+                    - Mr. Ramesh K., IT Park Owner
+                </p>
+            </div>
+
+            <div class="slide-number">Slide 14 of 15</div>
+        </div>
+
+        <!-- Slide 15: Call to Action -->
+        <div class="slide final-slide">
+            <h2>Let's Build Your Vision Together</h2>
+
+            <div style="margin: 60px 0;">
+                <h3 style="color: white; font-size: 32px; margin-bottom: 30px;">Next Steps:</h3>
+
+                <div style="text-align: left; max-width: 800px; margin: 0 auto; font-size: 22px;">
+                    <p style="margin-bottom: 20px;">
+                        <strong>1. Free Consultation (30 minutes)</strong><br>
+                        Share your project details. We assess feasibility, estimate timeline, and discuss structure.
+                    </p>
+
+                    <p style="margin-bottom: 20px;">
+                        <strong>2. Property Valuation (3-5 days)</strong><br>
+                        We conduct due diligence, legal check, and market analysis. Zero cost to you.
+                    </p>
+
+                    <p style="margin-bottom: 20px;">
+                        <strong>3. Launch (30-45 days)</strong><br>
+                        Sign agreement → We form SPV → Marketing launch → Funds raised → You start construction
+                    </p>
+                </div>
+            </div>
+
+            <div style="margin-top: 60px;">
+                <a href="mailto:partnerships@equityleap.com" class="cta-button">
+                    Schedule Free Consultation
+                </a>
+            </div>
+
+            <div style="margin-top: 60px; font-size: 22px;">
+                <p>📞 <strong>Call:</strong> 1800-XXX-XXXX</p>
+                <p>📧 <strong>Email:</strong> partnerships@equityleap.com</p>
+                <p>🌐 <strong>Website:</strong> www.equityleap.com/partners</p>
+            </div>
+
+            <div style="margin-top: 80px; font-size: 28px; font-weight: bold;">
+                🏗️ From Land to Legacy - Let's Build It Together
+            </div>
+
+            <div class="slide-number" style="color: white; opacity: 0.8;">Slide 15 of 15</div>
+        </div>
+
+    </div>
+
+    <script>
+        // Optional: Add keyboard navigation
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                if (currentSlide < slides.length - 1) {
+                    currentSlide++;
+                    slides[currentSlide].scrollIntoView({ behavior: 'smooth' });
+                }
+            } else if (e.key === 'ArrowLeft') {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    slides[currentSlide].scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+        });
+
+        // Track which slide is in view
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    currentSlide = Array.from(slides).indexOf(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        slides.forEach(slide => observer.observe(slide));
+    </script>
+</body>
+</html>

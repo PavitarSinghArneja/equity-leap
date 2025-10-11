@@ -139,7 +139,7 @@ const AdminShareControls: React.FC = () => {
     };
   }, []);
 
-  const toggleShareSelling = async (property: Property, enabled: boolean) => {
+  const toggleShareSelling = React.useCallback(async (property: Property, enabled: boolean) => {
     try {
       setUpdating(property.id);
 
@@ -171,29 +171,33 @@ const AdminShareControls: React.FC = () => {
         }
       }
 
-      addNotification({
-        name: "Settings Updated",
-        description: `Share selling ${enabled ? 'enabled' : 'disabled'} for ${property.title}`,
-        icon: "CHECK_CIRCLE",
-        color: "#059669",
-        time: new Date().toLocaleTimeString()
-      });
+      if (addNotification) {
+        addNotification({
+          name: "Settings Updated",
+          description: `Share selling ${enabled ? 'enabled' : 'disabled'} for ${property.title}`,
+          icon: "CHECK_CIRCLE",
+          color: "#059669",
+          time: new Date().toLocaleTimeString()
+        });
+      }
 
-      fetchData(); // Refresh data
+      await fetchData(); // Refresh data
 
     } catch (error) {
       console.error('Error updating share selling:', error);
-      addNotification({
-        name: "Update Failed",
-        description: "Failed to update share selling settings",
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        time: new Date().toLocaleTimeString()
-      });
+      if (addNotification) {
+        addNotification({
+          name: "Update Failed",
+          description: "Failed to update share selling settings",
+          icon: "ALERT_TRIANGLE",
+          color: "#DC2626",
+          time: new Date().toLocaleTimeString()
+        });
+      }
     } finally {
       setUpdating(null);
     }
-  };
+  }, [addNotification]);
 
   const updateROI = async () => {
     if (!selectedProperty) return;

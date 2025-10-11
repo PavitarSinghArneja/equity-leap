@@ -3,7 +3,9 @@ import { useAuth } from '@/contexts/NewAuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import OrderBook from '@/components/trading/OrderBook';
+import AvailableShares from '@/components/trading/AvailableShares';
+import BuyConfirmModal from '@/components/trading/BuyConfirmModal';
+import PendingHolds from '@/components/trading/PendingHolds';
 import TradingForm from '@/components/trading/TradingForm';
 import MyOrders from '@/components/trading/MyOrders';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,12 +20,25 @@ interface Property {
   available_shares: number;
 }
 
+interface SellListing {
+  id: string;
+  seller_id: string;
+  property_id: string;
+  shares_to_sell: number;
+  remaining_shares: number | null;
+  price_per_share: number;
+  total_amount: number;
+}
+
 const Trading: React.FC = () => {
   const { user } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
+  const [buyModalOpen, setBuyModalOpen] = useState(false);
+  const [selectedListing, setSelectedListing] = useState<SellListing | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     fetchProperties();
@@ -68,6 +83,15 @@ const Trading: React.FC = () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
+  };
+
+  const handleBuyClick = (listing: SellListing) => {
+    setSelectedListing(listing);
+    setBuyModalOpen(true);
+  };
+
+  const handleBuySuccess = () => {
+    setRefreshKey(prev => prev + 1);
   };
 
   if (loading) {
@@ -173,36 +197,57 @@ const Trading: React.FC = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Order Book - Takes 2 columns on large screens */}
-            <div className="lg:col-span-2">
-              <OrderBook propertyId={selectedPropertyId} />
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Available Shares - Takes 2 columns on large screens */}
+              <div className="lg:col-span-2 space-y-6">
+                <AvailableShares
+                  key={`available-${refreshKey}`}
+                  propertyId={selectedPropertyId}
+                  onBuyClick={handleBuyClick}
+                />
+
+                {/* Pending Holds for Sellers */}
+                <PendingHolds
+                  key={`pending-${refreshKey}`}
+                  propertyId={selectedPropertyId}
+                />
+              </div>
+
+              {/* Sell Form - Takes 1 column */}
+              <div className="space-y-6">
+                <TradingForm
+                  propertyId={selectedPropertyId}
+                  currentPrice={selectedProperty?.share_price || 0}
+                />
+              </div>
+
+              {/* My Orders - Full width below */}
+              <div className="lg:col-span-3">
+                <Tabs defaultValue="active" className="w-full">
+                  <TabsList className="w-full">
+                    <TabsTrigger value="active" className="flex-1">Active Orders</TabsTrigger>
+                    <TabsTrigger value="history" className="flex-1">Order History</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="active">
+                    <MyOrders propertyId={selectedPropertyId} status="active" />
+                  </TabsContent>
+                  <TabsContent value="history">
+                    <MyOrders propertyId={selectedPropertyId} status="completed" />
+                  </TabsContent>
+                </Tabs>
+              </div>
             </div>
 
-            {/* Trading Form - Takes 1 column */}
-            <div className="space-y-6">
-              <TradingForm
-                propertyId={selectedPropertyId}
-                currentPrice={selectedProperty?.share_price || 0}
-              />
-            </div>
-
-            {/* My Orders - Full width below */}
-            <div className="lg:col-span-3">
-              <Tabs defaultValue="active" className="w-full">
-                <TabsList className="w-full">
-                  <TabsTrigger value="active" className="flex-1">Active Orders</TabsTrigger>
-                  <TabsTrigger value="history" className="flex-1">Order History</TabsTrigger>
-                </TabsList>
-                <TabsContent value="active">
-                  <MyOrders propertyId={selectedPropertyId} status="active" />
-                </TabsContent>
-                <TabsContent value="history">
-                  <MyOrders propertyId={selectedPropertyId} status="completed" />
-                </TabsContent>
-              </Tabs>
-            </div>
-          </div>
+            {/* Buy Confirmation Modal */}
+            <BuyConfirmModal
+              listing={selectedListing}
+              isOpen={buyModalOpen}
+              onClose={() => setBuyModalOpen(false)}
+              onSuccess={handleBuySuccess}
+              propertyName={selectedProperty?.title}
+            />
+          </>
         )}
       </div>
     </div>

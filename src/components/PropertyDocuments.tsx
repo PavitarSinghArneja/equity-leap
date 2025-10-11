@@ -69,12 +69,18 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
   const fetchDocuments = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+
+      // Admins see all documents, regular users only see public ones
+      let query = supabase
         .from('property_documents')
         .select('*')
-        .eq('property_id', propertyId)
-        .eq('is_public', true) // Only show public documents to regular users
-        .order('uploaded_at', { ascending: false });
+        .eq('property_id', propertyId);
+
+      if (!isAdmin) {
+        query = query.eq('is_public', true);
+      }
+
+      const { data, error } = await query.order('uploaded_at', { ascending: false });
 
       if (error) throw error;
       setDocuments(data || []);

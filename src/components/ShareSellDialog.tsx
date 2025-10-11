@@ -59,7 +59,7 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
   const profitLoss = totalAmount - originalValue;
   const profitLossPercentage = originalValue > 0 ? ((profitLoss / originalValue) * 100) : 0;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = React.useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || sharesToSell <= 0 || sharesToSell > userShares) return;
 
@@ -84,11 +84,19 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
         throw new Error(`You only own ${totalOwned} shares, cannot sell ${sharesToSell} shares`);
       }
 
+      // Calculate expiry date (30 days from now)
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+
       const insertData = {
         seller_id: user.id,
         property_id: property.id,
         shares_to_sell: sharesToSell,
+        remaining_shares: sharesToSell,
         price_per_share: pricePerShare,
+        total_amount: totalAmount,
+        status: 'active',
+        expires_at: expiryDate.toISOString(),
         notes: formData.notes.trim() || null
       };
 
@@ -106,13 +114,15 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
         throw error;
       }
 
-      addNotification({
-        name: "Sell Request Created",
-        description: `Your request to sell ${sharesToSell} shares has been submitted`,
-        icon: "CHECK_CIRCLE",
-        color: "#059669",
-        time: new Date().toLocaleTimeString()
-      });
+      if (addNotification) {
+        addNotification({
+          name: "Sell Request Created",
+          description: `Your request to sell ${sharesToSell} shares has been submitted`,
+          icon: "CHECK_CIRCLE",
+          color: "#059669",
+          time: new Date().toLocaleTimeString()
+        });
+      }
 
       // Skip audit trail creation for now to avoid RLS issues
       console.log('Sell request created successfully, skipping audit trail for now');
@@ -126,33 +136,37 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
 
     } catch (error: any) {
       console.error('Error creating sell request:', error);
-      
+
       let errorMessage = "Failed to create sell request. Please try again.";
-      
+
       // Provide more specific error messages
       if (error?.message) {
         if (error.message.includes('shares_to_sell_check')) {
           errorMessage = "Invalid number of shares. Please enter a valid amount.";
         } else if (error.message.includes('foreign key')) {
           errorMessage = "Property or user not found. Please refresh and try again.";
-        } else if (error.message.includes('permission')) {
-          errorMessage = "Permission denied. Please make sure you're logged in.";
+        } else if (error.message.includes('permission') || error.message.includes('row-level security')) {
+          errorMessage = "Permission denied. Please contact support if this persists.";
+        } else if (error.code === '42501') {
+          errorMessage = "Database permission error. Please contact support.";
         } else {
           errorMessage = `Error: ${error.message}`;
         }
       }
-      
-      addNotification({
-        name: "Request Failed",
-        description: errorMessage,
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        time: new Date().toLocaleTimeString()
-      });
+
+      if (addNotification) {
+        addNotification({
+          name: "Request Failed",
+          description: errorMessage,
+          icon: "ALERT_TRIANGLE",
+          color: "#DC2626",
+          time: new Date().toLocaleTimeString()
+        });
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, sharesToSell, userShares, property.id, property.share_price, pricePerShare, totalAmount, formData.notes, addNotification]);
 
   const formatCurrency = (amount: number) => {
     return amount.toLocaleString('en-IN', {

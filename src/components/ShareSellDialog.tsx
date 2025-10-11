@@ -94,7 +94,7 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
         shares_to_sell: sharesToSell,
         remaining_shares: sharesToSell,
         price_per_share: pricePerShare,
-        total_amount: totalAmount,
+        // total_amount: removed - it's a GENERATED column (calculated by DB)
         status: 'active',
         expires_at: expiryDate.toISOString(),
         notes: formData.notes.trim() || null

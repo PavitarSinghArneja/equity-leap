@@ -69,45 +69,70 @@ const PendingHolds: React.FC<PendingHoldsProps> = ({ propertyId }) => {
     try {
       setLoading(true);
 
-      let query = supabase
+      // First get all holds where buyer confirmed but seller hasn't
+      const { data: holdsData, error: holdsError } = await supabase
         .from('share_buyer_holds')
-        .select(`
-          *,
-          share_sell_requests!inner(
-            seller_id,
-            property_id,
-            price_per_share,
-            properties(title)
-          )
-        `)
-        .eq('share_sell_requests.seller_id', user.id)
+        .select('*')
         .eq('hold_status', 'buyer_confirmed')
         .eq('buyer_confirmed', true)
         .eq('seller_confirmed', false)
         .order('created_at', { ascending: false });
 
-      if (propertyId) {
-        query = query.eq('share_sell_requests.property_id', propertyId);
+      if (holdsError) throw holdsError;
+
+      if (!holdsData || holdsData.length === 0) {
+        setHolds([]);
+        return;
       }
 
-      const { data, error } = await query;
+      // Get the order IDs to fetch sell requests
+      const orderIds = holdsData.map(h => h.order_id);
 
-      if (error) throw error;
+      // Fetch the corresponding sell requests with property info
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('share_sell_requests')
+        .select(`
+          id,
+          seller_id,
+          property_id,
+          price_per_share,
+          properties(title)
+        `)
+        .in('id', orderIds)
+        .eq('seller_id', user.id);
 
-      // Transform data to include property name and flatten structure
-      const transformedData = data?.map((hold: any) => ({
-        ...hold,
-        seller_id: hold.share_sell_requests?.seller_id,
-        property_id: hold.share_sell_requests?.property_id,
-        price_per_share: hold.share_sell_requests?.price_per_share,
-        property_name: hold.share_sell_requests?.properties?.title,
-        // Calculate total_price from shares and price_per_share
-        total_price: hold.shares * (hold.share_sell_requests?.price_per_share || 0),
-        shares_requested: hold.shares,
-        sell_request_id: hold.order_id
-      })) || [];
+      if (ordersError) throw ordersError;
 
-      setHolds(transformedData);
+      // Filter to only show holds for this seller's orders
+      const sellerOrderIds = new Set(ordersData?.map(o => o.id) || []);
+      const filteredHolds = holdsData.filter(h => sellerOrderIds.has(h.order_id));
+
+      // Create a map for quick lookup
+      const ordersMap = new Map(ordersData?.map(o => [o.id, o]) || []);
+
+      // Transform and combine the data
+      const transformedData = filteredHolds
+        .map((hold: any) => {
+          const order = ordersMap.get(hold.order_id);
+          if (!order) return null;
+
+          // Filter by property if specified
+          if (propertyId && order.property_id !== propertyId) return null;
+
+          return {
+            ...hold,
+            seller_id: order.seller_id,
+            property_id: order.property_id,
+            price_per_share: order.price_per_share,
+            property_name: order.properties?.title || 'Unknown Property',
+            total_price: hold.shares * parseFloat(order.price_per_share || 0),
+            shares_requested: hold.shares,
+            sell_request_id: hold.order_id
+          };
+        })
+        .filter(Boolean);
+
+      setHolds(transformedData as PendingHold[]);
     } catch (error) {
       console.error('Error fetching pending holds:', error);
       toast.error('Failed to load pending holds');

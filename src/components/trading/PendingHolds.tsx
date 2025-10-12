@@ -41,6 +41,8 @@ const PendingHolds: React.FC<PendingHoldsProps> = ({ propertyId }) => {
     fetchPendingHolds();
 
     // Realtime subscription for live updates
+    // Note: We can't filter by seller_id since it's not in share_buyer_holds
+    // So we subscribe to all changes and refetch (filtering happens in fetchPendingHolds)
     const channel: RealtimeChannel = supabase
       .channel('pending_holds_updates')
       .on(
@@ -48,8 +50,7 @@ const PendingHolds: React.FC<PendingHoldsProps> = ({ propertyId }) => {
         {
           event: '*',
           schema: 'public',
-          table: 'share_holds',
-          filter: user ? `seller_id=eq.${user.id}` : undefined
+          table: 'share_buyer_holds'
         },
         () => {
           fetchPendingHolds();
@@ -69,13 +70,18 @@ const PendingHolds: React.FC<PendingHoldsProps> = ({ propertyId }) => {
       setLoading(true);
 
       let query = supabase
-        .from('share_holds')
+        .from('share_buyer_holds')
         .select(`
           *,
-          share_sell_requests!inner(property_id, properties(name))
+          share_sell_requests!inner(
+            seller_id,
+            property_id,
+            price_per_share,
+            properties(title)
+          )
         `)
-        .eq('seller_id', user.id)
-        .eq('status', 'pending')
+        .eq('share_sell_requests.seller_id', user.id)
+        .eq('hold_status', 'buyer_confirmed')
         .eq('buyer_confirmed', true)
         .eq('seller_confirmed', false)
         .order('created_at', { ascending: false });
@@ -88,10 +94,17 @@ const PendingHolds: React.FC<PendingHoldsProps> = ({ propertyId }) => {
 
       if (error) throw error;
 
-      // Transform data to include property name
+      // Transform data to include property name and flatten structure
       const transformedData = data?.map((hold: any) => ({
         ...hold,
-        property_name: hold.share_sell_requests?.properties?.name
+        seller_id: hold.share_sell_requests?.seller_id,
+        property_id: hold.share_sell_requests?.property_id,
+        price_per_share: hold.share_sell_requests?.price_per_share,
+        property_name: hold.share_sell_requests?.properties?.title,
+        // Calculate total_price from shares and price_per_share
+        total_price: hold.shares * (hold.share_sell_requests?.price_per_share || 0),
+        shares_requested: hold.shares,
+        sell_request_id: hold.order_id
       })) || [];
 
       setHolds(transformedData);

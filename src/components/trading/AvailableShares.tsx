@@ -150,23 +150,27 @@ const AvailableShares: React.FC<AvailableSharesProps> = ({ propertyId, onBuyClic
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-2 border-green-200 dark:border-green-900">
+      <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-green-600" />
-            Available Shares for Sale
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <div className="bg-green-600 p-2 rounded-lg">
+              <ShoppingCart className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <span className="text-gray-900 dark:text-gray-100">Available Shares for Sale</span>
+              <p className="text-sm font-normal text-muted-foreground mt-0.5">
+                Click "Buy These Shares" to purchase • Seller must approve before transfer
+              </p>
+            </div>
           </CardTitle>
-          <Badge variant="outline" className="text-xs">
+          <Badge className="bg-green-600 text-white text-sm px-3 py-1">
             {listings.length} {listings.length === 1 ? 'listing' : 'listings'}
           </Badge>
         </div>
-        <p className="text-sm text-muted-foreground mt-1">
-          Click "Buy These Shares" to purchase. Seller must approve before transfer.
-        </p>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+      <CardContent className="pt-6">
+        <div className="space-y-4">
           {listings.map((listing) => {
             const remainingShares = listing.remaining_shares ?? listing.shares_to_sell;
             const isOwnListing = user?.id === listing.seller_id;
@@ -175,47 +179,49 @@ const AvailableShares: React.FC<AvailableSharesProps> = ({ propertyId, onBuyClic
             return (
               <div
                 key={listing.id}
-                className={`border rounded-lg p-4 hover:bg-muted/30 transition-colors ${
-                  isOwnListing ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''
+                className={`border-2 rounded-xl p-5 shadow-sm hover:shadow-md transition-all ${
+                  isOwnListing
+                    ? 'border-blue-300 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-700'
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   {/* Left side: Details */}
-                  <div className="flex-1 space-y-2">
+                  <div className="flex-1 space-y-3">
                     {/* Seller info */}
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <User className="w-4 h-4" />
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-muted-foreground" />
                       <span>
                         {isOwnListing ? (
-                          <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200">
+                          <Badge className="text-xs bg-blue-600 text-white">
                             Your Listing
                           </Badge>
                         ) : (
-                          `Seller #${listing.seller_id.slice(0, 8)}`
+                          <span className="text-sm text-muted-foreground">Seller #{listing.seller_id.slice(0, 8)}</span>
                         )}
                       </span>
-                      <span className="text-xs">•</span>
-                      <Clock className="w-3 h-3" />
-                      <span className="text-xs">{getTimeAgo(listing.created_at)}</span>
+                      <span className="text-xs text-muted-foreground">•</span>
+                      <Clock className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">{getTimeAgo(listing.created_at)}</span>
                     </div>
 
                     {/* Share details */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-4 bg-white dark:bg-gray-900/50 rounded-lg p-4 border border-gray-100 dark:border-gray-800">
                       <div>
-                        <p className="text-xs text-muted-foreground">Shares Available</p>
-                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Shares Available</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                           {remainingShares.toLocaleString()}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Price per Share</p>
-                        <p className="text-lg font-bold text-green-600">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Price per Share</p>
+                        <p className="text-2xl font-bold text-green-600">
                           {formatCurrency(listing.price_per_share)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Total Cost</p>
-                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Total Cost</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                           {formatCurrency(totalCost)}
                         </p>
                       </div>
@@ -223,21 +229,22 @@ const AvailableShares: React.FC<AvailableSharesProps> = ({ propertyId, onBuyClic
                   </div>
 
                   {/* Right side: Buy button */}
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 flex items-center">
                     {isOwnListing ? (
                       <Button
                         variant="outline"
                         disabled
-                        className="whitespace-nowrap"
+                        className="whitespace-nowrap h-12 px-6"
                       >
                         Your Listing
                       </Button>
                     ) : (
                       <Button
                         onClick={() => onBuyClick(listing)}
-                        className="bg-green-600 hover:bg-green-700 text-white whitespace-nowrap"
+                        size="lg"
+                        className="bg-green-600 hover:bg-green-700 text-white whitespace-nowrap h-12 px-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
                       >
-                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        <ShoppingCart className="w-5 h-5 mr-2" />
                         Buy These Shares
                       </Button>
                     )}

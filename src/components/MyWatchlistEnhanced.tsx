@@ -78,6 +78,7 @@ const MyWatchlistEnhanced: React.FC = () => {
               .select('id')
               .eq('property_id', item.property_id)
               .eq('status', 'active')
+              .gt('remaining_shares', 0)
               .limit(1);
 
             if (!sellError && sellRequests && sellRequests.length > 0) {

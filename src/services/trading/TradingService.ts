@@ -32,7 +32,21 @@ export class TradingService {
     }
   }
 
-  // Holds
+  // Instant Purchase (no holds, immediate settlement)
+  async instantBuyShares(orderId: UUID, shares: number): Promise<ServiceResult<any>> {
+    try {
+      const { data, error } = await supabase.rpc('instant_buy_shares', {
+        p_order_id: orderId,
+        p_shares: shares,
+      });
+      if (error) throw error;
+      return { data, error: null, success: true };
+    } catch (err: any) {
+      return this.err('INSTANT_BUY_FAILED', err?.message || 'Failed to purchase shares', err);
+    }
+  }
+
+  // Legacy: Holds (keeping for backward compatibility, but not used)
   async createBuyerHold(orderId: UUID, shares: number): Promise<ServiceResult<BuyerHold>> {
     try {
       const { data, error } = await supabase.rpc('create_buyer_hold', {

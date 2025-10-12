@@ -1,0 +1,203 @@
+-- Modify the trading flow for instant settlement (no seller approval needed)
+-- When buyer purchases, immediately transfer shares and funds
+
+-- Create a new function that handles instant purchase
+CREATE OR REPLACE FUNCTION instant_buy_shares(
+  p_order_id UUID,
+  p_shares INTEGER
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_order RECORD;
+  v_amount NUMERIC(15,2);
+  v_buyer UUID := auth.uid();
+  v_buyer_inv RECORD;
+  v_seller_inv RECORD;
+  v_result JSONB;
+BEGIN
+  IF p_shares IS NULL OR p_shares <= 0 THEN
+    RAISE EXCEPTION 'Invalid shares requested';
+  END IF;
+
+  -- Lock and validate the sell order
+  SELECT ssr.*, p.shares_sellable, p.property_status
+  INTO v_order
+  FROM share_sell_requests ssr
+  JOIN properties p ON p.id = ssr.property_id
+  WHERE ssr.id = p_order_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Order not found';
+  END IF;
+
+  IF v_order.status <> 'active' THEN
+    RAISE EXCEPTION 'Order not active';
+  END IF;
+
+  IF v_order.seller_id = v_buyer THEN
+    RAISE EXCEPTION 'Cannot buy from your own order';
+  END IF;
+
+  IF NOT v_order.shares_sellable OR v_order.property_status <> 'funded' THEN
+    RAISE EXCEPTION 'Trading not enabled for this property';
+  END IF;
+
+  IF v_order.remaining_shares < p_shares THEN
+    RAISE EXCEPTION 'Not enough shares remaining';
+  END IF;
+
+  v_amount := p_shares * v_order.price_per_share;
+
+  -- Verify buyer has sufficient balance
+  SELECT available_balance INTO v_buyer_inv
+  FROM escrow_balances
+  WHERE user_id = v_buyer
+  FOR UPDATE;
+
+  IF COALESCE(v_buyer_inv, 0) < v_amount THEN
+    RAISE EXCEPTION 'Insufficient wallet balance';
+  END IF;
+
+  -- 1. Transfer funds: buyer -> seller
+  UPDATE escrow_balances
+  SET available_balance = available_balance - v_amount,
+      updated_at = now()
+  WHERE user_id = v_buyer;
+
+  UPDATE escrow_balances
+  SET available_balance = available_balance + v_amount,
+      updated_at = now()
+  WHERE user_id = v_order.seller_id;
+
+  -- 2. Update remaining shares in the order
+  UPDATE share_sell_requests
+  SET remaining_shares = remaining_shares - p_shares,
+      updated_at = now()
+  WHERE id = p_order_id;
+
+  -- 3. Transfer shares: seller -> buyer
+  -- Buyer investments (upsert)
+  SELECT * INTO v_buyer_inv
+  FROM investments
+  WHERE user_id = v_buyer AND property_id = v_order.property_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    INSERT INTO investments (user_id, property_id, shares_owned, price_per_share, total_investment, investment_status)
+    VALUES (v_buyer, v_order.property_id, p_shares, v_order.price_per_share, v_amount, 'confirmed');
+  ELSE
+    UPDATE investments
+    SET shares_owned = v_buyer_inv.shares_owned + p_shares,
+        total_investment = v_buyer_inv.total_investment + v_amount,
+        price_per_share = (v_buyer_inv.total_investment + v_amount) / NULLIF(v_buyer_inv.shares_owned + p_shares, 0),
+        updated_at = now()
+    WHERE id = v_buyer_inv.id;
+  END IF;
+
+  -- Seller investments (decrement or delete)
+  SELECT * INTO v_seller_inv
+  FROM investments
+  WHERE user_id = v_order.seller_id AND property_id = v_order.property_id
+  FOR UPDATE;
+
+  IF FOUND THEN
+    IF v_seller_inv.shares_owned > p_shares THEN
+      UPDATE investments
+      SET shares_owned = v_seller_inv.shares_owned - p_shares,
+          total_investment = GREATEST(v_seller_inv.total_investment - (p_shares * v_seller_inv.price_per_share), 0),
+          updated_at = now()
+      WHERE id = v_seller_inv.id;
+    ELSE
+      DELETE FROM investments WHERE id = v_seller_inv.id;
+    END IF;
+  END IF;
+
+  -- 4. Release parked shares
+  UPDATE share_parks
+  SET shares_released = shares_released + p_shares,
+      status = CASE
+        WHEN shares_released + p_shares >= shares_parked THEN 'released'
+        ELSE status
+      END,
+      released_at = CASE
+        WHEN shares_released + p_shares >= shares_parked THEN now()
+        ELSE released_at
+      END
+  WHERE order_id = p_order_id
+    AND seller_id = v_order.seller_id
+    AND property_id = v_order.property_id
+    AND status = 'active';
+
+  -- 5. Log the transaction
+  INSERT INTO share_order_events (order_id, event_type, actor_id, metadata)
+  VALUES (
+    p_order_id,
+    'instant_purchase',
+    v_buyer,
+    jsonb_build_object(
+      'shares', p_shares,
+      'amount', v_amount,
+      'buyer_id', v_buyer,
+      'seller_id', v_order.seller_id
+    )
+  );
+
+  -- 6. Send notifications
+  -- Notify seller
+  INSERT INTO user_alerts (user_id, alert_type, title, message, property_id, created_at)
+  VALUES (
+    v_order.seller_id,
+    'trade_completed',
+    '💰 Shares Sold!',
+    'Your ' || p_shares || ' shares were sold for ₹' || v_amount || '. Funds added to your wallet.',
+    v_order.property_id,
+    now()
+  );
+
+  -- Notify buyer
+  INSERT INTO user_alerts (user_id, alert_type, title, message, property_id, created_at)
+  VALUES (
+    v_buyer,
+    'trade_completed',
+    '✅ Purchase Complete!',
+    'You successfully purchased ' || p_shares || ' shares for ₹' || v_amount || '.',
+    v_order.property_id,
+    now()
+  );
+
+  -- 7. Recalculate positions if function exists
+  BEGIN
+    PERFORM recalc_user_property_position(v_buyer, v_order.property_id);
+  EXCEPTION WHEN undefined_function THEN
+    -- ignore
+  END;
+
+  BEGIN
+    PERFORM recalc_user_property_position(v_order.seller_id, v_order.property_id);
+  EXCEPTION WHEN undefined_function THEN
+    -- ignore
+  END;
+
+  -- Return success
+  v_result := jsonb_build_object(
+    'success', true,
+    'shares_purchased', p_shares,
+    'amount_paid', v_amount,
+    'property_id', v_order.property_id,
+    'seller_id', v_order.seller_id
+  );
+
+  RETURN v_result;
+END;
+$$;
+
+-- Grant execute permission
+GRANT EXECUTE ON FUNCTION instant_buy_shares(UUID, INTEGER) TO authenticated;
+
+-- Test the function (commented out - uncomment to test)
+-- SELECT instant_buy_shares('your-order-id-here', 5);

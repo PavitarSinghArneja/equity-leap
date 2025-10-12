@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AvailableShares from '@/components/trading/AvailableShares';
 import BuyConfirmModal from '@/components/trading/BuyConfirmModal';
-import PendingHolds from '@/components/trading/PendingHolds';
 import TradingForm from '@/components/trading/TradingForm';
 import MyOrders from '@/components/trading/MyOrders';
 import { supabase } from '@/integrations/supabase/client';
@@ -200,22 +199,16 @@ const Trading: React.FC = () => {
           <>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Available Shares - Takes 2 columns on large screens */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="lg:col-span-2">
                 <AvailableShares
                   key={`available-${refreshKey}`}
                   propertyId={selectedPropertyId}
                   onBuyClick={handleBuyClick}
                 />
-
-                {/* Pending Holds for Sellers */}
-                <PendingHolds
-                  key={`pending-${refreshKey}`}
-                  propertyId={selectedPropertyId}
-                />
               </div>
 
               {/* Sell Form - Takes 1 column */}
-              <div className="space-y-6">
+              <div>
                 <TradingForm
                   propertyId={selectedPropertyId}
                   currentPrice={selectedProperty?.share_price || 0}

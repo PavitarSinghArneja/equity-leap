@@ -88,20 +88,14 @@ const BuyConfirmModal: React.FC<BuyConfirmModalProps> = ({
     try {
       setPurchasing(true);
 
-      // Step 1: Create hold
-      const holdRes = await tradingService.createBuyerHold(listing.id, remainingShares);
-      if (!holdRes.success || !holdRes.data) {
-        throw new Error(holdRes.error?.message || 'Failed to create hold');
+      // Instant purchase - immediate settlement
+      const result = await tradingService.instantBuyShares(listing.id, remainingShares);
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Failed to purchase shares');
       }
 
-      // Step 2: Auto-confirm buyer side
-      const confirmRes = await tradingService.buyerConfirmHold(holdRes.data.id);
-      if (!confirmRes.success) {
-        throw new Error(confirmRes.error?.message || 'Failed to confirm hold');
-      }
-
-      toast.success('Purchase Request Sent!', {
-        description: 'Waiting for seller to approve. You will be notified once confirmed.'
+      toast.success('Purchase Complete!', {
+        description: `Successfully purchased ${remainingShares} shares. Shares added to your portfolio.`
       });
 
       onSuccess();

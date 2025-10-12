@@ -160,7 +160,7 @@ const AvailableShares: React.FC<AvailableSharesProps> = ({ propertyId, onBuyClic
             <div>
               <span className="text-gray-900 dark:text-gray-100">Available Shares for Sale</span>
               <p className="text-sm font-normal text-muted-foreground mt-0.5">
-                Click "Buy These Shares" to purchase • Seller must approve before transfer
+                Click "Buy These Shares" for instant purchase • Shares transfer immediately
               </p>
             </div>
           </CardTitle>

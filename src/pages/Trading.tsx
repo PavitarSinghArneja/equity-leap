@@ -161,7 +161,7 @@ const Trading: React.FC = () => {
           </Card>
         ) : (
           <>
-            <div className="space-y-6 max-w-5xl mx-auto">
+            <div className="space-y-6 max-w-7xl mx-auto">
               {/* Available Shares for Sale */}
               <AvailableShares
                 key={`available-${refreshKey}`}
@@ -169,11 +169,14 @@ const Trading: React.FC = () => {
                 onBuyClick={handleBuyClick}
               />
 
-              {/* Order History (Completed/Cancelled) */}
-              <MyOrders propertyId={selectedPropertyId} status="completed" />
+              {/* Order History and Active Orders - Side by Side */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Order History (Completed/Cancelled) */}
+                <MyOrders propertyId={selectedPropertyId} status="completed" />
 
-              {/* Active Orders */}
-              <MyOrders propertyId={selectedPropertyId} status="active" />
+                {/* Active Orders */}
+                <MyOrders propertyId={selectedPropertyId} status="active" />
+              </div>
             </div>
 
             {/* Buy Confirmation Modal */}

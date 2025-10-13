@@ -191,14 +191,17 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
       }
 
       if (tradingEnabled) {
-        // New flow: create hold and auto-confirm buyer side
-        const holdRes = await tradingService.createBuyerHold(sellRequest.id, sellRequest.shares_to_sell);
-        if (!holdRes.success || !holdRes.data) throw new Error(holdRes.error?.message || 'Failed to hold');
-        // Track
-        try { await import('@/services/AnalyticsService').then(m => m.AnalyticsService.tradingHoldCreated(sellRequest.id, sellRequest.shares_to_sell)); } catch {}
-        const confirmRes = await tradingService.buyerConfirmHold(holdRes.data.id);
-        if (!confirmRes.success) throw new Error(confirmRes.error?.message || 'Failed to confirm hold');
-        try { await import('@/services/AnalyticsService').then(m => m.AnalyticsService.tradingBuyerConfirmed(holdRes.data.id)); } catch {}
+        // Instant purchase - immediate settlement (no holds)
+        const result = await tradingService.instantBuyShares(sellRequest.id, sellRequest.shares_to_sell);
+        if (!result.success) {
+          throw new Error(result.error?.message || 'Failed to purchase shares');
+        }
+        // Track analytics
+        try {
+          await import('@/services/AnalyticsService').then(m =>
+            m.AnalyticsService.tradingInstantPurchase(sellRequest.id, sellRequest.shares_to_sell)
+          );
+        } catch {}
       } else {
         // Legacy direct-settle flow (kept for backward compatibility)
         // Note: retained as-is to avoid regressions; will be removed once new flow is fully rolled out.
@@ -313,10 +316,8 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
       }
 
       NotificationService.success(
-        tradingEnabled ? 'Hold Created' : 'Shares Purchased',
-        tradingEnabled
-          ? `Your hold is created and confirmed. Waiting for seller confirmation.`
-          : `Successfully purchased ${sellRequest.shares_to_sell} shares of ${sellRequest.properties.title}`
+        'Purchase Complete!',
+        `Successfully purchased ${sellRequest.shares_to_sell} shares of ${sellRequest.properties.title}. Shares added to your portfolio.`
       );
 
       // Refresh the list and wallet balance

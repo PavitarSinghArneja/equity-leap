@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/NewAuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AvailableShares from '@/components/trading/AvailableShares';
 import BuyConfirmModal from '@/components/trading/BuyConfirmModal';
 import TradingForm from '@/components/trading/TradingForm';
 import MyOrders from '@/components/trading/MyOrders';
 import { supabase } from '@/integrations/supabase/client';
-import { TrendingUp, BarChart3, Activity } from 'lucide-react';
+import { TrendingUp, BarChart3 } from 'lucide-react';
 
 interface Property {
   id: string;
@@ -118,70 +117,36 @@ const Trading: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Simplified Header */}
       <div className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="bg-primary/10 p-2 rounded-lg">
                 <TrendingUp className="w-6 h-6 text-primary" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold">Share Trading</h1>
-                <p className="text-sm text-muted-foreground">Buy and sell property shares in real-time</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">Welcome back</p>
-                <p className="font-medium">{user.email?.split('@')[0]}</p>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-lg">
-                <Activity className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium text-primary">Live</span>
-              </div>
+              <h1 className="text-2xl font-bold">Share Trading</h1>
             </div>
           </div>
 
           {/* Property Selector */}
-          <div className="mt-4">
-            <Select value={selectedPropertyId} onValueChange={setSelectedPropertyId}>
-              <SelectTrigger className="w-full max-w-md bg-background">
-                <SelectValue placeholder="Select a property to trade" />
-              </SelectTrigger>
-              <SelectContent>
-                {properties.map((property) => (
-                  <SelectItem key={property.id} value={property.id}>
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="font-medium">{property.title}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {property.city}, {property.country}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Property Stats */}
-          {selectedProperty && (
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              <div className="bg-background rounded-lg p-3">
-                <p className="text-xs text-muted-foreground">Current Price</p>
-                <p className="text-lg font-bold text-primary">{formatCurrency(selectedProperty.share_price)}</p>
-              </div>
-              <div className="bg-background rounded-lg p-3">
-                <p className="text-xs text-muted-foreground">Available Shares</p>
-                <p className="text-lg font-bold">{selectedProperty.available_shares.toLocaleString()}</p>
-              </div>
-              <div className="bg-background rounded-lg p-3">
-                <p className="text-xs text-muted-foreground">Location</p>
-                <p className="text-lg font-bold">{selectedProperty.city}</p>
-              </div>
-            </div>
-          )}
+          <Select value={selectedPropertyId} onValueChange={setSelectedPropertyId}>
+            <SelectTrigger className="w-full max-w-md">
+              <SelectValue placeholder="Select a property to trade" />
+            </SelectTrigger>
+            <SelectContent>
+              {properties.map((property) => (
+                <SelectItem key={property.id} value={property.id}>
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="font-medium">{property.title}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {property.city}, {property.country}
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -192,7 +157,7 @@ const Trading: React.FC = () => {
             <CardContent className="py-12 text-center">
               <BarChart3 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Select a Property to Start Trading</h3>
-              <p className="text-sm text-muted-foreground">Choose a property from the dropdown above to view the order book and place trades.</p>
+              <p className="text-sm text-muted-foreground">Choose a property from the dropdown above to view available shares.</p>
             </CardContent>
           </Card>
         ) : (
@@ -207,28 +172,13 @@ const Trading: React.FC = () => {
                 />
               </div>
 
-              {/* Sell Form - Takes 1 column */}
-              <div>
+              {/* Sell Form and Active Orders - Takes 1 column */}
+              <div className="space-y-6">
                 <TradingForm
                   propertyId={selectedPropertyId}
                   currentPrice={selectedProperty?.share_price || 0}
                 />
-              </div>
-
-              {/* My Orders - Full width below */}
-              <div className="lg:col-span-3">
-                <Tabs defaultValue="active" className="w-full">
-                  <TabsList className="w-full">
-                    <TabsTrigger value="active" className="flex-1">Active Orders</TabsTrigger>
-                    <TabsTrigger value="history" className="flex-1">Order History</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="active">
-                    <MyOrders propertyId={selectedPropertyId} status="active" />
-                  </TabsContent>
-                  <TabsContent value="history">
-                    <MyOrders propertyId={selectedPropertyId} status="completed" />
-                  </TabsContent>
-                </Tabs>
+                <MyOrders propertyId={selectedPropertyId} status="active" />
               </div>
             </div>
 

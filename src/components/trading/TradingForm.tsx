@@ -239,16 +239,11 @@ const TradingForm: React.FC<TradingFormProps> = ({ propertyId, currentPrice }) =
 
         {/* Info */}
         <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-          <div className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-            <p className="font-medium">How it works:</p>
-            <ol className="list-decimal list-inside space-y-1 ml-1">
-              <li>List your shares at your desired price</li>
-              <li>Buyers will see your listing and can purchase</li>
-              <li>You'll get a notification when someone wants to buy</li>
-              <li>Approve the sale to transfer shares and get paid</li>
-            </ol>
+          <div className="text-xs text-blue-800 dark:text-blue-200">
+            <p className="font-medium mb-1">Instant Settlement:</p>
+            <p>List your shares • Buyers purchase instantly • You get paid immediately</p>
             <p className="text-xs text-muted-foreground mt-2">
-              • Listings expire in 30 days • You can cancel anytime
+              Listings expire in 30 days • Cancel anytime
             </p>
           </div>
         </div>

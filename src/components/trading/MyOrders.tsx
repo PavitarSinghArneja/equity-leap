@@ -241,9 +241,10 @@ const MyOrders: React.FC<MyOrdersProps> = ({ propertyId, status }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <ListOrdered className="w-5 h-5" />
-          My {status === 'active' ? 'Active' : 'Past'} Orders ({orders.length})
+        <CardTitle className="flex items-center gap-2 text-base">
+          <ListOrdered className="w-4 h-4" />
+          My Active Orders
+          <Badge variant="secondary">{orders.length}</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>

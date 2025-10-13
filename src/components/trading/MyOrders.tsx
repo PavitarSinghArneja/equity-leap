@@ -223,16 +223,18 @@ const MyOrders: React.FC<MyOrdersProps> = ({ propertyId, status }) => {
   if (orders.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12">
-          <div className="text-center">
-            <ListOrdered className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-            <h3 className="text-lg font-semibold mb-2">No {status} orders</h3>
-            <p className="text-sm text-muted-foreground">
-              {status === 'active'
-                ? "You don't have any active sell orders"
-                : "You don't have any completed or cancelled orders"}
-            </p>
-          </div>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ListOrdered className="w-4 h-4" />
+            {status === 'active' ? 'My Active Orders' : 'Order History'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground text-center py-4">
+            {status === 'active'
+              ? "No active orders"
+              : "No order history"}
+          </p>
         </CardContent>
       </Card>
     );
@@ -243,7 +245,7 @@ const MyOrders: React.FC<MyOrdersProps> = ({ propertyId, status }) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <ListOrdered className="w-4 h-4" />
-          My Active Orders
+          {status === 'active' ? 'My Active Orders' : 'Order History'}
           <Badge variant="secondary">{orders.length}</Badge>
         </CardTitle>
       </CardHeader>

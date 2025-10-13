@@ -354,12 +354,12 @@ const MyShareSellRequests: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-muted-foreground">
-                        {request.status === 'active' ? 'Expires' : 
+                        {request.status === 'active' ? 'Expires' :
                          request.status === 'completed' ? 'Sold' : 'Created'}
                       </p>
                       <p className="font-medium">
                         {request.status === 'active' ? <Countdown to={request.expires_at} /> :
-                         request.status === 'completed' ? 'Recently' :
+                         request.status === 'completed' ? formatDate(request.created_at) :
                          formatDate(request.created_at)}
                       </p>
                     </div>

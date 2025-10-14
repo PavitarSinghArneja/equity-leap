@@ -47,7 +47,7 @@ export class TradingService {
 
       if (error) {
         // Parse error for user-friendly messages
-        let errorMessage = err?.message || 'Failed to purchase shares';
+        let errorMessage = error?.message || 'Failed to purchase shares';
 
         if (error.message.includes('Insufficient wallet balance')) {
           errorMessage = 'Insufficient wallet balance. Please add funds to your wallet.';

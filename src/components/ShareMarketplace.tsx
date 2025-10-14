@@ -9,6 +9,7 @@ import { TradingServiceFactory } from '@/services/trading/TradingServiceFactory'
 import { isFeatureEnabled } from '@/config/featureFlags';
 import { useInvestments, useInvestmentMutations } from '@/hooks/useInvestmentService';
 import { NotificationService } from '@/services/NotificationService';
+import { toast } from 'sonner';
 import {
   ShoppingCart,
   User,
@@ -158,10 +159,9 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
       // 2. Validate user tier - must be waitlist_player or higher
       const validTiers: UserTier[] = ['waitlist_player', 'small_investor', 'large_investor'];
       if (!userProfile || !validTiers.includes(userProfile.tier)) {
-        NotificationService.error(
-          "Access Denied",
-          "You must be a waitlist player or higher to purchase shares. Please upgrade your account."
-        );
+        const errorMsg = "You must be a waitlist player or higher to purchase shares. Please upgrade your account.";
+        toast.error(errorMsg);
+        NotificationService.error("Access Denied", errorMsg);
         return;
       }
 
@@ -183,10 +183,9 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
 
       // 5. Validate sufficient funds
       if (currentBalance < totalCost) {
-        NotificationService.error(
-          "Insufficient Funds",
-          `Your wallet balance (${formatCurrency(currentBalance)}) is insufficient to purchase these shares. Required: ${formatCurrency(totalCost)}`
-        );
+        const errorMsg = `Your wallet balance (${formatCurrency(currentBalance)}) is insufficient to purchase these shares. Required: ${formatCurrency(totalCost)}`;
+        toast.error(errorMsg);
+        NotificationService.error("Insufficient Funds", errorMsg);
         return;
       }
 
@@ -315,10 +314,9 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
         }
       }
 
-      NotificationService.success(
-        'Purchase Complete!',
-        `Successfully purchased ${sellRequest.shares_to_sell} shares of ${sellRequest.properties.title}. Shares added to your portfolio.`
-      );
+      const successMsg = `Successfully purchased ${sellRequest.shares_to_sell} shares of ${sellRequest.properties.title}. Shares added to your portfolio.`;
+      toast.success(successMsg);
+      NotificationService.success('Purchase Complete!', successMsg);
 
       // Refresh the list and wallet balance
       fetchSellRequests();
@@ -334,10 +332,8 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
     } catch (error) {
       console.error('Error purchasing shares:', error);
       const errorMessage = error instanceof Error ? error.message : "Failed to purchase shares. Please try again.";
-      NotificationService.error(
-        "Purchase Failed",
-        errorMessage
-      );
+      toast.error(errorMessage);
+      NotificationService.error("Purchase Failed", errorMessage);
     } finally {
       setPurchasing(null);
     }

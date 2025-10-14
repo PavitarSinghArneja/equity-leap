@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { 
   Building2, 
   Edit, 
@@ -125,13 +126,7 @@ const AdminProperties = () => {
       }
     } catch (error) {
       console.error('Image upload error:', error);
-      addNotification({
-        name: "Upload Failed",
-        description: "Failed to upload images",
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        isLogo: true
-      });
+      toast.error('Failed to upload images');
     } finally {
       setUploadingImages(false);
     }
@@ -184,25 +179,13 @@ const AdminProperties = () => {
 
       if (error) throw error;
 
-      addNotification({
-        name: "Success",
-        description: "Property updated successfully",
-        icon: "CHECK_CIRCLE",
-        color: "#10B981",
-        isLogo: true
-      });
+      toast.success('Property updated successfully');
 
       setIsEditDialogOpen(false);
       fetchProperties();
     } catch (error) {
       console.error('Error updating property:', error);
-      addNotification({
-        name: "Update Failed",
-        description: "Failed to update property",
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        isLogo: true
-      });
+      toast.error('Failed to update property');
     } finally {
       setLoading(false);
     }

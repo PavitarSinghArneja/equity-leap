@@ -250,76 +250,52 @@ const Investment = () => {
       return;
     }
 
-    // Check KYC status before allowing investment
-    const isInvestorTier = profile?.tier === 'small_investor' || profile?.tier === 'large_investor';
-    if (!(profile?.tier_override_by_admin && isInvestorTier) && profile?.kyc_status !== 'approved') {
-      toast.error("Please complete your KYC verification to start investing");
-      navigate('/kyc');
-      return;
-    }
-
+    // Basic client-side validation (server will validate again)
     if (!property || !validateInvestment()) return;
 
     setInvesting(true);
     try {
-      // Create investment using service
-      const investmentData = await createInvestment({
-        user_id: user.id,
-        property_id: property.id,
-        shares_owned: shares,
-        price_per_share: property.share_price,
-        total_investment: investmentAmount,
-        investment_status: 'confirmed'
+      // Generate unique transaction ID for idempotency
+      const transactionId = crypto.randomUUID();
+
+      // Use atomic investment function (handles all operations atomically)
+      // This replaces the multi-step manual process with a single atomic database call
+      const { data, error } = await supabase.rpc('create_investment_atomic', {
+        p_user_id: user.id,
+        p_property_id: property.id,
+        p_shares: shares,
+        p_price_per_share: property.share_price,
+        p_transaction_id: transactionId
       });
 
-      if (!investmentData) throw new Error('Investment creation failed');
+      if (error) {
+        // Parse error message for user-friendly display
+        let errorMessage = "Unable to complete your investment. Please try again.";
 
-      // Update user's wallet balance
-      const newBalance = (escrowBalance?.available_balance || 0) - investmentAmount;
-      const { error: balanceError } = await supabase
-        .from('escrow_balances')
-        .update({
-          available_balance: newBalance,
-          total_invested: ((escrowBalance?.total_invested || 0) + investmentAmount)
-        })
-        .eq('user_id', user.id);
-
-      if (balanceError) throw balanceError;
-
-      // Create transaction record
-      const { error: transactionError } = await supabase
-        .from('transactions')
-        .insert([{
-          user_id: user.id,
-          transaction_type: 'investment',
-          amount: investmentAmount,
-          status: 'completed',
-          reference_id: investmentData.id,
-          description: `Investment in ${property.title} - ${shares} shares`,
-          property_id: property.id
-        }]);
-
-      if (transactionError) throw transactionError;
-
-      // Update property shares and status if not dummy data
-      if (property.id !== 'dummy-1') {
-        const newAvailableShares = property.available_shares - shares;
-        const updates: any = {
-          available_shares: newAvailableShares,
-          funded_amount: (property.funded_amount || 0) + investmentAmount
-        };
-
-        // Auto-update to 'funded' (sold out) if all shares are taken
-        if (newAvailableShares <= 0) {
-          updates.property_status = 'funded';
+        if (error.message.includes('KYC')) {
+          errorMessage = "KYC approval required. Please complete your verification.";
+          setTimeout(() => navigate('/kyc'), 2000);
+        } else if (error.message.includes('Insufficient shares')) {
+          errorMessage = "Not enough shares available. Please reduce quantity.";
+        } else if (error.message.includes('Insufficient wallet balance')) {
+          errorMessage = "Insufficient wallet balance. Please add funds.";
+          setTimeout(() => navigate('/dashboard/wallet'), 2000);
+        } else if (error.message.includes('Duplicate transaction')) {
+          errorMessage = "This transaction is already being processed.";
+        } else if (error.message.includes('Concurrent transaction')) {
+          errorMessage = "Multiple purchases detected. Please try again.";
         }
 
-        const { error: propertyError } = await supabase
-          .from('properties')
-          .update(updates)
-          .eq('id', property.id);
+        throw new Error(errorMessage);
+      }
 
-        if (propertyError) throw propertyError;
+      if (!data) throw new Error('Investment creation failed');
+
+      // Parse result
+      const result = typeof data === 'string' ? JSON.parse(data) : data;
+
+      if (!result.success) {
+        throw new Error('Investment creation failed');
       }
 
       // Automatically update user tier based on their investment portfolio
@@ -335,7 +311,14 @@ const Investment = () => {
         console.warn('Position snapshot recalc failed (non-fatal):', e);
       }
 
-      toast.success(`You've successfully invested ${formatCurrency(investmentAmount)} in ${property.title}`);
+      // Show success message with details
+      toast.success(
+        `Successfully invested ${formatCurrency(result.amount_paid)} in ${result.property_title}! ` +
+        `You now own ${result.shares_purchased} shares.`
+      );
+
+      // Refresh data
+      await fetchData();
 
       // Navigate to portfolio/dashboard
       setTimeout(() => {
@@ -344,7 +327,8 @@ const Investment = () => {
 
     } catch (error) {
       console.error('Investment error:', error);
-      toast.error("Unable to complete your investment. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Unable to complete your investment. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setInvesting(false);
     }

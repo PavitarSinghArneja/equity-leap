@@ -33,13 +33,41 @@ export class TradingService {
   }
 
   // Instant Purchase (no holds, immediate settlement)
-  async instantBuyShares(orderId: UUID, shares: number): Promise<ServiceResult<any>> {
+  // Now uses atomic transaction with idempotency support
+  async instantBuyShares(orderId: UUID, shares: number, transactionId?: UUID): Promise<ServiceResult<any>> {
     try {
+      // Generate unique transaction ID for idempotency if not provided
+      const txId = transactionId || crypto.randomUUID();
+
       const { data, error } = await supabase.rpc('instant_buy_shares', {
         p_order_id: orderId,
         p_shares: shares,
+        p_transaction_id: txId,
       });
-      if (error) throw error;
+
+      if (error) {
+        // Parse error for user-friendly messages
+        let errorMessage = err?.message || 'Failed to purchase shares';
+
+        if (error.message.includes('Insufficient wallet balance')) {
+          errorMessage = 'Insufficient wallet balance. Please add funds to your wallet.';
+        } else if (error.message.includes('Not enough shares remaining')) {
+          errorMessage = 'Not enough shares available. Please reduce your quantity.';
+        } else if (error.message.includes('Cannot buy from your own order')) {
+          errorMessage = 'You cannot buy from your own sell order.';
+        } else if (error.message.includes('Order not active')) {
+          errorMessage = 'This sell order is no longer active.';
+        } else if (error.message.includes('Trading not enabled')) {
+          errorMessage = 'Trading is not enabled for this property yet.';
+        } else if (error.message.includes('Duplicate transaction')) {
+          errorMessage = 'This purchase is already being processed.';
+        } else if (error.message.includes('Concurrent transaction')) {
+          errorMessage = 'Multiple purchases detected. Please try again.';
+        }
+
+        throw new Error(errorMessage);
+      }
+
       return { data, error: null, success: true };
     } catch (err: any) {
       return this.err('INSTANT_BUY_FAILED', err?.message || 'Failed to purchase shares', err);

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/NewAuthContext';
+import { toast } from 'sonner';
 import {
   TrendingDown,
   Calculator,
@@ -148,7 +149,9 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
 
       // Provide more specific error messages
       if (error?.message) {
-        if (error.message.includes('shares_to_sell_check')) {
+        if (error.message.includes('Share trading is not enabled')) {
+          errorMessage = "Share trading is not enabled for this property. Please contact support if you believe this is an error.";
+        } else if (error.message.includes('shares_to_sell_check')) {
           errorMessage = "Invalid number of shares. Please enter a valid amount.";
         } else if (error.message.includes('foreign key')) {
           errorMessage = "Property or user not found. Please refresh and try again.";
@@ -161,6 +164,10 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
         }
       }
 
+      // Show toast notification
+      toast.error(errorMessage);
+
+      // Also add to notification system
       if (addNotification) {
         addNotification({
           name: "Request Failed",

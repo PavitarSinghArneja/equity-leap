@@ -91,21 +91,9 @@ BEGIN
   END IF;
 END $$;
 
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'positive_total_shares'
-  ) THEN
-    ALTER TABLE properties
-    ADD CONSTRAINT positive_total_shares
-    CHECK (total_shares > 0);
-
-    RAISE NOTICE 'Added check constraint: total_shares > 0';
-  ELSE
-    RAISE NOTICE 'Constraint positive_total_shares already exists';
-  END IF;
-END $$;
+-- Note: properties table doesn't have total_shares column
+-- Only available_shares exists, which can be 0 when fully funded
+-- So this constraint is intentionally skipped
 
 -- 4. Add check constraint: no negative shares in investments
 DO $$
@@ -239,6 +227,8 @@ BEGIN
   END IF;
 END $$;
 
+-- Note: Using available_shares instead of total_shares (which doesn't exist)
+-- This constraint limits the maximum available shares per property
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -247,9 +237,9 @@ BEGIN
   ) THEN
     ALTER TABLE properties
     ADD CONSTRAINT reasonable_property_shares
-    CHECK (total_shares <= 100000000); -- 100 million shares max per property
+    CHECK (available_shares <= 100000000); -- 100 million shares max
 
-    RAISE NOTICE 'Added check constraint: max 100M shares per property';
+    RAISE NOTICE 'Added check constraint: max 100M available shares per property';
   ELSE
     RAISE NOTICE 'Constraint reasonable_property_shares already exists';
   END IF;

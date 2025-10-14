@@ -24,6 +24,8 @@ interface ShareSellDialogProps {
     share_price: number;
     city?: string;
     country?: string;
+    shares_sellable?: boolean;
+    property_status?: string;
   };
   userShares: number;
   userInvestment: {
@@ -65,6 +67,11 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
 
     try {
       setLoading(true);
+
+      // Check if trading is enabled for this property
+      if (property.shares_sellable === false || property.property_status !== 'funded') {
+        throw new Error('Share trading is not enabled for this property');
+      }
 
       // First, verify the user actually owns enough shares
       const { data: userInvestments, error: investmentError } = await supabase

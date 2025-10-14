@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAdmin } from '@/hooks/useNewAdmin';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import {
   ArrowLeft,
@@ -214,57 +215,27 @@ const Investment = () => {
     if (!property || !escrowBalance) return false;
 
     if (shares <= 0) {
-      console.log({
-        name: "Invalid Shares",
-        description: "Please enter a valid number of shares",
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        isLogo: true
-      });
+      toast.error("Please enter a valid number of shares");
       return false;
     }
 
     if (investmentAmount < property.minimum_investment) {
-      console.log({
-        name: "Below Minimum Investment",
-        description: `Minimum investment is ${formatCurrency(property.minimum_investment)}`,
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        isLogo: true
-      });
+      toast.error(`Minimum investment is ${formatCurrency(property.minimum_investment)}`);
       return false;
     }
 
     if (investmentAmount > property.maximum_investment) {
-      console.log({
-        name: "Exceeds Maximum Investment",
-        description: `Maximum investment is ${formatCurrency(property.maximum_investment)}`,
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        isLogo: true
-      });
+      toast.error(`Maximum investment is ${formatCurrency(property.maximum_investment)}`);
       return false;
     }
 
     if (investmentAmount > escrowBalance.available_balance) {
-      console.log({
-        name: "Insufficient Balance",
-        description: "You don't have enough balance in your wallet",
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        isLogo: true
-      });
+      toast.error("You don't have enough balance in your wallet");
       return false;
     }
 
     if (shares > property.available_shares) {
-      console.log({
-        name: "Shares Not Available",
-        description: `Only ${property.available_shares} shares are available`,
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        isLogo: true
-      });
+      toast.error(`Only ${property.available_shares} shares are available`);
       return false;
     }
 
@@ -274,13 +245,7 @@ const Investment = () => {
   const executeInvestment = async () => {
     // Check if user is authenticated first
     if (!user) {
-      console.log({
-        name: "Sign In Required",
-        description: "Please sign in to start investing",
-        icon: "SHIELD_ALERT",
-        color: "#DC2626",
-        isLogo: true
-      });
+      toast.error("Please sign in to start investing");
       navigate('/auth');
       return;
     }
@@ -288,13 +253,7 @@ const Investment = () => {
     // Check KYC status before allowing investment
     const isInvestorTier = profile?.tier === 'small_investor' || profile?.tier === 'large_investor';
     if (!(profile?.tier_override_by_admin && isInvestorTier) && profile?.kyc_status !== 'approved') {
-      console.log({
-        name: "KYC Required",
-        description: "Please complete your KYC verification to start investing",
-        icon: "SHIELD_ALERT",
-        color: "#DC2626",
-        isLogo: true
-      });
+      toast.error("Please complete your KYC verification to start investing");
       navigate('/kyc');
       return;
     }
@@ -376,13 +335,7 @@ const Investment = () => {
         console.warn('Position snapshot recalc failed (non-fatal):', e);
       }
 
-      console.log({
-        name: "Investment Successful",
-        description: `You've successfully invested ${formatCurrency(investmentAmount)} in ${property.title}`,
-        icon: "CHECK_CIRCLE",
-        color: "#059669",
-        isLogo: true
-      });
+      toast.success(`You've successfully invested ${formatCurrency(investmentAmount)} in ${property.title}`);
 
       // Navigate to portfolio/dashboard
       setTimeout(() => {
@@ -391,13 +344,7 @@ const Investment = () => {
 
     } catch (error) {
       console.error('Investment error:', error);
-      console.log({
-        name: "Investment Failed",
-        description: "Unable to complete your investment. Please try again.",
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        isLogo: true
-      });
+      toast.error("Unable to complete your investment. Please try again.");
     } finally {
       setInvesting(false);
     }

@@ -69,10 +69,26 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
     try {
       setLoading(true);
 
+      // Debug: Log the property object to see what we're getting
+      console.log('🔍 ShareSellDialog - Property data:', {
+        id: property.id,
+        title: property.title,
+        shares_sellable: property.shares_sellable,
+        property_status: property.property_status,
+        typeof_shares_sellable: typeof property.shares_sellable,
+        is_undefined: property.shares_sellable === undefined,
+        is_null: property.shares_sellable === null,
+        is_false: property.shares_sellable === false
+      });
+
       // Check if trading is enabled for this property
-      if (property.shares_sellable === false || property.property_status !== 'funded') {
+      // Only block if shares_sellable is explicitly false
+      if (property.shares_sellable === false) {
+        console.error('❌ Trading blocked: shares_sellable is false');
         throw new Error('Share trading is not enabled for this property');
       }
+
+      console.log('✅ Trading check passed - proceeding with sell request');
 
       // First, verify the user actually owns enough shares
       const { data: userInvestments, error: investmentError } = await supabase

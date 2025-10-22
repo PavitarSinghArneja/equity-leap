@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/NewAuthContext';
+import { toast } from 'sonner';
 import {
   FileText,
   Download,
@@ -51,7 +52,7 @@ const DocumentTypeConfig = {
 };
 
 const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdmin = false }) => {
-  const { user, addNotification } = useAuth();
+  const { user } = useAuth();
   const [documents, setDocuments] = useState<PropertyDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -138,13 +139,7 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
 
       if (docError) throw docError;
 
-      addNotification({
-        name: "Document Uploaded",
-        description: `${uploadForm.document_name} has been uploaded successfully`,
-        icon: "CHECK_CIRCLE",
-        color: "#059669",
-        time: new Date().toLocaleTimeString()
-      });
+      toast.success(`${uploadForm.document_name} uploaded successfully`);
 
       // Reset form and refresh documents
       setUploadForm({
@@ -159,13 +154,7 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
 
     } catch (error) {
       console.error('Error uploading document:', error);
-      addNotification({
-        name: "Upload Failed",
-        description: "Failed to upload document. Please try again.",
-        icon: "ALERT_TRIANGLE",
-        color: "#DC2626",
-        time: new Date().toLocaleTimeString()
-      });
+      toast.error("Failed to upload document. Please try again.");
     } finally {
       setUploading(false);
     }

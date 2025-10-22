@@ -56,6 +56,7 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
   const [documents, setDocuments] = useState<PropertyDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   // Upload form state
@@ -171,6 +172,54 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
       document.body.removeChild(link);
     } catch (error) {
       console.error('Error downloading document:', error);
+    }
+  };
+
+  const handleDelete = async (document: PropertyDocument) => {
+    if (!isAdmin || !user) return;
+
+    // Confirm deletion
+    if (!window.confirm(`Are you sure you want to delete "${document.document_name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setDeleting(document.id);
+
+      // Extract file path from URL
+      const urlParts = document.file_url.split('/property-documents/');
+      const filePath = urlParts[1];
+
+      // Delete file from storage
+      if (filePath) {
+        const { error: storageError } = await supabase.storage
+          .from('property-documents')
+          .remove([filePath]);
+
+        if (storageError) {
+          console.warn('Failed to delete file from storage:', storageError);
+          // Continue to delete database record even if storage deletion fails
+        }
+      }
+
+      // Delete document record from database
+      const { error: dbError } = await supabase
+        .from('property_documents')
+        .delete()
+        .eq('id', document.id);
+
+      if (dbError) throw dbError;
+
+      toast.success(`${document.document_name} deleted successfully`);
+
+      // Refresh document list
+      fetchDocuments();
+
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast.error("Failed to delete document. Please try again.");
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -349,6 +398,27 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
                       <Download className="w-4 h-4 mr-1" />
                       Download
                     </Button>
+                    {isAdmin && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(document)}
+                        disabled={deleting === document.id}
+                        className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                      >
+                        {deleting === document.id ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-1"></div>
+                            Deleting...
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Delete
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
               );

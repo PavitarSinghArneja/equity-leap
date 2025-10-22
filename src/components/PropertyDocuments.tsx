@@ -186,20 +186,32 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
     try {
       setDeleting(document.id);
 
-      // Extract file path from URL
-      const urlParts = document.file_url.split('/property-documents/');
-      const filePath = urlParts[1];
+      // Extract file path from URL (handle different URL formats)
+      let filePath = '';
+      if (document.file_url.includes('/property-documents/')) {
+        const urlParts = document.file_url.split('/property-documents/');
+        filePath = urlParts[1]?.split('?')[0]; // Remove query params if any
+      } else if (document.file_url.includes('/object/public/property-documents/')) {
+        const urlParts = document.file_url.split('/object/public/property-documents/');
+        filePath = urlParts[1]?.split('?')[0]; // Remove query params if any
+      }
 
-      // Delete file from storage
+      // Delete file from Supabase Storage
       if (filePath) {
+        console.log('Deleting file from storage:', filePath);
         const { error: storageError } = await supabase.storage
           .from('property-documents')
           .remove([filePath]);
 
         if (storageError) {
-          console.warn('Failed to delete file from storage:', storageError);
-          // Continue to delete database record even if storage deletion fails
+          console.error('Failed to delete file from storage:', storageError);
+          toast.error('Warning: File may not have been deleted from storage');
+          // Continue to delete database record anyway
+        } else {
+          console.log('File deleted from storage successfully');
         }
+      } else {
+        console.warn('Could not extract file path from URL:', document.file_url);
       }
 
       // Delete document record from database

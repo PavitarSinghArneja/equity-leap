@@ -163,15 +163,20 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
 
   const handleDownload = async (document: PropertyDocument) => {
     try {
+      // Open in new tab for download
       const link = document.createElement('a');
       link.href = document.file_url;
       link.download = document.document_name;
       link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      toast.success('Download started');
     } catch (error) {
       console.error('Error downloading document:', error);
+      toast.error('Failed to download document. Please try again.');
     }
   };
 

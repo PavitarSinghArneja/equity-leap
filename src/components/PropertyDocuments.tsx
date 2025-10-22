@@ -161,12 +161,12 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
     }
   };
 
-  const handleDownload = async (document: PropertyDocument) => {
+  const handleDownload = async (doc: PropertyDocument) => {
     try {
       // Open in new tab for download
       const link = document.createElement('a');
-      link.href = document.file_url;
-      link.download = document.document_name;
+      link.href = doc.file_url;
+      link.download = doc.document_name;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
@@ -180,24 +180,24 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
     }
   };
 
-  const handleDelete = async (document: PropertyDocument) => {
+  const handleDelete = async (doc: PropertyDocument) => {
     if (!isAdmin || !user) return;
 
     // Confirm deletion
-    if (!window.confirm(`Are you sure you want to delete "${document.document_name}"? This action cannot be undone.`)) {
+    if (!window.confirm(`Are you sure you want to delete "${doc.document_name}"? This action cannot be undone.`)) {
       return;
     }
 
     try {
-      setDeleting(document.id);
+      setDeleting(doc.id);
 
       // Extract file path from URL (handle different URL formats)
       let filePath = '';
-      if (document.file_url.includes('/property-documents/')) {
-        const urlParts = document.file_url.split('/property-documents/');
+      if (doc.file_url.includes('/property-documents/')) {
+        const urlParts = doc.file_url.split('/property-documents/');
         filePath = urlParts[1]?.split('?')[0]; // Remove query params if any
-      } else if (document.file_url.includes('/object/public/property-documents/')) {
-        const urlParts = document.file_url.split('/object/public/property-documents/');
+      } else if (doc.file_url.includes('/object/public/property-documents/')) {
+        const urlParts = doc.file_url.split('/object/public/property-documents/');
         filePath = urlParts[1]?.split('?')[0]; // Remove query params if any
       }
 
@@ -216,18 +216,18 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
           console.log('File deleted from storage successfully');
         }
       } else {
-        console.warn('Could not extract file path from URL:', document.file_url);
+        console.warn('Could not extract file path from URL:', doc.file_url);
       }
 
       // Delete document record from database
       const { error: dbError } = await supabase
         .from('property_documents')
         .delete()
-        .eq('id', document.id);
+        .eq('id', doc.id);
 
       if (dbError) throw dbError;
 
-      toast.success(`${document.document_name} deleted successfully`);
+      toast.success(`${doc.document_name} deleted successfully`);
 
       // Refresh document list
       fetchDocuments();

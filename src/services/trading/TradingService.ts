@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 import type {
   TradingServiceConfig,
   ServiceResult,
@@ -135,7 +136,7 @@ export class TradingService {
 
   private err<T = any>(code: string, message: string, details?: any): ServiceResult<T> {
     const error: ServiceError = { code, message, details };
-    if (this.config.enableLogging) console.error('[TradingService]', error);
+    if (this.config.enableLogging) logger.error('[TradingService]', error);
     return { data: null, error, success: false };
   }
 }

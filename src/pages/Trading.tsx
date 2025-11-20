@@ -7,6 +7,7 @@ import BuyConfirmModal from '@/components/trading/BuyConfirmModal';
 import MyOrders from '@/components/trading/MyOrders';
 import { supabase } from '@/integrations/supabase/client';
 import { TrendingUp, BarChart3 } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface Property {
   id: string;
@@ -67,7 +68,7 @@ const Trading: React.FC = () => {
         setSelectedPropertyId(propertiesList[0].id);
       }
     } catch (error) {
-      console.error('Error fetching properties:', error);
+      logger.error('Error fetching properties:', error);
     } finally {
       setLoading(false);
     }

@@ -21,6 +21,7 @@ import {
   StickyNote,
   Edit3
 } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface WatchlistProperty {
   id: string;
@@ -111,7 +112,7 @@ const MyWatchlistEnhanced: React.FC = () => {
       setEditingNotes(null);
       setNoteText('');
     } else {
-      console.error('Error updating notes:', result.error);
+      logger.error('Error updating notes:', result.error);
     }
   };
 

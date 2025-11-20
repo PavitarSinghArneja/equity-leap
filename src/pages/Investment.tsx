@@ -29,6 +29,7 @@ import WatchlistButton from '@/components/WatchlistButton';
 import ShareSellDialog from '@/components/ShareSellDialog';
 import ShareMarketplace from '@/components/ShareMarketplace';
 import PropertyDocuments from '@/components/PropertyDocuments';
+import { logger } from '@/utils/logger';
 
 interface Property {
   id: string;
@@ -98,7 +99,7 @@ const Investment = () => {
   const remainingBalance = (escrowBalance?.available_balance || 0) - investmentAmount;
 
   const fetchData = useCallback(async () => {
-    console.log('🔥 Investment.tsx fetchData called!', { user: !!user, propertyId });
+    logger.log('🔥 Investment.tsx fetchData called!', { user: !!user, propertyId });
     if (!propertyId) return;
 
     try {
@@ -157,7 +158,7 @@ const Investment = () => {
           .single();
 
         if (balanceError) {
-          console.error('Wallet balance error:', balanceError);
+          logger.error('Wallet balance error:', balanceError);
           // Don't throw - allow viewing without wallet
         } else {
           setEscrowBalance(balanceData);
@@ -165,7 +166,7 @@ const Investment = () => {
       }
 
     } catch (error) {
-      console.error('Error fetching data:', error);
+      logger.error('Error fetching data:', error);
       // TODO: Add proper notification
       navigate('/properties');
     } finally {
@@ -308,7 +309,7 @@ const Investment = () => {
           p_property_id: property.id
         });
       } catch (e) {
-        console.warn('Position snapshot recalc failed (non-fatal):', e);
+        logger.warn('Position snapshot recalc failed (non-fatal):', e);
       }
 
       // Show success message with details
@@ -326,7 +327,7 @@ const Investment = () => {
       }, 2000);
 
     } catch (error) {
-      console.error('Investment error:', error);
+      logger.error('Investment error:', error);
       const errorMessage = error instanceof Error ? error.message : "Unable to complete your investment. Please try again.";
       toast.error(errorMessage);
     } finally {

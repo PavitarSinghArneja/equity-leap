@@ -18,6 +18,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { Countdown } from '@/components/ui/countdown';
+import { logger } from '@/utils/logger';
 
 interface ShareSellRequest {
   id: string;
@@ -88,7 +89,7 @@ const MyShareSellRequests: React.FC = () => {
         if (!holdsError) setPendingHolds(holds || []);
       }
     } catch (error) {
-      console.error('Error fetching sell requests:', error);
+      logger.error('Error fetching sell requests:', error);
     } finally {
       setLoading(false);
     }
@@ -142,7 +143,7 @@ const MyShareSellRequests: React.FC = () => {
       fetchSellRequests(); // Refresh the list
 
     } catch (error) {
-      console.error('Error cancelling sell request:', error);
+      logger.error('Error cancelling sell request:', error);
       addNotification({
         name: "Cancellation Failed",
         description: "Failed to cancel your sell request. Please try again.",

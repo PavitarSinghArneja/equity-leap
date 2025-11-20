@@ -11,11 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { 
-  Building2, 
-  Edit, 
-  Trash2, 
-  Plus, 
+import {
+  Building2,
+  Edit,
+  Trash2,
+  Plus,
   ArrowLeft,
   Upload,
   X,
@@ -29,6 +29,7 @@ import {
   Save,
   AlertTriangle
 } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface Property {
   id: string;
@@ -83,7 +84,7 @@ const AdminProperties = () => {
       if (error) throw error;
       setProperties(data || []);
     } catch (error) {
-      console.error('Error fetching properties:', error);
+      logger.error('Error fetching properties:', error);
       addNotification({
         name: "Error",
         description: "Failed to load properties",
@@ -125,7 +126,7 @@ const AdminProperties = () => {
         uploadedUrls.push(publicUrl);
       }
     } catch (error) {
-      console.error('Image upload error:', error);
+      logger.error('Image upload error:', error);
       toast.error('Failed to upload images');
     } finally {
       setUploadingImages(false);
@@ -147,7 +148,7 @@ const AdminProperties = () => {
         .from('property-images')
         .remove([imagePath]);
     } catch (error) {
-      console.error('Error removing image:', error);
+      logger.error('Error removing image:', error);
     }
   };
 
@@ -184,7 +185,7 @@ const AdminProperties = () => {
       setIsEditDialogOpen(false);
       fetchProperties();
     } catch (error) {
-      console.error('Error updating property:', error);
+      logger.error('Error updating property:', error);
       toast.error('Failed to update property');
     } finally {
       setLoading(false);
@@ -229,7 +230,7 @@ const AdminProperties = () => {
           .remove(imagePaths);
           
         if (storageError) {
-          console.warn('Error deleting images from storage:', storageError);
+          logger.warn('Error deleting images from storage:', storageError);
         }
       }
 
@@ -267,7 +268,7 @@ const AdminProperties = () => {
 
       fetchProperties();
     } catch (error) {
-      console.error('Error permanently deleting property:', error);
+      logger.error('Error permanently deleting property:', error);
       addNotification({
         name: "Delete Failed",
         description: "Failed to permanently delete property",

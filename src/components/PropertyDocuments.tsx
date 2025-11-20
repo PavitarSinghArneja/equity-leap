@@ -21,6 +21,7 @@ import {
   Eye,
   Trash2
 } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface PropertyDocument {
   id: string;
@@ -87,7 +88,7 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
       if (error) throw error;
       setDocuments(data || []);
     } catch (error) {
-      console.error('Error fetching property documents:', error);
+      logger.error('Error fetching property documents:', error);
     } finally {
       setLoading(false);
     }
@@ -154,7 +155,7 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
       fetchDocuments();
 
     } catch (error) {
-      console.error('Error uploading document:', error);
+      logger.error('Error uploading document:', error);
       toast.error("Failed to upload document. Please try again.");
     } finally {
       setUploading(false);
@@ -175,7 +176,7 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
 
       toast.success('Download started');
     } catch (error) {
-      console.error('Error downloading document:', error);
+      logger.error('Error downloading document:', error);
       toast.error('Failed to download document. Please try again.');
     }
   };
@@ -203,20 +204,20 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
 
       // Delete file from Supabase Storage
       if (filePath) {
-        console.log('Deleting file from storage:', filePath);
+        logger.log('Deleting file from storage:', filePath);
         const { error: storageError } = await supabase.storage
           .from('property-documents')
           .remove([filePath]);
 
         if (storageError) {
-          console.error('Failed to delete file from storage:', storageError);
+          logger.error('Failed to delete file from storage:', storageError);
           toast.error('Warning: File may not have been deleted from storage');
           // Continue to delete database record anyway
         } else {
-          console.log('File deleted from storage successfully');
+          logger.log('File deleted from storage successfully');
         }
       } else {
-        console.warn('Could not extract file path from URL:', doc.file_url);
+        logger.warn('Could not extract file path from URL:', doc.file_url);
       }
 
       // Delete document record from database
@@ -233,7 +234,7 @@ const PropertyDocuments: React.FC<PropertyDocumentsProps> = ({ propertyId, isAdm
       fetchDocuments();
 
     } catch (error) {
-      console.error('Error deleting document:', error);
+      logger.error('Error deleting document:', error);
       toast.error("Failed to delete document. Please try again.");
     } finally {
       setDeleting(null);

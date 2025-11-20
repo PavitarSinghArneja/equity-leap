@@ -22,6 +22,7 @@ import {
   AlertTriangle,
   CheckCircle
 } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 type UserTier = 'explorer' | 'waitlist_player' | 'small_investor' | 'large_investor';
 
@@ -65,7 +66,7 @@ interface ShareMarketplaceProps {
 }
 
 const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
-  console.log('🔥 ShareMarketplace component rendered!', { propertyId });
+  logger.log('🔥 ShareMarketplace component rendered!', { propertyId });
   const { user } = useAuth();
   const [sellRequests, setSellRequests] = useState<ShareSellRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,14 +106,14 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
       if (error) throw error;
       setSellRequests(data || []);
     } catch (error) {
-      console.error('Error fetching sell requests:', error);
+      logger.error('Error fetching sell requests:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    console.log('🔥 ShareMarketplace mounted!', { propertyId });
+    logger.log('🔥 ShareMarketplace mounted!', { propertyId });
     fetchSellRequests();
     const channel = supabase
       .channel(`market_${propertyId || 'all'}`)
@@ -306,7 +307,7 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
         if (updateError) {
           // Note: At this point, we've already updated wallet and investments
           // Log error but don't rollback as the purchase is effectively complete
-          console.error('Failed to update sell request status:', updateError);
+          logger.error('Failed to update sell request status:', updateError);
           NotificationService.warning(
             "Partial Success",
             "Shares purchased but listing status not updated. Contact support if needed."
@@ -330,7 +331,7 @@ const ShareMarketplace: React.FC<ShareMarketplaceProps> = ({ propertyId }) => {
       }
 
     } catch (error) {
-      console.error('Error purchasing shares:', error);
+      logger.error('Error purchasing shares:', error);
       const errorMessage = error instanceof Error ? error.message : "Failed to purchase shares. Please try again.";
       toast.error(errorMessage);
       NotificationService.error("Purchase Failed", errorMessage);

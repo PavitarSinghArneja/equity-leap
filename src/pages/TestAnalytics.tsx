@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { AnalyticsService, getAnalyticsStats } from '@/services/AnalyticsService';
 import { featureFlags, getAllFeatureFlags } from '@/config/featureFlags';
+import { logger } from '@/utils/logger';
 
 const TestAnalytics = () => {
-  console.log('[TestAnalytics] Component rendering...');
+  logger.log('[TestAnalytics] Component rendering...');
   const [result, setResult] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  console.log('[TestAnalytics] State initialized');
+  logger.log('[TestAnalytics] State initialized');
 
   const testDirectRPC = async () => {
     setLoading(true);

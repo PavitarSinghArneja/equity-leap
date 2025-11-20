@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/NewAuthContext';
 import { ListOrdered, Clock, X, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { logger } from '@/utils/logger';
 
 interface Order {
   id: string;
@@ -110,7 +111,7 @@ const MyOrders: React.FC<MyOrdersProps> = ({ propertyId, status }) => {
       if (error) throw error;
       setOrders(data || []);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      logger.error('Error fetching orders:', error);
       toast.error('Failed to load orders');
     } finally {
       setLoading(false);
@@ -138,7 +139,7 @@ const MyOrders: React.FC<MyOrdersProps> = ({ propertyId, status }) => {
 
       fetchOrders();
     } catch (error) {
-      console.error('Error cancelling order:', error);
+      logger.error('Error cancelling order:', error);
       toast.error('Failed to cancel order');
     } finally {
       setCancelling(null);

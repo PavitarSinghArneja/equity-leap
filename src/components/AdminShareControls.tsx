@@ -25,6 +25,7 @@ import {
   Save
 } from 'lucide-react';
 import { Countdown } from '@/components/ui/countdown';
+import { logger } from '@/utils/logger';
 
 interface Property {
   id: string;
@@ -111,7 +112,7 @@ const AdminShareControls: React.FC = () => {
       }
       
     } catch (error) {
-      console.error('Error fetching data:', error);
+      logger.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -167,7 +168,7 @@ const AdminShareControls: React.FC = () => {
         });
 
         if (alertError) {
-          console.warn('Failed to create alerts:', alertError);
+          logger.warn('Failed to create alerts:', alertError);
         }
       }
 
@@ -184,7 +185,7 @@ const AdminShareControls: React.FC = () => {
       await fetchData(); // Refresh data
 
     } catch (error) {
-      console.error('Error updating share selling:', error);
+      logger.error('Error updating share selling:', error);
       if (addNotification) {
         addNotification({
           name: "Update Failed",
@@ -227,7 +228,7 @@ const AdminShareControls: React.FC = () => {
       fetchData(); // Refresh data
 
     } catch (error) {
-      console.error('Error updating ROI:', error);
+      logger.error('Error updating ROI:', error);
       addNotification({
         name: "Update Failed",
         description: "Failed to update ROI",

@@ -17,6 +17,7 @@ import {
   PieChart,
   Clock
 } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface ShareSellDialogProps {
   property: {
@@ -70,7 +71,7 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
       setLoading(true);
 
       // Debug: Log the property object to see what we're getting
-      console.log('🔍 ShareSellDialog - Property data:', {
+      logger.log('🔍 ShareSellDialog - Property data:', {
         id: property.id,
         title: property.title,
         shares_sellable: property.shares_sellable,
@@ -84,11 +85,11 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
       // Check if trading is enabled for this property
       // Only block if shares_sellable is explicitly false
       if (property.shares_sellable === false) {
-        console.error('❌ Trading blocked: shares_sellable is false');
+        logger.error('❌ Trading blocked: shares_sellable is false');
         throw new Error('Share trading is not enabled for this property');
       }
 
-      console.log('✅ Trading check passed - proceeding with sell request');
+      logger.log('✅ Trading check passed - proceeding with sell request');
 
       // First, verify the user actually owns enough shares
       const { data: userInvestments, error: investmentError } = await supabase
@@ -99,7 +100,7 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
         .eq('investment_status', 'confirmed');
 
       if (investmentError) {
-        console.error('Error checking user investments:', investmentError);
+        logger.error('Error checking user investments:', investmentError);
         throw new Error('Failed to verify share ownership');
       }
 
@@ -124,8 +125,8 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
         notes: formData.notes.trim() || null
       };
 
-      console.log('Attempting to create sell request with data:', insertData);
-      console.log('User owns', totalOwned, 'shares, attempting to sell', sharesToSell);
+      logger.log('Attempting to create sell request with data:', insertData);
+      logger.log('User owns', totalOwned, 'shares, attempting to sell', sharesToSell);
 
       const { data, error } = await supabase
         .from('share_sell_requests')
@@ -134,7 +135,7 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
         .single();
 
       if (error) {
-        console.error('Database error:', error);
+        logger.error('Database error:', error);
         throw error;
       }
 
@@ -149,7 +150,7 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
       }
 
       // Skip audit trail creation for now to avoid RLS issues
-      console.log('Sell request created successfully, skipping audit trail for now');
+      logger.log('Sell request created successfully, skipping audit trail for now');
 
       setFormData({
         shares_to_sell: '',
@@ -159,7 +160,7 @@ const ShareSellDialog: React.FC<ShareSellDialogProps> = ({
       setIsOpen(false);
 
     } catch (error: any) {
-      console.error('Error creating sell request:', error);
+      logger.error('Error creating sell request:', error);
 
       let errorMessage = "Failed to create sell request. Please try again.";
 

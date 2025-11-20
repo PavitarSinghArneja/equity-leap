@@ -9,8 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAdmin } from '@/hooks/useNewAdmin';
 import { useWatchlist } from '@/hooks/useWatchlist';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  BarChart3, 
+import {
+  BarChart3,
   MapPin,
   TrendingUp,
   Building2,
@@ -25,6 +25,7 @@ import {
   Heart
 } from 'lucide-react';
 import { AnalyticsService } from '@/services/AnalyticsService';
+import { logger } from '@/utils/logger';
 
 interface Property {
   id: string;
@@ -138,7 +139,7 @@ const Properties = () => {
       // Don't update state if request was aborted
       if (abortSignal?.aborted) return;
 
-      console.error('Error fetching properties:', error);
+      logger.error('Error fetching properties:', error);
       setProperties([]);
       addNotification({
         name: "Failed to Load Properties",

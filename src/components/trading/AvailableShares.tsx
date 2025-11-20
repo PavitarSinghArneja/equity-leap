@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/NewAuthContext';
 import { ShoppingCart, TrendingDown } from 'lucide-react';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { logger } from '@/utils/logger';
 
 interface SellListing {
   id: string;
@@ -73,7 +74,7 @@ const AvailableShares: React.FC<AvailableSharesProps> = ({ propertyId, onBuyClic
 
       setListings(data || []);
     } catch (error) {
-      console.error('Error fetching listings:', error);
+      logger.error('Error fetching listings:', error);
     } finally {
       setLoading(false);
     }

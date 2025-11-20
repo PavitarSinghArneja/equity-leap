@@ -9,6 +9,7 @@ import { Clock, CheckCircle, XCircle, User, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { TradingService } from '@/services/trading/TradingService';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { logger } from '@/utils/logger';
 
 interface PendingHold {
   id: string;
@@ -134,7 +135,7 @@ const PendingHolds: React.FC<PendingHoldsProps> = ({ propertyId }) => {
 
       setHolds(transformedData as PendingHold[]);
     } catch (error) {
-      console.error('Error fetching pending holds:', error);
+      logger.error('Error fetching pending holds:', error);
       toast.error('Failed to load pending holds');
     } finally {
       setLoading(false);
@@ -157,7 +158,7 @@ const PendingHolds: React.FC<PendingHoldsProps> = ({ propertyId }) => {
 
       fetchPendingHolds();
     } catch (error) {
-      console.error('Approval error:', error);
+      logger.error('Approval error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to approve sale';
       toast.error('Approval Failed', {
         description: errorMessage
@@ -183,7 +184,7 @@ const PendingHolds: React.FC<PendingHoldsProps> = ({ propertyId }) => {
 
       fetchPendingHolds();
     } catch (error) {
-      console.error('Rejection error:', error);
+      logger.error('Rejection error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to reject sale';
       toast.error('Rejection Failed', {
         description: errorMessage

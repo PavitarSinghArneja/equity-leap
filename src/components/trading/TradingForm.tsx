@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/NewAuthContext';
 import { TrendingDown, Wallet, AlertCircle, Tag } from 'lucide-react';
 import { toast } from 'sonner';
+import { logger } from '@/utils/logger';
 
 interface TradingFormProps {
   propertyId: string;
@@ -44,7 +45,7 @@ const TradingForm: React.FC<TradingFormProps> = ({ propertyId, currentPrice }) =
       if (error && error.code !== 'PGRST116') throw error;
       setUserShares(data?.shares_owned || 0);
     } catch (error) {
-      console.error('Error fetching user shares:', error);
+      logger.error('Error fetching user shares:', error);
     }
   };
 
@@ -103,7 +104,7 @@ const TradingForm: React.FC<TradingFormProps> = ({ propertyId, currentPrice }) =
       fetchUserShares();
 
     } catch (error) {
-      console.error('Error submitting order:', error);
+      logger.error('Error submitting order:', error);
       toast.error('Listing Failed', {
         description: 'Failed to list shares. Please try again.'
       });

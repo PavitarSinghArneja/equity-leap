@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/NewAuthContext';
 import { Wallet, ShoppingCart, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { TradingService } from '@/services/trading/TradingService';
+import { logger } from '@/utils/logger';
 
 interface SellListing {
   id: string;
@@ -67,7 +68,7 @@ const BuyConfirmModal: React.FC<BuyConfirmModalProps> = ({
       if (error) throw error;
       setWalletBalance(data?.available_balance || 0);
     } catch (error) {
-      console.error('Error fetching wallet:', error);
+      logger.error('Error fetching wallet:', error);
       toast.error('Failed to fetch wallet balance');
     } finally {
       setLoading(false);
@@ -101,7 +102,7 @@ const BuyConfirmModal: React.FC<BuyConfirmModalProps> = ({
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Purchase error:', error);
+      logger.error('Purchase error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to purchase shares';
       toast.error('Purchase Failed', {
         description: errorMessage

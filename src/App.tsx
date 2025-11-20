@@ -43,6 +43,7 @@ import AdminShareTrading from "@/pages/admin/AdminShareTrading";
 import TestAnalytics from "@/pages/TestAnalytics";
 import Trading from "@/pages/Trading";
 import NotFound from "./pages/NotFound";
+import { logger } from '@/utils/logger';
 
 const queryClient = new QueryClient();
 
@@ -74,10 +75,10 @@ const PageTitleManager = () => {
 
 
 const AppContent = () => {
-  console.log('[App] 🚀 AppContent rendering...');
+  logger.log('[App] 🚀 AppContent rendering...');
   try {
     const { notifications } = useAuth();
-    console.log('[App] ✅ Auth context loaded, notifications:', notifications?.length || 0);
+    logger.log('[App] ✅ Auth context loaded, notifications:', notifications?.length || 0);
 
     return (
       <>
@@ -98,11 +99,11 @@ const AppContent = () => {
             v7_relativeSplatPath: true
           }}
         >
-          {(() => { console.log('[App] 📄 Rendering PageTitleManager'); return null; })()}
+          {(() => { logger.log('[App] 📄 Rendering PageTitleManager'); return null; })()}
           <PageTitleManager />
-          {(() => { console.log('[App] 🧭 Rendering TopNav'); return null; })()}
+          {(() => { logger.log('[App] 🧭 Rendering TopNav'); return null; })()}
           <TopNav />
-          {(() => { console.log('[App] 🛣️  Rendering Routes'); return null; })()}
+          {(() => { logger.log('[App] 🛣️  Rendering Routes'); return null; })()}
           <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<Auth />} />
@@ -149,7 +150,7 @@ const AppContent = () => {
     </>
     );
   } catch (error) {
-    console.error('[App] ❌ ERROR in AppContent:', error);
+    logger.error('[App] ❌ ERROR in AppContent:', error);
     throw error; // Re-throw to let ErrorBoundary catch it
   }
 };

@@ -65,14 +65,7 @@ const TopNav: React.FC = () => {
             <NavLink to="/admin/support" className={({ isActive }) => `text-foreground hover:text-primary transition-colors font-medium ${isActive ? 'text-primary' : ''}`}>Support</NavLink>
           )}
           {profile?.subscription_active && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(profile?.tier === 'waitlist_player' ? '/waitlist-dashboard/overview' : '/dashboard/overview')}
-              className="ml-2"
-            >
-              Dashboard
-            </Button>
+            <NavLink to={profile?.tier === 'waitlist_player' ? '/waitlist-dashboard/overview' : '/dashboard/overview'} className={({ isActive }) => `text-foreground hover:text-primary transition-colors font-medium ${isActive ? 'text-primary' : ''}`}>Dashboard</NavLink>
           )}
         </nav>
         )}
@@ -157,14 +150,10 @@ const TopNav: React.FC = () => {
               <LinkItem to="/admin/support" label="Support" onClick={close} />
             )}
             {profile?.subscription_active && user && (
-              <Button variant="outline" size="sm" onClick={() => { close(); navigate(profile?.tier === 'waitlist_player' ? '/waitlist-dashboard/overview' : '/dashboard/overview'); }}>
-                Dashboard
-              </Button>
+              <LinkItem to={profile?.tier === 'waitlist_player' ? '/waitlist-dashboard/overview' : '/dashboard/overview'} label="Dashboard" onClick={close} />
             )}
             {isAdmin && user && (
-              <Button variant="outline" size="sm" onClick={() => { close(); navigate('/admin'); }}>
-                Admin Panel
-              </Button>
+              <LinkItem to="/admin" label="Admin Panel" onClick={close} />
             )}
             {user ? (
               <Button variant="ghost" size="sm" onClick={() => { close(); signOut(); }}>Sign Out</Button>

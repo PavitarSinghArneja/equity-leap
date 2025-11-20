@@ -136,11 +136,11 @@ export const NotificationContainer = ({
   const getPositionClasses = () => {
     switch (position) {
       case 'top-left':
-        return 'top-4 left-4';
+        return 'top-20 left-4';
       case 'top-center':
-        return 'top-4 left-1/2 -translate-x-1/2';
+        return 'top-20 left-1/2 -translate-x-1/2';
       case 'top-right':
-        return 'top-4 right-4';
+        return 'top-20 right-4';
       case 'bottom-left':
         return 'bottom-4 left-4';
       case 'bottom-center':
@@ -148,14 +148,14 @@ export const NotificationContainer = ({
       case 'bottom-right':
         return 'bottom-4 right-4';
       default:
-        return 'top-4 right-4';
+        return 'top-20 right-4';
     }
   };
 
   return (
     <div
       className={cn(
-        "fixed z-50 pointer-events-none",
+        "fixed z-[100] pointer-events-none",
         getPositionClasses()
       )}
     >

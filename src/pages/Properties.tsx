@@ -369,10 +369,24 @@ const Properties = () => {
                         >
                           Sold Out
                         </Button>
-                        <Button 
+                        <Button
                           variant="outline"
                           className="flex-1"
-                          onClick={() => navigate(`/invest/${property.id}`)}
+                          onClick={() => {
+                            // Check if user is authenticated first
+                            if (!user) {
+                              addNotification({
+                                name: "Sign In Required",
+                                description: "Please sign in to view property details",
+                                icon: "SHIELD_ALERT",
+                                color: "#DC2626",
+                                isLogo: true
+                              });
+                              navigate('/auth');
+                              return;
+                            }
+                            navigate(`/invest/${property.id}`);
+                          }}
                         >
                           View Details
                         </Button>

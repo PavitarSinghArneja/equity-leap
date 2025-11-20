@@ -62,6 +62,8 @@ const Properties = () => {
   const [priceFilter, setPriceFilter] = useState('');
   const [roiFilter, setRoiFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
@@ -189,6 +191,65 @@ const Properties = () => {
     return 'bg-muted-foreground';
   };
 
+  // Filter properties based on selected filters
+  const filteredProperties = properties.filter((property) => {
+    // Price filter
+    if (priceFilter) {
+      const price = property.total_value || 0;
+      switch (priceFilter) {
+        case 'under-50l':
+          if (price >= 5000000) return false;
+          break;
+        case '50l-1cr':
+          if (price < 5000000 || price >= 10000000) return false;
+          break;
+        case '1cr-2cr':
+          if (price < 10000000 || price >= 20000000) return false;
+          break;
+        case 'above-2cr':
+          if (price < 20000000) return false;
+          break;
+      }
+    }
+
+    // ROI filter
+    if (roiFilter) {
+      const roi = property.expected_roi || 0;
+      switch (roiFilter) {
+        case 'under-8':
+          if (roi >= 8) return false;
+          break;
+        case '8-12':
+          if (roi < 8 || roi >= 12) return false;
+          break;
+        case '12-15':
+          if (roi < 12 || roi >= 15) return false;
+          break;
+        case 'above-15':
+          if (roi < 15) return false;
+          break;
+      }
+    }
+
+    // Type filter
+    if (typeFilter && property.property_type !== typeFilter) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredProperties.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedProperties = filteredProperties.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [priceFilter, roiFilter, typeFilter]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Main Content */}
@@ -250,18 +311,23 @@ const Properties = () => {
             </Select>
 
             {(priceFilter || roiFilter || typeFilter) && (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => {
-                  setPriceFilter('');
-                  setRoiFilter('');
-                  setTypeFilter('');
-                }}
-                className="text-primary hover:text-primary/80"
-              >
-                Clear all
-              </Button>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary">
+                  {[priceFilter, roiFilter, typeFilter].filter(Boolean).length} active
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setPriceFilter('');
+                    setRoiFilter('');
+                    setTypeFilter('');
+                  }}
+                  className="text-primary hover:text-primary/80"
+                >
+                  Clear all
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -282,8 +348,8 @@ const Properties = () => {
                 </CardContent>
               </Card>
             ))
-          ) : properties.length > 0 ? (
-            properties.map((property) => (
+          ) : paginatedProperties.length > 0 ? (
+            paginatedProperties.map((property) => (
             <Card key={property.id} className="investment-card hover:shadow-xl transition-all duration-300 overflow-hidden">
               <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
                 {property.image ? (
@@ -511,30 +577,86 @@ const Properties = () => {
             // Empty state
             <div className="col-span-full text-center py-12">
               <Building2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Properties Available</h3>
-              <p className="text-muted-foreground">
-                There are currently no properties available for investment. Please check back later.
-              </p>
+              {properties.length === 0 ? (
+                <>
+                  <h3 className="text-lg font-semibold mb-2">No Properties Available</h3>
+                  <p className="text-muted-foreground">
+                    There are currently no properties available for investment. Please check back later.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-lg font-semibold mb-2">No Matching Properties</h3>
+                  <p className="text-muted-foreground mb-4">
+                    No properties match your current filters. Try adjusting your search criteria.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setPriceFilter('');
+                      setRoiFilter('');
+                      setTypeFilter('');
+                    }}
+                  >
+                    Clear All Filters
+                  </Button>
+                </>
+              )}
             </div>
           )}
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-center space-x-2">
-          <Button variant="outline" size="icon" disabled>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          
-          <Button variant="default" size="sm">1</Button>
-          <Button variant="outline" size="sm">2</Button>
-          <Button variant="outline" size="sm">3</Button>
-          <span className="text-muted-foreground">...</span>
-          <Button variant="outline" size="sm">8</Button>
-          
-          <Button variant="outline" size="icon">
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
+        {filteredProperties.length > ITEMS_PER_PAGE && (
+          <div className="flex items-center justify-center space-x-2">
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+
+            {/* Page numbers */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              // Show first page, last page, current page, and pages around current
+              if (
+                page === 1 ||
+                page === totalPages ||
+                (page >= currentPage - 1 && page <= currentPage + 1)
+              ) {
+                return (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                );
+              } else if (page === currentPage - 2 || page === currentPage + 2) {
+                return <span key={page} className="text-muted-foreground">...</span>;
+              }
+              return null;
+            })}
+
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+
+            {/* Page info */}
+            <span className="text-sm text-muted-foreground ml-4">
+              Page {currentPage} of {totalPages} ({filteredProperties.length} properties)
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

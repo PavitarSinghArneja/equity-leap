@@ -3,7 +3,7 @@ import { NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/NewAuthContext';
 import { useAdmin } from '@/hooks/useNewAdmin';
-import { BarChart3, Menu, X, Bell } from 'lucide-react';
+import { Hotel, Menu, X, Bell } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useUserAlerts } from '@/hooks/useUserAlerts';
 
@@ -35,17 +35,17 @@ const TopNav: React.FC = () => {
   const close = () => setOpen(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-      <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border shadow-sm">
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
             to="/"
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
-            <div className="w-8 h-8 hero-gradient rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-br from-primary via-primary-light to-secondary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+              <Hotel className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">Retreat Slice</span>
+            <span className="text-2xl font-bold text-foreground">Retreat Slice</span>
           </Link>
           {!isMinimal && (
             <button className="md:hidden" onClick={() => setOpen((v) => !v)} aria-label="Toggle menu">
@@ -55,14 +55,14 @@ const TopNav: React.FC = () => {
         </div>
 
         {!isMinimal && (
-        <nav className="hidden md:flex items-center gap-6 text-sm">
-          <NavLink to="/welcome" className="text-foreground font-medium">Home</NavLink>
-          <NavLink to="/properties" className="text-muted-foreground hover:text-foreground">Properties</NavLink>
+        <nav className="hidden md:flex items-center gap-8">
+          <NavLink to="/welcome" className={({ isActive }) => `text-foreground hover:text-primary transition-colors font-medium ${isActive ? 'text-primary' : ''}`}>Home</NavLink>
+          <NavLink to="/properties" className={({ isActive }) => `text-foreground hover:text-primary transition-colors font-medium ${isActive ? 'text-primary' : ''}`}>Properties</NavLink>
           {profile?.tier && ['waitlist_player', 'small_investor', 'large_investor'].includes(profile.tier) && (
-            <NavLink to="/trading" className="text-muted-foreground hover:text-foreground">Trading</NavLink>
+            <NavLink to="/trading" className={({ isActive }) => `text-foreground hover:text-primary transition-colors font-medium ${isActive ? 'text-primary' : ''}`}>Trading</NavLink>
           )}
           {isAdmin && (
-            <NavLink to="/admin/support" className="text-muted-foreground hover:text-foreground">Support</NavLink>
+            <NavLink to="/admin/support" className={({ isActive }) => `text-foreground hover:text-primary transition-colors font-medium ${isActive ? 'text-primary' : ''}`}>Support</NavLink>
           )}
           {profile?.subscription_active && (
             <Button
@@ -137,7 +137,7 @@ const TopNav: React.FC = () => {
               </Button>
             </>
           ) : (
-            <Button size="sm" onClick={() => navigate('/auth')} className="bg-green-600 text-white hover:bg-green-700">
+            <Button size="sm" onClick={() => navigate('/auth')} className="bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary shadow-lg shadow-primary/30">
               Get Started
             </Button>
           )}
@@ -146,7 +146,7 @@ const TopNav: React.FC = () => {
 
       {/* Mobile menu */}
       {!isLanding && open && (
-        <div className="md:hidden border-t border-border bg-card">
+        <div className="md:hidden border-t border-border bg-background">
           <div className="container mx-auto px-4 py-3 grid grid-cols-2 gap-2">
             <LinkItem to="/welcome" label="Home" onClick={close} />
             <LinkItem to="/properties" label="Properties" onClick={close} />
@@ -169,7 +169,7 @@ const TopNav: React.FC = () => {
             {user ? (
               <Button variant="ghost" size="sm" onClick={() => { close(); signOut(); }}>Sign Out</Button>
             ) : (
-              <Button size="sm" className="bg-green-600 text-white hover:bg-green-700" onClick={() => { close(); navigate('/auth'); }}>Get Started</Button>
+              <Button size="sm" className="bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary shadow-lg shadow-primary/30" onClick={() => { close(); navigate('/auth'); }}>Get Started</Button>
             )}
           </div>
       </div>

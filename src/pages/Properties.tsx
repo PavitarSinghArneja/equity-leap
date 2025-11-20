@@ -197,7 +197,7 @@ const Properties = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchProperties}
+            onClick={() => fetchProperties()}
             disabled={loading}
             className="flex items-center gap-2"
           >

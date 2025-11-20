@@ -83,6 +83,13 @@ const PageTitleManager = () => {
   return null;
 };
 
+const ConditionalTopNav = () => {
+  const location = useLocation();
+  // Don't show TopNav on landing page since it has its own navbar
+  if (location.pathname === '/') return null;
+  return <TopNav />;
+};
+
 const AppContent = () => {
   const { phase } = useAuth();
   const { notifications, removeNotification, networkStatus } = useNotifications();
@@ -130,7 +137,7 @@ const AppContent = () => {
         }}
       >
         <PageTitleManager />
-        <TopNav />
+        <ConditionalTopNav />
         <Routes>
           <Route path="/" element={<LandingPage />} />
 

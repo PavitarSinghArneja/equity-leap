@@ -16,28 +16,28 @@
     --popover: 210 15% 12%;
     --popover-foreground: 0 0% 95%;
 
-    /* Primary: Bright Green */
-    --primary: 120 60% 45%;
+    /* Primary: Darker, comfortable green */
+    --primary: 142 76% 36%;
     --primary-foreground: 0 0% 98%;
-    --primary-light: 120 60% 55%;
-    --primary-dark: 120 60% 35%;
+    --primary-light: 142 76% 46%;
+    --primary-dark: 142 76% 26%;
 
     /* Secondary: Darker Green */
-    --secondary: 120 50% 30%;
+    --secondary: 142 76% 26%;
     --secondary-foreground: 0 0% 98%;
-    --secondary-light: 120 50% 40%;
-    --secondary-dark: 120 50% 20%;
+    --secondary-light: 142 76% 36%;
+    --secondary-dark: 142 76% 20%;
 
-    /* Accent: Bright Green variant */
-    --accent: 120 50% 40%;
+    /* Accent: Darker Green variant */
+    --accent: 142 76% 30%;
     --accent-foreground: 0 0% 98%;
 
-    /* Muted: Dark blue-grays */
+    /* Muted: Dark grays */
     --muted: 210 15% 15%;
     --muted-foreground: 210 10% 65%;
 
-    /* Success/Profit Green - Bright green */
-    --success: 120 60% 45%;
+    /* Success/Profit Green - Darker comfortable green */
+    --success: 142 76% 36%;
     --success-foreground: 0 0% 98%;
 
     /* Warning/Risk Orange */
@@ -49,14 +49,14 @@
 
     --border: 210 15% 20%;
     --input: 210 15% 10%;
-    --ring: 120 60% 45%;
+    --ring: 142 76% 36%;
 
     --radius: 0.75rem;
 
     /* Investment Platform Specific Colors */
-    --portfolio-up: 120 60% 45%;
+    --portfolio-up: 142 76% 36%;
     --portfolio-down: 0 84% 60%;
-    --escrow-balance: 120 60% 45%;
+    --escrow-balance: 142 76% 36%;
   }
 
   .dark {

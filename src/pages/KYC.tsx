@@ -11,9 +11,9 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useAdmin } from '@/hooks/useNewAdmin';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  ChevronRight, 
-  ChevronLeft, 
+import {
+  ChevronRight,
+  ChevronLeft,
   Upload,
   FileText,
   User,
@@ -22,6 +22,19 @@ import {
   CheckCircle2,
   AlertTriangle
 } from 'lucide-react';
+import {
+  validateFullName,
+  validateDateOfBirth,
+  validatePhoneNumber,
+  validatePostalCode,
+  validateAddress,
+  validateCity,
+  validateState,
+  validateBankName,
+  validateIFSCCode,
+  validateAccountNumber,
+  validateFile
+} from '@/utils/validators';
 
 interface PersonalInfo {
   fullName: string;
@@ -56,7 +69,7 @@ const KYC = () => {
   
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  
+
   // Form data states
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({
     fullName: profile?.full_name || '',
@@ -68,14 +81,14 @@ const KYC = () => {
     country: profile?.country || 'India',
     phone: profile?.phone || ''
   });
-  
+
   const [documents, setDocuments] = useState<Documents>({
     panCard: null,
     aadhaarFront: null,
     aadhaarBack: null,
     addressProof: null
   });
-  
+
   const [bankDetails, setBankDetails] = useState<BankDetails>({
     accountNumber: '',
     confirmAccountNumber: '',
@@ -83,8 +96,11 @@ const KYC = () => {
     bankName: '',
     accountType: 'savings'
   });
-  
+
   const [selfieFile, setSelfieFile] = useState<File | null>(null);
+
+  // Validation error states
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (!user) {
@@ -119,13 +135,38 @@ const KYC = () => {
   ];
 
   const validateStep = (step: number): boolean => {
+    const newErrors: { [key: string]: string } = {};
+
     switch (step) {
       case 1:
-        const { fullName, dateOfBirth, address, city, state, postalCode, phone } = personalInfo;
-        if (!fullName || !dateOfBirth || !address || !city || !state || !postalCode || !phone) {
+        // Validate personal information
+        const nameValidation = validateFullName(personalInfo.fullName);
+        if (!nameValidation.isValid) newErrors.fullName = nameValidation.error!;
+
+        const dobValidation = validateDateOfBirth(personalInfo.dateOfBirth);
+        if (!dobValidation.isValid) newErrors.dateOfBirth = dobValidation.error!;
+
+        const addressValidation = validateAddress(personalInfo.address);
+        if (!addressValidation.isValid) newErrors.address = addressValidation.error!;
+
+        const cityValidation = validateCity(personalInfo.city);
+        if (!cityValidation.isValid) newErrors.city = cityValidation.error!;
+
+        const stateValidation = validateState(personalInfo.state);
+        if (!stateValidation.isValid) newErrors.state = stateValidation.error!;
+
+        const postalCodeValidation = validatePostalCode(personalInfo.postalCode);
+        if (!postalCodeValidation.isValid) newErrors.postalCode = postalCodeValidation.error!;
+
+        const phoneValidation = validatePhoneNumber(personalInfo.phone);
+        if (!phoneValidation.isValid) newErrors.phone = phoneValidation.error!;
+
+        setErrors(newErrors);
+
+        if (Object.keys(newErrors).length > 0) {
           addNotification({
-            name: "Incomplete Information",
-            description: "Please fill all required personal information fields",
+            name: "Validation Errors",
+            description: "Please fix the errors in the form before proceeding",
             icon: "ALERT_TRIANGLE",
             color: "#DC2626",
             isLogo: true
@@ -133,12 +174,24 @@ const KYC = () => {
           return false;
         }
         return true;
-      
+
       case 2:
-        if (!documents.panCard || !documents.aadhaarFront || !documents.aadhaarBack) {
+        // Validate document uploads
+        const panValidation = validateFile(documents.panCard);
+        if (!panValidation.isValid) newErrors.panCard = panValidation.error!;
+
+        const aadhaarFrontValidation = validateFile(documents.aadhaarFront);
+        if (!aadhaarFrontValidation.isValid) newErrors.aadhaarFront = aadhaarFrontValidation.error!;
+
+        const aadhaarBackValidation = validateFile(documents.aadhaarBack);
+        if (!aadhaarBackValidation.isValid) newErrors.aadhaarBack = aadhaarBackValidation.error!;
+
+        setErrors(newErrors);
+
+        if (Object.keys(newErrors).length > 0) {
           addNotification({
-            name: "Documents Required",
-            description: "Please upload PAN card and both sides of Aadhaar card",
+            name: "Document Validation Failed",
+            description: "Please upload all required documents with valid file types and sizes",
             icon: "ALERT_TRIANGLE",
             color: "#DC2626",
             isLogo: true
@@ -146,23 +199,31 @@ const KYC = () => {
           return false;
         }
         return true;
-      
+
       case 3:
-        const { accountNumber, confirmAccountNumber, ifscCode, bankName } = bankDetails;
-        if (!accountNumber || !confirmAccountNumber || !ifscCode || !bankName) {
-          addNotification({
-            name: "Bank Details Required",
-            description: "Please fill all bank details",
-            icon: "ALERT_TRIANGLE",
-            color: "#DC2626",
-            isLogo: true
-          });
-          return false;
+        // Validate bank details
+        const bankNameValidation = validateBankName(bankDetails.bankName);
+        if (!bankNameValidation.isValid) newErrors.bankName = bankNameValidation.error!;
+
+        const accountValidation = validateAccountNumber(bankDetails.accountNumber);
+        if (!accountValidation.isValid) newErrors.accountNumber = accountValidation.error!;
+
+        const confirmAccountValidation = validateAccountNumber(bankDetails.confirmAccountNumber);
+        if (!confirmAccountValidation.isValid) newErrors.confirmAccountNumber = confirmAccountValidation.error!;
+
+        if (bankDetails.accountNumber !== bankDetails.confirmAccountNumber) {
+          newErrors.confirmAccountNumber = "Account numbers don't match";
         }
-        if (accountNumber !== confirmAccountNumber) {
+
+        const ifscValidation = validateIFSCCode(bankDetails.ifscCode);
+        if (!ifscValidation.isValid) newErrors.ifscCode = ifscValidation.error!;
+
+        setErrors(newErrors);
+
+        if (Object.keys(newErrors).length > 0) {
           addNotification({
-            name: "Account Numbers Don't Match",
-            description: "Please ensure both account numbers are identical",
+            name: "Bank Details Invalid",
+            description: "Please fix the errors in bank details before proceeding",
             icon: "ALERT_TRIANGLE",
             color: "#DC2626",
             isLogo: true
@@ -170,12 +231,16 @@ const KYC = () => {
           return false;
         }
         return true;
-      
+
       case 4:
-        if (!selfieFile) {
+        // Validate selfie file
+        const selfieValidation = validateFile(selfieFile);
+        if (!selfieValidation.isValid) {
+          newErrors.selfie = selfieValidation.error!;
+          setErrors(newErrors);
           addNotification({
             name: "Selfie Required",
-            description: "Please upload a clear selfie for verification",
+            description: selfieValidation.error || "Please upload a clear selfie for verification",
             icon: "ALERT_TRIANGLE",
             color: "#DC2626",
             isLogo: true
@@ -183,7 +248,7 @@ const KYC = () => {
           return false;
         }
         return true;
-      
+
       default:
         return true;
     }
@@ -201,9 +266,24 @@ const KYC = () => {
 
   const handleFileUpload = async (file: File, documentType: keyof Documents | 'selfie') => {
     try {
+      // Validate file before upload
+      const validation = validateFile(file);
+      if (!validation.isValid) {
+        addNotification({
+          name: "Invalid File",
+          description: validation.error || "File validation failed",
+          icon: "ALERT_TRIANGLE",
+          color: "#DC2626",
+          isLogo: true
+        });
+        return null;
+      }
+
+      // Generate UUID-based filename for security
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user?.id}/${documentType}_${Date.now()}.${fileExt}`;
-      
+      const uuid = crypto.randomUUID();
+      const fileName = `${user?.id}/${documentType}_${uuid}.${fileExt}`;
+
       const { data, error } = await supabase.storage
         .from('kyc-documents')
         .upload(fileName, file);
@@ -216,7 +296,6 @@ const KYC = () => {
 
       return urlData.publicUrl;
     } catch (error) {
-      console.error('File upload error:', error);
       addNotification({
         name: "Upload Failed",
         description: "Failed to upload file. Please try again.",
@@ -324,7 +403,6 @@ const KYC = () => {
       }, 2000);
 
     } catch (error) {
-      console.error('KYC submission error:', error);
       addNotification({
         name: "Submission Failed",
         description: "Failed to submit KYC. Please try again.",
@@ -348,9 +426,15 @@ const KYC = () => {
                 <Input
                   id="fullName"
                   value={personalInfo.fullName}
-                  onChange={(e) => setPersonalInfo(prev => ({ ...prev, fullName: e.target.value }))}
+                  onChange={(e) => {
+                    setPersonalInfo(prev => ({ ...prev, fullName: e.target.value }));
+                    if (errors.fullName) setErrors(prev => ({ ...prev, fullName: '' }));
+                  }}
                   placeholder="Enter your full name"
+                  className={errors.fullName ? 'border-red-500' : ''}
                 />
+                {errors.fullName && <p className="text-xs text-red-500">{errors.fullName}</p>}
+                <p className="text-xs text-muted-foreground">Only letters and spaces (2-100 characters)</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth">Date of Birth *</Label>
@@ -358,61 +442,95 @@ const KYC = () => {
                   id="dateOfBirth"
                   type="date"
                   value={personalInfo.dateOfBirth}
-                  onChange={(e) => setPersonalInfo(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                  onChange={(e) => {
+                    setPersonalInfo(prev => ({ ...prev, dateOfBirth: e.target.value }));
+                    if (errors.dateOfBirth) setErrors(prev => ({ ...prev, dateOfBirth: '' }));
+                  }}
+                  className={errors.dateOfBirth ? 'border-red-500' : ''}
                 />
+                {errors.dateOfBirth && <p className="text-xs text-red-500">{errors.dateOfBirth}</p>}
+                <p className="text-xs text-muted-foreground">Must be at least 18 years old</p>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="address">Address *</Label>
               <Textarea
                 id="address"
                 value={personalInfo.address}
-                onChange={(e) => setPersonalInfo(prev => ({ ...prev, address: e.target.value }))}
+                onChange={(e) => {
+                  setPersonalInfo(prev => ({ ...prev, address: e.target.value }));
+                  if (errors.address) setErrors(prev => ({ ...prev, address: '' }));
+                }}
                 placeholder="Enter your complete address"
                 rows={3}
+                className={errors.address ? 'border-red-500' : ''}
               />
+              {errors.address && <p className="text-xs text-red-500">{errors.address}</p>}
+              <p className="text-xs text-muted-foreground">Full address (minimum 10 characters)</p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="city">City *</Label>
                 <Input
                   id="city"
                   value={personalInfo.city}
-                  onChange={(e) => setPersonalInfo(prev => ({ ...prev, city: e.target.value }))}
+                  onChange={(e) => {
+                    setPersonalInfo(prev => ({ ...prev, city: e.target.value }));
+                    if (errors.city) setErrors(prev => ({ ...prev, city: '' }));
+                  }}
                   placeholder="City"
+                  className={errors.city ? 'border-red-500' : ''}
                 />
+                {errors.city && <p className="text-xs text-red-500">{errors.city}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="state">State *</Label>
                 <Input
                   id="state"
                   value={personalInfo.state}
-                  onChange={(e) => setPersonalInfo(prev => ({ ...prev, state: e.target.value }))}
+                  onChange={(e) => {
+                    setPersonalInfo(prev => ({ ...prev, state: e.target.value }));
+                    if (errors.state) setErrors(prev => ({ ...prev, state: '' }));
+                  }}
                   placeholder="State"
+                  className={errors.state ? 'border-red-500' : ''}
                 />
+                {errors.state && <p className="text-xs text-red-500">{errors.state}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="postalCode">Postal Code *</Label>
                 <Input
                   id="postalCode"
                   value={personalInfo.postalCode}
-                  onChange={(e) => setPersonalInfo(prev => ({ ...prev, postalCode: e.target.value }))}
+                  onChange={(e) => {
+                    setPersonalInfo(prev => ({ ...prev, postalCode: e.target.value }));
+                    if (errors.postalCode) setErrors(prev => ({ ...prev, postalCode: '' }));
+                  }}
                   placeholder="Postal Code"
+                  className={errors.postalCode ? 'border-red-500' : ''}
                 />
+                {errors.postalCode && <p className="text-xs text-red-500">{errors.postalCode}</p>}
+                <p className="text-xs text-muted-foreground">6 digits (e.g., 110001)</p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number *</Label>
                 <Input
                   id="phone"
                   value={personalInfo.phone}
-                  onChange={(e) => setPersonalInfo(prev => ({ ...prev, phone: e.target.value }))}
+                  onChange={(e) => {
+                    setPersonalInfo(prev => ({ ...prev, phone: e.target.value }));
+                    if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+                  }}
                   placeholder="Enter your phone number"
+                  className={errors.phone ? 'border-red-500' : ''}
                 />
+                {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
+                <p className="text-xs text-muted-foreground">10 digits starting with 6-9</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="country">Country *</Label>
@@ -443,14 +561,22 @@ const KYC = () => {
             ].map(({ key, label, required }) => (
               <div key={key} className="space-y-2">
                 <Label>{label} {required && '*'}</Label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                <div className={`border-2 border-dashed rounded-lg p-6 text-center hover:border-gray-400 transition-colors ${
+                  errors[key] ? 'border-red-500' : 'border-gray-300'
+                }`}>
                   <input
                     type="file"
                     accept="image/*,.pdf"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        setDocuments(prev => ({ ...prev, [key]: file }));
+                        const validation = validateFile(file);
+                        if (!validation.isValid) {
+                          setErrors(prev => ({ ...prev, [key]: validation.error! }));
+                        } else {
+                          setDocuments(prev => ({ ...prev, [key]: file }));
+                          setErrors(prev => ({ ...prev, [key]: '' }));
+                        }
                       }
                     }}
                     className="hidden"
@@ -464,6 +590,7 @@ const KYC = () => {
                     <p className="text-xs text-gray-500 mt-1">PNG, JPG or PDF (max 5MB)</p>
                   </label>
                 </div>
+                {errors[key] && <p className="text-xs text-red-500">{errors[key]}</p>}
               </div>
             ))}
           </div>
@@ -477,40 +604,64 @@ const KYC = () => {
               <Input
                 id="bankName"
                 value={bankDetails.bankName}
-                onChange={(e) => setBankDetails(prev => ({ ...prev, bankName: e.target.value }))}
+                onChange={(e) => {
+                  setBankDetails(prev => ({ ...prev, bankName: e.target.value }));
+                  if (errors.bankName) setErrors(prev => ({ ...prev, bankName: '' }));
+                }}
                 placeholder="Enter your bank name"
+                className={errors.bankName ? 'border-red-500' : ''}
               />
+              {errors.bankName && <p className="text-xs text-red-500">{errors.bankName}</p>}
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="accountNumber">Account Number *</Label>
               <Input
                 id="accountNumber"
+                type="text"
                 value={bankDetails.accountNumber}
-                onChange={(e) => setBankDetails(prev => ({ ...prev, accountNumber: e.target.value }))}
+                onChange={(e) => {
+                  setBankDetails(prev => ({ ...prev, accountNumber: e.target.value.replace(/\D/g, '') }));
+                  if (errors.accountNumber) setErrors(prev => ({ ...prev, accountNumber: '' }));
+                }}
                 placeholder="Enter your account number"
+                className={errors.accountNumber ? 'border-red-500' : ''}
               />
+              {errors.accountNumber && <p className="text-xs text-red-500">{errors.accountNumber}</p>}
+              <p className="text-xs text-muted-foreground">9-18 digits only</p>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="confirmAccountNumber">Confirm Account Number *</Label>
               <Input
                 id="confirmAccountNumber"
+                type="text"
                 value={bankDetails.confirmAccountNumber}
-                onChange={(e) => setBankDetails(prev => ({ ...prev, confirmAccountNumber: e.target.value }))}
+                onChange={(e) => {
+                  setBankDetails(prev => ({ ...prev, confirmAccountNumber: e.target.value.replace(/\D/g, '') }));
+                  if (errors.confirmAccountNumber) setErrors(prev => ({ ...prev, confirmAccountNumber: '' }));
+                }}
                 placeholder="Re-enter your account number"
+                className={errors.confirmAccountNumber ? 'border-red-500' : ''}
               />
+              {errors.confirmAccountNumber && <p className="text-xs text-red-500">{errors.confirmAccountNumber}</p>}
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="ifscCode">IFSC Code *</Label>
                 <Input
                   id="ifscCode"
                   value={bankDetails.ifscCode}
-                  onChange={(e) => setBankDetails(prev => ({ ...prev, ifscCode: e.target.value.toUpperCase() }))}
+                  onChange={(e) => {
+                    setBankDetails(prev => ({ ...prev, ifscCode: e.target.value.toUpperCase() }));
+                    if (errors.ifscCode) setErrors(prev => ({ ...prev, ifscCode: '' }));
+                  }}
                   placeholder="Enter IFSC code"
+                  className={errors.ifscCode ? 'border-red-500' : ''}
                 />
+                {errors.ifscCode && <p className="text-xs text-red-500">{errors.ifscCode}</p>}
+                <p className="text-xs text-muted-foreground">Format: ABCD0123456</p>
               </div>
               <div className="space-y-2">
                 <Label>Account Type *</Label>
@@ -536,16 +687,26 @@ const KYC = () => {
               <h3 className="text-lg font-semibold mb-2">Upload Your Selfie</h3>
               <p className="text-gray-600 mb-6">Please upload a clear selfie for identity verification</p>
             </div>
-            
+
             <div className="space-y-2">
               <Label>Selfie Photo *</Label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+              <div className={`border-2 border-dashed rounded-lg p-6 text-center hover:border-gray-400 transition-colors ${
+                errors.selfie ? 'border-red-500' : 'border-gray-300'
+              }`}>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) setSelfieFile(file);
+                    if (file) {
+                      const validation = validateFile(file);
+                      if (!validation.isValid) {
+                        setErrors(prev => ({ ...prev, selfie: validation.error! }));
+                      } else {
+                        setSelfieFile(file);
+                        setErrors(prev => ({ ...prev, selfie: '' }));
+                      }
+                    }
                   }}
                   className="hidden"
                   id="selfie-upload"
@@ -558,6 +719,7 @@ const KYC = () => {
                   <p className="text-xs text-gray-500 mt-1">PNG or JPG (max 5MB)</p>
                 </label>
               </div>
+              {errors.selfie && <p className="text-xs text-red-500">{errors.selfie}</p>}
             </div>
           </div>
         );

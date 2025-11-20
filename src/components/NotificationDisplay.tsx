@@ -100,24 +100,11 @@ const NotificationDisplay = ({ notification, onDismiss }: NotificationDisplayPro
           <div
             className="h-full bg-primary transition-all"
             style={{
-              animation: `shrink ${notification.duration}ms linear forwards`
+              animation: `notification-shrink ${notification.duration}ms linear forwards`
             }}
           />
         </div>
       )}
-
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @keyframes shrink {
-            from {
-              width: 100%;
-            }
-            to {
-              width: 0%;
-            }
-          }
-        `
-      }} />
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { Download, CheckCircle2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
+// TIRA Agreement - Professional document with PDF download and signature functionality
 const TiraAgreement: React.FC = () => {
   const [isSigned, setIsSigned] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);

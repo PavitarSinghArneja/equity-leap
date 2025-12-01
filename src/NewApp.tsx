@@ -52,6 +52,7 @@ import AdminAddProperty from "@/pages/admin/AdminAddProperty";
 import AdminShareTrading from "@/pages/admin/AdminShareTrading";
 import Trading from "@/pages/Trading";
 import TestAnalytics from "@/pages/TestAnalytics";
+import TiraAgreement from "@/pages/TiraAgreement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,6 +74,7 @@ const PageTitleManager = () => {
     if (path.startsWith("/trial-expired")) return "Trial Expired · Retreat Slice";
     if (path.startsWith("/trading")) return "Trading · Retreat Slice";
     if (path.startsWith("/test-analytics")) return "Analytics Test · Retreat Slice";
+    if (path.startsWith("/tira-agreement")) return "TIRA Agreement · Retreat Slice";
     return "Retreat Slice";
   };
 
@@ -307,6 +309,9 @@ const AppContent = () => {
               </AuthenticatedRoute>
             }
           />
+
+          {/* TIRA Agreement - Public route */}
+          <Route path="/tira-agreement" element={<TiraAgreement />} />
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

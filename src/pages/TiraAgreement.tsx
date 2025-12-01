@@ -14,7 +14,10 @@ const TiraAgreement: React.FC = () => {
 
     setIsDownloading(true);
     try {
-      // Create canvas from the document
+      // Small delay to ensure DOM is fully rendered with current state (signed or unsigned)
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Create canvas from the document - this captures the current state including signature if signed
       const canvas = await html2canvas(documentRef.current, {
         scale: 2,
         useCORS: true,
@@ -51,7 +54,12 @@ const TiraAgreement: React.FC = () => {
         heightLeft -= pdfHeight;
       }
 
-      pdf.save('Tira-Agreement-RS-TRR-2025-001.pdf');
+      // Include signature status in filename
+      const filename = isSigned
+        ? 'Tira-Agreement-RS-TRR-2025-001-SIGNED.pdf'
+        : 'Tira-Agreement-RS-TRR-2025-001.pdf';
+
+      pdf.save(filename);
     } catch (error) {
       console.error('Error generating PDF:', error);
     } finally {

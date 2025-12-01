@@ -42,6 +42,7 @@ import AdminAddProperty from "@/pages/admin/AdminAddProperty";
 import AdminShareTrading from "@/pages/admin/AdminShareTrading";
 import TestAnalytics from "@/pages/TestAnalytics";
 import Trading from "@/pages/Trading";
+import TiraAgreement from "@/pages/TiraAgreement";
 import NotFound from "./pages/NotFound";
 import { logger } from '@/utils/logger';
 
@@ -63,6 +64,7 @@ const PageTitleManager = () => {
     if (path.startsWith("/admin")) return "Admin · Retreat Slice";
     if (path.startsWith("/kyc")) return "KYC · Retreat Slice";
     if (path.startsWith("/trial-expired")) return "Trial Expired · Retreat Slice";
+    if (path.startsWith("/tira-agreement")) return "TIRA Agreement · Retreat Slice";
     return "Retreat Slice";
   };
 
@@ -141,6 +143,7 @@ const AppContent = () => {
           <Route path="/admin/investments" element={<AdminRoute><AdminInvestments /></AdminRoute>} />
           <Route path="/test-analytics" element={<TestAnalytics />} />
           <Route path="/trading" element={<Trading />} />
+          <Route path="/tira-agreement" element={<TiraAgreement />} />
           <Route path="/test-route" element={<div style={{padding: '50px', fontSize: '24px'}}>TEST ROUTE WORKS!</div>} />
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

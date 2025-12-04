@@ -91,180 +91,142 @@ const TiraAgreement: React.FC = () => {
         {/* Document */}
         <div
           ref={documentRef}
-          className="bg-white shadow-lg p-12 space-y-6"
+          className="bg-white shadow-lg p-12 space-y-5"
           style={{
             fontFamily: 'Georgia, serif',
-            lineHeight: '1.8',
+            lineHeight: '1.6',
             color: '#1a1a1a'
           }}
         >
-          {/* Header */}
-          <div className="text-center border-b-2 border-gray-800 pb-6">
-            <h1 className="text-2xl font-bold mb-2">RETREAT SLICE LLP</h1>
-            <p className="text-sm text-gray-600">Fractional Ownership & Hospitality Tech</p>
-          </div>
-
-          {/* Reference & Date */}
-          <div className="space-y-1 text-sm">
-            <p><strong>Reference:</strong> RS-TRR-2025-001</p>
-            <p><strong>Date:</strong> November 1st, 2025</p>
-          </div>
-
-          {/* To */}
+          {/* Header - Date, Reference, To */}
           <div className="space-y-1">
-            <p className="font-semibold">TO:</p>
-            <p>The Directors/Partners</p>
-            <p className="font-semibold">Tira Riverfront Retreat LLP</p>
-            <p className="text-sm text-gray-600">Project Location: Sita River, Udupi, Barkur</p>
+            <p className="text-base"><strong>DATE:</strong> December 4th, 2025 <strong>REFERENCE:</strong> RS-TRR-2025-001 <strong>TO:</strong> The Directors/Partners, Tira Riverfront Retreat LLP</p>
+          </div>
+
+          <div>
+            <p className="text-base"><strong>PROJECT LOCATION:</strong> Sita River, Udupi, Barkur</p>
+          </div>
+
+          <div>
+            <p className="text-base"><strong>FROM:</strong> Retreat Slice LLP</p>
           </div>
 
           {/* Subject */}
-          <div>
-            <p className="font-semibold text-center uppercase mb-4">
+          <div className="py-2">
+            <p className="font-bold text-base">
               SUBJECT: LETTER OF COMMITMENT & STRATEGIC PARTNERSHIP FRAMEWORK
             </p>
           </div>
 
           {/* Opening */}
-          <div>
-            <p className="mb-4">Dear Partners,</p>
-            <p className="mb-4">
-              Following our recent discussions regarding the riverfront development at Sita River,
-              Udupi, Barkur, Retreat Slice LLP is pleased to formally submit this Letter of Commitment.
-              We are excited to onboard Tira Riverfront Retreat LLP ("The Landowner Entity") onto the
-              Retreat Slice platform.
+          <div className="space-y-4">
+            <p>Dear Partners,</p>
+            <p>
+              Following our recent discussions regarding the riverfront development at <strong>Sita River, Udupi, Barkur</strong>, Retreat Slice LLP is pleased to formally submit this Letter of Commitment. We are excited to onboard Tira Riverfront Retreat LLP ("The Landowner Entity") onto the <strong>Retreat Slice</strong> platform.
             </p>
-            <p className="mb-4">
-              This letter outlines the operational framework, financial commitments, and distinct roles
-              required to transform this asset into a high-yielding fractional ownership retreat. We are
-              committed to acting as your Technology and Platform Partner, providing the digital
-              infrastructure, brand visibility, and investor interface required to fund and market this project.
+            <p>
+              This letter outlines the operational framework, financial commitments, and distinct roles required to transform this asset into a high-yielding fractional ownership retreat. We are committed to acting as your <strong>Technology and Platform Partner</strong>, providing the digital infrastructure, brand visibility, and investor interface required to fund and market this project.
             </p>
           </div>
 
           {/* Section 1 */}
-          <div>
-            <h2 className="font-bold text-lg mb-3">1. SCOPE OF PARTNERSHIP & ROLES</h2>
-            <div className="space-y-3 pl-4">
-              <p>
-                <strong>Retreat Slice LLP (The Platform):</strong> We shall serve as the customer-facing
-                technology interface. We are responsible for aggregating potential investors, maintaining
-                digital transparency (displaying BOQs, Capex, Opex, and cash flows), and managing the
-                investor community. We will facilitate a secondary market infrastructure to allow liquidity
-                for investors wishing to exit.
-              </p>
-              <p>
-                <strong>Tira Riverfront Retreat LLP (The Landowner/Developer):</strong> You retain full
-                liability for the physical execution of the project, including land acquisition (if pending),
-                construction quality, adherence to timelines, and the eventual appointment of the hospitality
-                operator.
-              </p>
-            </div>
+          <div className="space-y-3">
+            <h2 className="font-bold text-base">1. SCOPE OF PARTNERSHIP & ROLES</h2>
+            <ul className="list-disc ml-8 space-y-3">
+              <li>
+                <strong>Retreat Slice LLP (The Platform):</strong> We shall <strong>take the responsibility of acting</strong> as the customer-facing technology interface. We are responsible for aggregating potential investors, maintaining digital transparency (displaying BOQs, Capex, Opex, and cash flows), and managing the investor community. We will facilitate <strong>and manage</strong> a secondary market infrastructure to allow liquidity for investors wishing to exit.
+              </li>
+              <li>
+                <strong>Tira Riverfront Retreat LLP (The Landowner/Developer):</strong> You retain full liability for the physical execution of the project, including land acquisition (if pending), construction quality, adherence to timelines, and the eventual appointment of the hospitality operator.
+              </li>
+            </ul>
           </div>
 
           {/* Section 2 */}
-          <div>
-            <h2 className="font-bold text-lg mb-3">2. FINANCIAL COMMITMENT & FUND MANAGEMENT</h2>
-            <div className="space-y-3 pl-4">
-              <p>
-                <strong>Escrow Mechanism:</strong> To ensure absolute trust for our investors, all capital
-                raised via Retreat Slice will be deposited into a regulated Escrow Account (via partners
-                such as Razorpay or Slice).
-              </p>
-              <p>
-                <strong>Stage-Wise Disbursement:</strong> Funds will not be released purely on raising;
-                they will be released to the Landowner's account strictly upon the completion of defined
-                construction milestones. This protects our stakeholders and incentivizes project velocity.
-              </p>
-              <p>
-                <strong>Platform Fees:</strong> Retreat Slice LLP shall charge a 5% commission on the total
-                funds raised through our platform for our services in technology, marketing, and investor
-                relations.
-              </p>
-              <p>
-                <strong>Secondary Market Fees:</strong> We will maintain a pool of secondary buyers to
-                provide liquidity. For this service, we charge a 2% flat commission to the exiting investor
-                upon the sale of their stake.
-              </p>
-            </div>
+          <div className="space-y-3">
+            <h2 className="font-bold text-base">2. FINANCIAL COMMITMENT & FUND MANAGEMENT</h2>
+            <ul className="list-disc ml-8 space-y-3">
+              <li>
+                <strong>Escrow Mechanism:</strong> To ensure absolute trust <strong>to the</strong> investors, all capital raised via Retreat Slice will be deposited into a regulated Escrow Account (via partners such as Razorpay or Slice). <em>The Escrow Account will be structured with joint oversight to ensure transparency. However, funds shall be released expeditiously upon milestone completion to ensure the smooth progress of construction and prevent delays.</em>
+              </li>
+              <li>
+                <strong>Stage-Wise Disbursement:</strong> Funds will not be released purely on raising; they will be released to the Landowner's account strictly upon the completion of defined construction milestones. This protects our stakeholders and incentivizes project velocity.
+              </li>
+              <li>
+                <strong>Platform Fees:</strong> Retreat Slice LLP shall charge a <strong>5% commission</strong> on the total funds raised through our platform for our services in technology, marketing, and investor relations. <em>(Benchmarked to industry standards for full-stack fundraising & tech infrastructure).</em>
+              </li>
+              <li>
+                <strong>Secondary Market Fees:</strong> We will maintain a pool of secondary buyers to provide liquidity. For this service, we charge a <strong>2% flat commission</strong> to the exiting investor upon the sale of their stake.
+              </li>
+            </ul>
           </div>
 
           {/* Section 3 */}
-          <div>
-            <h2 className="font-bold text-lg mb-3">3. RETURNS & LIABILITY</h2>
-            <div className="space-y-3 pl-4">
-              <p>
-                <strong>ROI Structure:</strong> We target ROIs in excess of 15%. The Landowner Entity is
-                liable for ensuring the project is operational and generating revenue.
-              </p>
-              <p>
-                <strong>Flow of Funds:</strong> Returns generated from the resort operations shall be
-                collected by the Landowner/Operator and remitted to Retreat Slice LLP. We will purely act
-                as the intermediary to distribute these returns to the stakeholders on a pro-rata basis.
-              </p>
-              <p>
-                <strong>Regulatory Stance:</strong> While we operate currently as a transparency-first
-                proprietary platform, we intend to apply for a SEBI license upon reaching our internal
-                regulatory thresholds. Until such time, trust is maintained through the complete visibility
-                of documentation and the "SPV" (Special Purpose Vehicle) structure formed for this project.
-              </p>
-            </div>
+          <div className="space-y-3">
+            <h2 className="font-bold text-base">3. RETURNS & LIABILITY</h2>
+            <ul className="list-disc ml-8 space-y-3">
+              <li>
+                <strong>ROI Structure:</strong> We <strong>project returns of 15%</strong>. This figure shall be further ratified as a formal commitment from the Landowner Entity directly to the investors. The Landowner Entity is liable for ensuring the project is operational and generating revenue.
+              </li>
+              <li>
+                <strong>Flow of Funds:</strong> Returns generated from the resort operations shall be collected by the Landowner/Operator and remitted to <strong>the Escrow Account</strong>. We will purely act as the intermediary to <strong>facilitate</strong> these returns to the stakeholders on a pro-rata basis.
+              </li>
+              <li>
+                <strong>Regulatory Stance:</strong> While we operate currently as a transparency-first proprietary platform, we intend to apply for a SEBI license upon reaching our internal regulatory thresholds. Until such time, trust is maintained through the complete visibility of documentation and the "SPV" (Special Purpose Vehicle) structure formed for this project.
+              </li>
+            </ul>
           </div>
 
           {/* Section 4 */}
-          <div>
-            <h2 className="font-bold text-lg mb-3">4. PROJECT & STAKEHOLDER BENEFITS</h2>
-            <p className="pl-4">
-              We commit to presenting your project with full transparency to build a "sentimental connection"
-              with investors. Beyond financial ROI, stakeholders will be entitled to discounted stays and
-              engagement in decision-making processes, creating a loyal community for the Tira Riverfront Retreat.
+          <div className="space-y-3">
+            <h2 className="font-bold text-base">4. PROJECT & STAKEHOLDER BENEFITS</h2>
+            <p className="ml-4">
+              We commit to presenting your project with full transparency to build a "sentimental connection" with investors. Beyond financial ROI, stakeholders will be entitled to discounted stays and <strong>assist in</strong> decision-making processes, creating a loyal community for the Tira Riverfront Retreat.
             </p>
-            <p className="pl-4 mt-3">
-              We view this strictly as a collaboration. We are flexible in maintaining your entity as the
-              primary beneficiary of funds, provided the construction and financial commitments to the
-              investors are met with precision.
+            <p className="ml-4">
+              We view this strictly as a collaboration. <strong>We agree to</strong> maintaining your entity as the primary beneficiary of funds, provided the construction and financial commitments to the investors are met with precision <strong>within seven (7) years from the initial disbursement of project funds.</strong>
             </p>
           </div>
 
           {/* Closing */}
-          <div className="pt-4">
-            <p className="mb-6">
+          <div className="pt-4 space-y-4">
+            <p>
               Please sign below to acknowledge these terms as the foundation of our definitive agreement.
             </p>
             <p>Sincerely,</p>
             <div className="mt-12 mb-8">
-              <div className="border-t border-gray-400 w-64">
-                <p className="mt-2 text-sm">Designated Partner</p>
-                <p className="font-semibold">Retreat Slice LLP</p>
+              <p className="text-sm mb-1">(Signature)</p>
+              <div className="border-t border-gray-400 w-80 pt-2">
+                <p className="font-semibold">Designated Partner Retreat Slice LLP</p>
               </div>
             </div>
           </div>
 
           {/* Acceptance Section */}
-          <div className="border-t-2 border-gray-300 pt-6">
-            <h3 className="font-bold text-lg mb-4">ACCEPTED AND AGREED:</h3>
-            <p className="mb-6">
-              We, Tira Riverfront Retreat LLP, acknowledge the terms above and accept liability for the
-              project milestones and investor return commitments as outlined.
+          <div className="border-t-2 border-gray-300 pt-6 space-y-4">
+            <h3 className="font-bold text-base">ACCEPTED AND AGREED:</h3>
+            <p>
+              We, Tira Riverfront Retreat LLP, acknowledge the terms above and accept liability for the project milestones and investor return commitments as outlined.
             </p>
 
             <div className="mt-8">
               {isSigned ? (
-                <div className="space-y-4">
-                  <div className="border-t border-gray-400 w-64">
-                    <p className="mt-2 font-bold text-lg">Tira Riverfront Retreat LLP</p>
-                    <p className="text-sm text-gray-600">Authorized Signatory</p>
-                    <div className="flex items-center gap-2 mt-2 text-green-600">
+                <div className="space-y-2">
+                  <p className="text-sm">(Signature)</p>
+                  <div className="border-t border-gray-400 w-80 pt-2">
+                    <p className="font-bold text-lg">Tira Riverfront Retreat LLP</p>
+                    <p className="text-sm text-gray-600 mt-1">Authorized Signatory</p>
+                    <div className="flex items-center gap-2 mt-3 text-green-600">
                       <CheckCircle2 className="w-5 h-5" />
                       <span className="text-sm font-semibold">Signed and Accepted</span>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div>
-                  <div className="border-t border-gray-400 w-64 mb-6">
-                    <p className="mt-2 text-sm text-gray-500">Authorized Signatory</p>
-                    <p className="font-semibold text-gray-400">Tira Riverfront Retreat LLP</p>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-400">(Signature)</p>
+                  <div className="border-t border-gray-400 w-80 pt-2">
+                    <p className="font-semibold text-gray-400">Authorized Signatory Tira Riverfront Retreat LLP</p>
                   </div>
                 </div>
               )}

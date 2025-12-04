@@ -184,7 +184,7 @@ const TiraAgreement: React.FC = () => {
               We commit to presenting your project with full transparency to build a "sentimental connection" with investors. Beyond financial ROI, stakeholders will be entitled to discounted stays and <strong>assist in</strong> decision-making processes, creating a loyal community for the Tira Riverfront Retreat.
             </p>
             <p className="ml-4">
-              We view this strictly as a collaboration. <strong>We agree to</strong> maintaining your entity as the primary beneficiary of funds, provided the construction and financial commitments to the investors are met with precision <strong>WITHIN mutually AGREED PERMISSIBLE TIME FRAME</strong>
+              We view this strictly as a collaboration. <strong>We agree to</strong> maintaining your entity as the primary beneficiary of funds, provided the construction and financial commitments to the investors are met with precision <strong>within mutually agreed permissible time frame</strong>
             </p>
           </div>
 
